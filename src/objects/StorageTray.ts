@@ -1,4 +1,4 @@
-import { SIZES, COLORS, FONT_BODY, TEXT, fs, s } from '../utils/constants';
+import { SIZES, COLORS, FONT, FONT_BODY, TEXT, fs, s } from '../utils/constants';
 
 export interface StorageSlot {
   index: number;
@@ -35,9 +35,15 @@ export class StorageTray extends Phaser.GameObjects.Container {
       this.slotSprites.push(null);
     }
 
-    // Label
-    const label = scene.add.text(width / 2, y - s(14), '✨ Storage', {
-      fontSize: fs(9), color: TEXT.SECONDARY, fontFamily: FONT_BODY,
+    // Label — small, positioned above slots with a pill background
+    const labelY = y - this.slotSize / 2 - s(12);
+    const labelBg = scene.add.graphics();
+    labelBg.fillStyle(0xFCE4EC, 0.8);
+    labelBg.fillRoundedRect(width / 2 - s(32), labelY - s(7), s(64), s(14), s(7));
+    this.add(labelBg);
+
+    const label = scene.add.text(width / 2, labelY, '✨ Storage', {
+      fontSize: fs(7), color: TEXT.SECONDARY, fontFamily: FONT,
     }).setOrigin(0.5);
     this.add(label);
 

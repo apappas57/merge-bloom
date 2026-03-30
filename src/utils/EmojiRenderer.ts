@@ -14,33 +14,24 @@ const CHAIN_COLORS: Record<string, { from: string; to: string; fromHex: number; 
   cafe:      { from: '#EFEBE9', to: '#BCAAA4', fromHex: 0xEFEBE9, toHex: 0xBCAAA4 },
 };
 
-/** Default fallback for unknown chains or UI textures */
 const DEFAULT_COLORS = { from: '#E0E0E0', to: '#BDBDBD', fromHex: 0xE0E0E0, toHex: 0xBDBDBD };
 
-/** Parse a texture key to extract chain and tier info */
 function parseKey(key: string): { chainId: string; tier: number; isGenerator: boolean; isUI: boolean } {
   if (key.startsWith('gen_')) {
-    // Generator keys: gen_gen_flower -> chainId derived from second part
-    const rest = key.slice(4); // e.g. "gen_flower"
+    const rest = key.slice(4);
     const chainId = rest.replace('gen_', '');
     return { chainId, tier: 0, isGenerator: true, isUI: false };
   }
-  // UI keys like 'gem', 'star_ui', 'sparkle'
   if (key === 'gem' || key === 'star_ui' || key === 'sparkle') {
     return { chainId: '', tier: 0, isGenerator: false, isUI: true };
   }
-  // Chain item keys: flower_1, crystal_3, etc.
   const parts = key.split('_');
   const tier = parseInt(parts[parts.length - 1], 10);
   const chainId = parts.slice(0, parts.length - 1).join('_');
   return { chainId, tier, isGenerator: false, isUI: false };
 }
 
-/** Draw a rounded rectangle path on a canvas context */
-function roundRect(
-  ctx: CanvasRenderingContext2D,
-  x: number, y: number, w: number, h: number, r: number
-): void {
+function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number): void {
   ctx.beginPath();
   ctx.moveTo(x + r, y);
   ctx.lineTo(x + w - r, y);
@@ -54,39 +45,80 @@ function roundRect(
   ctx.closePath();
 }
 
-/** Draw a small 4-point sparkle star */
-function drawSparkle(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, color: string): void {
-  ctx.save();
-  ctx.fillStyle = color;
-  ctx.beginPath();
-  ctx.moveTo(cx, cy - size);
-  ctx.quadraticCurveTo(cx + size * 0.3, cy - size * 0.3, cx + size, cy);
-  ctx.quadraticCurveTo(cx + size * 0.3, cy + size * 0.3, cx, cy + size);
-  ctx.quadraticCurveTo(cx - size * 0.3, cy + size * 0.3, cx - size, cy);
-  ctx.quadraticCurveTo(cx - size * 0.3, cy - size * 0.3, cx, cy - size);
-  ctx.closePath();
-  ctx.fill();
-  ctx.restore();
+/** Draw cute kawaii eyes on a shape */
+function drawCuteEyes(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, happy: boolean = false): void {
+  const eyeSpacing = size * 0.16;
+  const eyeR = size * 0.045;
+
+  if (happy) {
+    // Happy closed eyes (^_^)
+    ctx.strokeStyle = '#4A3728';
+    ctx.lineWidth = size * 0.02;
+    ctx.lineCap = 'round';
+    [-1, 1].forEach(dir => {
+      ctx.beginPath();
+      ctx.arc(cx + dir * eyeSpacing, cy, eyeR * 1.5, Math.PI + 0.3, -0.3);
+      ctx.stroke();
+    });
+  } else {
+    // Open dot eyes with shine
+    [-1, 1].forEach(dir => {
+      const ex = cx + dir * eyeSpacing;
+      ctx.fillStyle = '#3D2B1F';
+      ctx.beginPath();
+      ctx.arc(ex, cy, eyeR, 0, Math.PI * 2);
+      ctx.fill();
+      // Shine
+      ctx.fillStyle = '#FFFFFF';
+      ctx.beginPath();
+      ctx.arc(ex - eyeR * 0.3, cy - eyeR * 0.4, eyeR * 0.4, 0, Math.PI * 2);
+      ctx.fill();
+    });
+  }
 }
 
-/** Create a rainbow/holographic gradient for high tiers */
-function rainbowStroke(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number): CanvasGradient {
-  const grad = ctx.createLinearGradient(x, y, x + w, y + h);
-  grad.addColorStop(0, '#FF6B6B');
-  grad.addColorStop(0.17, '#FFD93D');
-  grad.addColorStop(0.33, '#6BCB77');
-  grad.addColorStop(0.5, '#4D96FF');
-  grad.addColorStop(0.67, '#9B59B6');
-  grad.addColorStop(0.83, '#FF6B9D');
-  grad.addColorStop(1, '#FF6B6B');
-  return grad;
+/** Draw blush marks */
+function drawBlush(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number): void {
+  const spacing = size * 0.22;
+  ctx.fillStyle = 'rgba(255,130,170,0.25)';
+  [-1, 1].forEach(dir => {
+    ctx.beginPath();
+    ctx.ellipse(cx + dir * spacing, cy + size * 0.06, size * 0.06, size * 0.035, 0, 0, Math.PI * 2);
+    ctx.fill();
+  });
+}
+
+/** Draw a tiny smile */
+function drawSmile(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number): void {
+  ctx.strokeStyle = '#5C3D2E';
+  ctx.lineWidth = size * 0.015;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.arc(cx, cy + size * 0.08, size * 0.05, 0.2, Math.PI - 0.2);
+  ctx.stroke();
+}
+
+/** Draw sparkle decorations for high-tier items */
+function drawSparkles(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, count: number): void {
+  ctx.fillStyle = 'rgba(255,215,0,0.6)';
+  for (let i = 0; i < count; i++) {
+    const angle = (i / count) * Math.PI * 2 + Math.PI / 4;
+    const dist = size * 0.42;
+    const sx = cx + Math.cos(angle) * dist;
+    const sy = cy + Math.sin(angle) * dist;
+    const sr = size * 0.025;
+    // 4-point star
+    ctx.beginPath();
+    ctx.moveTo(sx, sy - sr * 2);
+    ctx.quadraticCurveTo(sx + sr * 0.3, sy - sr * 0.3, sx + sr * 2, sy);
+    ctx.quadraticCurveTo(sx + sr * 0.3, sy + sr * 0.3, sx, sy + sr * 2);
+    ctx.quadraticCurveTo(sx - sr * 0.3, sy + sr * 0.3, sx - sr * 2, sy);
+    ctx.quadraticCurveTo(sx - sr * 0.3, sy - sr * 0.3, sx, sy - sr * 2);
+    ctx.fill();
+  }
 }
 
 export class EmojiRenderer {
-  /**
-   * Render emoji to Phaser canvas textures as beautiful framed kawaii item sprites.
-   * `size` should already be in game-pixel units (DPR-scaled).
-   */
   static generateTextures(
     scene: Phaser.Scene,
     emojiList: { key: string; emoji: string }[],
@@ -98,252 +130,213 @@ export class EmojiRenderer {
       const canvas = document.createElement('canvas');
       canvas.width = size;
       canvas.height = size;
-
       const ctx = canvas.getContext('2d');
       if (!ctx) continue;
 
       const parsed = parseKey(key);
 
       if (parsed.isGenerator) {
-        EmojiRenderer.drawGeneratorFrame(ctx, size, emoji, parsed.chainId);
+        EmojiRenderer.drawGenerator(ctx, size, emoji, parsed.chainId);
       } else if (parsed.isUI) {
-        // UI textures: simple emoji, no frame (used as icons)
-        EmojiRenderer.drawUITexture(ctx, size, emoji);
+        EmojiRenderer.drawUI(ctx, size, emoji);
       } else {
-        EmojiRenderer.drawItemFrame(ctx, size, emoji, parsed.chainId, parsed.tier);
+        EmojiRenderer.drawPlushItem(ctx, size, emoji, parsed.chainId, parsed.tier);
       }
 
       scene.textures.addCanvas(key, canvas);
     }
   }
 
-  /** Draw a framed kawaii item sprite for a merge chain item */
-  private static drawItemFrame(
-    ctx: CanvasRenderingContext2D,
-    size: number,
-    emoji: string,
-    chainId: string,
-    tier: number
-  ): void {
-    const pad = size * 0.06;
-    const cornerR = size * 0.2;
+  /** Draw a cute plush-style item — the core visual identity */
+  private static drawPlushItem(ctx: CanvasRenderingContext2D, size: number, emoji: string, chainId: string, tier: number): void {
     const colors = CHAIN_COLORS[chainId] || DEFAULT_COLORS;
+    const cx = size / 2;
+    const cy = size / 2;
+    const pad = size * 0.08;
+    const bodyR = (size - pad * 2) / 2;
+    const cr = size * 0.18;
 
-    // 1. Drop shadow
+    // === Background card ===
+    // Shadow
     ctx.save();
-    ctx.shadowColor = 'rgba(0,0,0,0.15)';
-    ctx.shadowBlur = size * 0.06;
-    ctx.shadowOffsetX = 0;
-    ctx.shadowOffsetY = size * 0.04;
-    roundRect(ctx, pad, pad, size - pad * 2, size - pad * 2, cornerR);
+    ctx.shadowColor = 'rgba(0,0,0,0.12)';
+    ctx.shadowBlur = size * 0.05;
+    ctx.shadowOffsetY = size * 0.03;
+    roundRect(ctx, pad, pad, size - pad * 2, size - pad * 2, cr);
     ctx.fillStyle = colors.from;
     ctx.fill();
     ctx.restore();
 
-    // 2. Background gradient fill
+    // Gradient fill
     const grad = ctx.createLinearGradient(pad, pad, pad, size - pad);
     grad.addColorStop(0, colors.from);
     grad.addColorStop(1, colors.to);
-    roundRect(ctx, pad, pad, size - pad * 2, size - pad * 2, cornerR);
+    roundRect(ctx, pad, pad, size - pad * 2, size - pad * 2, cr);
     ctx.fillStyle = grad;
     ctx.fill();
 
-    // 3. Inner highlight (top-half shine)
-    const highlightH = (size - pad * 2) * 0.45;
+    // Inner shine
     ctx.save();
-    roundRect(ctx, pad, pad, size - pad * 2, size - pad * 2, cornerR);
+    roundRect(ctx, pad, pad, size - pad * 2, size - pad * 2, cr);
     ctx.clip();
-    const shineGrad = ctx.createLinearGradient(0, pad, 0, pad + highlightH);
-    shineGrad.addColorStop(0, 'rgba(255,255,255,0.4)');
-    shineGrad.addColorStop(1, 'rgba(255,255,255,0)');
-    ctx.fillStyle = shineGrad;
-    ctx.fillRect(pad, pad, size - pad * 2, highlightH);
+    const shine = ctx.createLinearGradient(0, pad, 0, cy);
+    shine.addColorStop(0, 'rgba(255,255,255,0.4)');
+    shine.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = shine;
+    ctx.fillRect(pad, pad, size - pad * 2, cy - pad);
     ctx.restore();
 
-    // 4. Border decoration based on tier
+    // Border (tier-based)
     if (tier >= 7) {
-      // Rainbow/holographic shimmer border + corner stars
-      const borderW = size * 0.05;
-      roundRect(ctx, pad, pad, size - pad * 2, size - pad * 2, cornerR);
-      ctx.strokeStyle = rainbowStroke(ctx, pad, pad, size - pad * 2, size - pad * 2);
-      ctx.lineWidth = borderW;
+      // Rainbow shimmer border
+      const rGrad = ctx.createLinearGradient(pad, pad, size - pad, size - pad);
+      rGrad.addColorStop(0, '#FF6B9D');
+      rGrad.addColorStop(0.25, '#FFD93D');
+      rGrad.addColorStop(0.5, '#6BCB77');
+      rGrad.addColorStop(0.75, '#4D96FF');
+      rGrad.addColorStop(1, '#FF6B9D');
+      roundRect(ctx, pad, pad, size - pad * 2, size - pad * 2, cr);
+      ctx.strokeStyle = rGrad;
+      ctx.lineWidth = size * 0.04;
       ctx.stroke();
-
-      // Inner glow
-      ctx.save();
-      roundRect(ctx, pad + borderW, pad + borderW, size - (pad + borderW) * 2, size - (pad + borderW) * 2, cornerR * 0.8);
-      ctx.strokeStyle = 'rgba(255,255,255,0.5)';
-      ctx.lineWidth = size * 0.02;
-      ctx.stroke();
-      ctx.restore();
-
-      // Corner stars
-      const starSize = size * 0.06;
-      const inset = pad + size * 0.1;
-      drawSparkle(ctx, inset, inset, starSize, '#FFD700');
-      drawSparkle(ctx, size - inset, inset, starSize, '#FFD700');
-      drawSparkle(ctx, inset, size - inset, starSize, '#FFD700');
-      drawSparkle(ctx, size - inset, size - inset, starSize, '#FFD700');
+      drawSparkles(ctx, cx, cy, size, 4);
     } else if (tier >= 5) {
-      // Golden sparkle border
-      const borderW = size * 0.04;
-      roundRect(ctx, pad, pad, size - pad * 2, size - pad * 2, cornerR);
+      roundRect(ctx, pad, pad, size - pad * 2, size - pad * 2, cr);
       ctx.strokeStyle = '#FFD54F';
-      ctx.lineWidth = borderW;
+      ctx.lineWidth = size * 0.035;
       ctx.stroke();
-
-      // Inner glow line
-      roundRect(ctx, pad + borderW * 0.8, pad + borderW * 0.8,
-        size - (pad + borderW * 0.8) * 2, size - (pad + borderW * 0.8) * 2, cornerR * 0.85);
-      ctx.strokeStyle = 'rgba(255,215,0,0.3)';
-      ctx.lineWidth = size * 0.015;
-      ctx.stroke();
-
-      // Sparkle dots at corners
-      const dotSize = size * 0.04;
-      const inset = pad + size * 0.1;
-      drawSparkle(ctx, inset, inset, dotSize, '#FFD700');
-      drawSparkle(ctx, size - inset, inset, dotSize, '#FFD700');
-      drawSparkle(ctx, inset, size - inset, dotSize, '#FFD700');
-      drawSparkle(ctx, size - inset, size - inset, dotSize, '#FFD700');
+      drawSparkles(ctx, cx, cy, size, 3);
     } else if (tier >= 3) {
-      // Thicker border with inner glow
-      const borderW = size * 0.035;
-      roundRect(ctx, pad, pad, size - pad * 2, size - pad * 2, cornerR);
-      ctx.strokeStyle = colors.to;
-      ctx.lineWidth = borderW;
-      ctx.stroke();
-
-      // Subtle inner glow
-      roundRect(ctx, pad + borderW, pad + borderW,
-        size - (pad + borderW) * 2, size - (pad + borderW) * 2, cornerR * 0.85);
-      ctx.strokeStyle = 'rgba(255,255,255,0.35)';
-      ctx.lineWidth = size * 0.015;
-      ctx.stroke();
-    } else {
-      // Tier 1-2: Simple soft border
-      roundRect(ctx, pad, pad, size - pad * 2, size - pad * 2, cornerR);
+      roundRect(ctx, pad, pad, size - pad * 2, size - pad * 2, cr);
       ctx.strokeStyle = colors.to;
       ctx.lineWidth = size * 0.025;
-      ctx.globalAlpha = 0.6;
+      ctx.stroke();
+    } else {
+      roundRect(ctx, pad, pad, size - pad * 2, size - pad * 2, cr);
+      ctx.strokeStyle = colors.to;
+      ctx.lineWidth = size * 0.02;
+      ctx.globalAlpha = 0.5;
       ctx.stroke();
       ctx.globalAlpha = 1;
     }
 
-    // 5. Emoji centered at ~65% of card size
-    const emojiSize = size * 0.65;
-    ctx.font = `${emojiSize}px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif`;
+    // === Plush body (centered circle/blob) ===
+    const plushR = bodyR * 0.55;
+    const plushY = cy + size * 0.02;
+
+    // Plush shadow
+    ctx.fillStyle = 'rgba(0,0,0,0.06)';
+    ctx.beginPath();
+    ctx.ellipse(cx, plushY + plushR * 0.15, plushR * 0.9, plushR * 0.3, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Plush body gradient
+    const plushGrad = ctx.createRadialGradient(cx - plushR * 0.25, plushY - plushR * 0.25, 0, cx, plushY, plushR);
+    plushGrad.addColorStop(0, '#FFFFFF');
+    plushGrad.addColorStop(0.4, colors.from);
+    plushGrad.addColorStop(1, colors.to);
+    ctx.fillStyle = plushGrad;
+    ctx.beginPath();
+    ctx.arc(cx, plushY, plushR, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Plush border
+    ctx.strokeStyle = colors.to + '80';
+    ctx.lineWidth = size * 0.01;
+    ctx.stroke();
+
+    // === Cute face ===
+    const faceY = plushY - plushR * 0.05;
+    const isHappy = tier >= 5;
+    drawCuteEyes(ctx, cx, faceY, size, isHappy);
+    drawBlush(ctx, cx, faceY, size);
+    drawSmile(ctx, cx, faceY, size);
+
+    // === Emoji as tiny icon on the plush body (like a belly button design) ===
+    const iconSize = size * 0.22;
+    ctx.font = `${iconSize}px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(emoji, size / 2, size / 2 + size * 0.02);
+    ctx.fillText(emoji, cx, plushY + plushR * 0.45);
   }
 
-  /** Draw a generator frame: hexagonal-ish pink/rose with "+" indicator */
-  private static drawGeneratorFrame(
-    ctx: CanvasRenderingContext2D,
-    size: number,
-    emoji: string,
-    chainId: string
-  ): void {
-    const pad = size * 0.05;
-    const cornerR = size * 0.22;
+  /** Draw a generator — special plush with "tap me" energy */
+  private static drawGenerator(ctx: CanvasRenderingContext2D, size: number, emoji: string, chainId: string): void {
     const colors = CHAIN_COLORS[chainId] || DEFAULT_COLORS;
+    const cx = size / 2;
+    const cy = size / 2;
+    const pad = size * 0.06;
+    const cr = size * 0.2;
 
-    // Drop shadow
+    // Shadow
     ctx.save();
-    ctx.shadowColor = 'rgba(190,80,130,0.25)';
-    ctx.shadowBlur = size * 0.08;
-    ctx.shadowOffsetX = 0;
-    ctx.shadowOffsetY = size * 0.04;
-    roundRect(ctx, pad, pad, size - pad * 2, size - pad * 2, cornerR);
+    ctx.shadowColor = 'rgba(190,80,130,0.2)';
+    ctx.shadowBlur = size * 0.06;
+    ctx.shadowOffsetY = size * 0.03;
+    roundRect(ctx, pad, pad, size - pad * 2, size - pad * 2, cr);
     ctx.fillStyle = '#FFE4EC';
     ctx.fill();
     ctx.restore();
 
-    // Rose/pink gradient background
+    // Pink gradient
     const grad = ctx.createLinearGradient(0, pad, 0, size - pad);
     grad.addColorStop(0, '#FFE4EC');
-    grad.addColorStop(0.5, '#FFD0E0');
     grad.addColorStop(1, '#FFB8D0');
-    roundRect(ctx, pad, pad, size - pad * 2, size - pad * 2, cornerR);
+    roundRect(ctx, pad, pad, size - pad * 2, size - pad * 2, cr);
     ctx.fillStyle = grad;
     ctx.fill();
 
-    // Inner highlight shine
+    // Inner shine
     ctx.save();
-    roundRect(ctx, pad, pad, size - pad * 2, size - pad * 2, cornerR);
+    roundRect(ctx, pad, pad, size - pad * 2, size - pad * 2, cr);
     ctx.clip();
-    const shineGrad = ctx.createLinearGradient(0, pad, 0, pad + (size - pad * 2) * 0.4);
-    shineGrad.addColorStop(0, 'rgba(255,255,255,0.45)');
-    shineGrad.addColorStop(1, 'rgba(255,255,255,0)');
-    ctx.fillStyle = shineGrad;
-    ctx.fillRect(pad, pad, size - pad * 2, (size - pad * 2) * 0.4);
+    const shine = ctx.createLinearGradient(0, pad, 0, cy);
+    shine.addColorStop(0, 'rgba(255,255,255,0.4)');
+    shine.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = shine;
+    ctx.fillRect(pad, pad, size - pad * 2, cy - pad);
     ctx.restore();
 
-    // Thick rose border
-    const borderW = size * 0.05;
-    roundRect(ctx, pad, pad, size - pad * 2, size - pad * 2, cornerR);
+    // Border
+    roundRect(ctx, pad, pad, size - pad * 2, size - pad * 2, cr);
     ctx.strokeStyle = '#F06292';
-    ctx.lineWidth = borderW;
+    ctx.lineWidth = size * 0.04;
     ctx.stroke();
 
-    // Secondary inner border using chain color
-    roundRect(ctx, pad + borderW * 0.8, pad + borderW * 0.8,
-      size - (pad + borderW * 0.8) * 2, size - (pad + borderW * 0.8) * 2, cornerR * 0.85);
-    ctx.strokeStyle = colors.to;
-    ctx.lineWidth = size * 0.02;
-    ctx.globalAlpha = 0.5;
-    ctx.stroke();
-    ctx.globalAlpha = 1;
-
-    // Emoji
-    const emojiSize = size * 0.55;
+    // Emoji centered
+    const emojiSize = size * 0.45;
     ctx.font = `${emojiSize}px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(emoji, size / 2, size / 2 + size * 0.01);
+    ctx.fillText(emoji, cx, cy);
 
-    // "+" indicator in top-right corner
-    const plusR = size * 0.11;
-    const plusCX = size - pad - plusR * 0.8;
-    const plusCY = pad + plusR * 0.8;
-
+    // "+" badge
+    const plusR = size * 0.1;
+    const plusX = size - pad - plusR;
+    const plusY = pad + plusR;
     ctx.beginPath();
-    ctx.arc(plusCX, plusCY, plusR, 0, Math.PI * 2);
+    ctx.arc(plusX, plusY, plusR, 0, Math.PI * 2);
     ctx.fillStyle = '#EC407A';
     ctx.fill();
-    ctx.strokeStyle = '#FFFFFF';
-    ctx.lineWidth = size * 0.015;
-    ctx.stroke();
-
-    // Plus sign
     ctx.fillStyle = '#FFFFFF';
     ctx.font = `bold ${plusR * 1.4}px sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('+', plusCX, plusCY);
+    ctx.fillText('+', plusX, plusY + 1);
   }
 
-  /** Draw UI emoji textures (gem, star, sparkle) with a subtle glow */
-  private static drawUITexture(
-    ctx: CanvasRenderingContext2D,
-    size: number,
-    emoji: string
-  ): void {
+  /** Draw UI textures (gem, star, sparkle) */
+  private static drawUI(ctx: CanvasRenderingContext2D, size: number, emoji: string): void {
     // Subtle glow behind
-    const glowR = size * 0.35;
-    const gradient = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, glowR);
-    gradient.addColorStop(0, 'rgba(255,255,255,0.3)');
-    gradient.addColorStop(1, 'rgba(255,255,255,0)');
-    ctx.fillStyle = gradient;
-    ctx.beginPath();
-    ctx.arc(size / 2, size / 2, glowR, 0, Math.PI * 2);
-    ctx.fill();
+    const cx = size / 2;
+    const cy = size / 2;
+    const glow = ctx.createRadialGradient(cx, cy, 0, cx, cy, size * 0.4);
+    glow.addColorStop(0, 'rgba(255,200,230,0.3)');
+    glow.addColorStop(1, 'rgba(255,200,230,0)');
+    ctx.fillStyle = glow;
+    ctx.fillRect(0, 0, size, size);
 
-    // Emoji
-    ctx.font = `${size * 0.75}px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif`;
+    ctx.font = `${size * 0.7}px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(emoji, size / 2, size / 2 + size * 0.03);
+    ctx.fillText(emoji, cx, cy + size * 0.03);
   }
 }

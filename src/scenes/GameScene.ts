@@ -395,7 +395,30 @@ export class GameScene extends Phaser.Scene {
       // Mascot reacts + check achievements + check orders
       this.mascot.reactToMerge(result.newItem.tier);
       this.checkAchievements(result.newItem.chainId, result.newItem.tier);
-      this.checkOrders(result.newItem.chainId, result.newItem.tier);
+
+      // Check if this new item fulfills an order — if so, consume it
+      const orderMatch = this.orderSystem.findMatchingOrder(result.newItem.chainId, result.newItem.tier);
+      if (orderMatch) {
+        // Consume the item from the board
+        this.items.delete(newItem.data_.id);
+        this.board.setOccupied(newItem.data_.col, newItem.data_.row, null);
+
+        // Fly item to top of screen (toward order bar) then destroy
+        this.tweens.add({
+          targets: newItem, y: s(60), alpha: 0, scaleX: 0.3, scaleY: 0.3,
+          duration: 400, ease: 'Power2',
+          onComplete: () => newItem.destroy(),
+        });
+
+        const completed = this.orderSystem.fulfillItem(orderMatch.orderIdx, orderMatch.slotIdx);
+        if (completed) {
+          // Auto-claim completed orders after a brief delay
+          this.time.delayedCall(600, () => {
+            this.onClaimOrder(orderMatch.orderIdx);
+          });
+        }
+        this.updateUI();
+      }
 
       const c1 = this.questSystem.onItemCreated(result.newItem.chainId, result.newItem.tier);
       const c2 = this.questSystem.onMerge();
@@ -666,18 +689,6 @@ export class GameScene extends Phaser.Scene {
       'I\'ve never seen this before! 🤩', 'How beautiful! 💖',
     ];
     this.mascot.showSpeech(discoveryLines[Phaser.Math.Between(0, discoveryLines.length - 1)], 2500);
-  }
-
-  private checkOrders(chainId: string, tier: number): void {
-    // Check if this item matches any active order
-    const match = this.orderSystem.findMatchingOrder(chainId, tier);
-    if (match) {
-      const completed = this.orderSystem.fulfillItem(match.orderIdx, match.slotIdx);
-      if (completed) {
-        this.mascot.showSpeech('Order ready! Tap GO! 🎉', 2500);
-      }
-      this.updateUI();
-    }
   }
 
   private onClaimOrder(orderIdx: number): void {

@@ -5,12 +5,19 @@ export default defineConfig({
   plugins: [
     VitePWA({
       registerType: 'autoUpdate',
+      devOptions: { enabled: false },
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+        // Force new service worker to take over immediately
+        skipWaiting: true,
+        clientsClaim: true,
+      },
       manifest: {
         name: 'Merge Bloom',
         short_name: 'Merge Bloom',
         description: 'A cozy garden merge game',
-        theme_color: '#1a1a2e',
-        background_color: '#1a1a2e',
+        theme_color: '#FFF0F5',
+        background_color: '#FFF0F5',
         display: 'standalone',
         orientation: 'portrait',
         scope: '/',
@@ -20,9 +27,6 @@ export default defineConfig({
           { src: '/icon-512.svg', sizes: '512x512', type: 'image/svg+xml' },
           { src: '/icon-512.svg', sizes: '512x512', type: 'image/svg+xml', purpose: 'maskable' }
         ]
-      },
-      workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg}']
       }
     })
   ],

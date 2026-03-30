@@ -83,6 +83,10 @@ export class MergeItem extends Phaser.GameObjects.Container {
       const cell = this.board.getCellAt(dragX, dragY);
       if (cell) { this.board.highlightCell(cell.col, cell.row, COLORS.CELL_VALID); }
       else { this.board.clearHighlights(); }
+      // Trash zone proximity check
+      const { width, height } = this.scene.scale;
+      const nearTrash = dragX > width - s(60) && dragY > height - s(130);
+      this.scene.events.emit('item-near-trash', nearTrash);
     });
 
     this.on('dragend', () => {

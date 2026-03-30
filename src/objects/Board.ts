@@ -60,20 +60,35 @@ export class Board {
     const bh = this.rows * (this.cellSize + this.gap) - this.gap + pad * 2;
     const bx = this.offsetX - pad;
     const by = this.offsetY - pad;
-    const r = SIZES.CORNER_RADIUS;
+    const r = SIZES.CORNER_RADIUS + s(6); // More rounded board corners
 
-    // Board background — soft mint with subtle shadow
-    this.graphics.fillStyle(COLORS.BOARD_BG, 0.6);
-    this.graphics.fillRoundedRect(bx + s(2), by + s(3), bw, bh, r + s(4));
+    // Board outer shadow (deeper, softer)
+    this.graphics.fillStyle(0xD4A0B8, 0.25);
+    this.graphics.fillRoundedRect(bx + s(2), by + s(4), bw, bh, r);
 
-    this.graphics.fillStyle(COLORS.BOARD_BG, 0.85);
-    this.graphics.fillRoundedRect(bx, by, bw, bh, r + s(4));
+    // Board background
+    this.graphics.fillStyle(COLORS.BOARD_BG, 0.88);
+    this.graphics.fillRoundedRect(bx, by, bw, bh, r);
+
+    // Soft dot pattern on board background
+    const dotSpacing = s(12);
+    const dotR = s(0.8);
+    for (let dx = bx + dotSpacing; dx < bx + bw - dotSpacing / 2; dx += dotSpacing) {
+      for (let dy = by + dotSpacing; dy < by + bh - dotSpacing / 2; dy += dotSpacing) {
+        this.graphics.fillStyle(0xE8B4CC, 0.15);
+        this.graphics.fillCircle(dx, dy, dotR);
+      }
+    }
 
     // Soft border
-    this.graphics.lineStyle(s(1.5), COLORS.CELL_BORDER, 0.3);
-    this.graphics.strokeRoundedRect(bx, by, bw, bh, r + s(4));
+    this.graphics.lineStyle(s(1.5), COLORS.CELL_BORDER, 0.35);
+    this.graphics.strokeRoundedRect(bx, by, bw, bh, r);
 
-    const cr = s(10);
+    // Inner highlight along top edge
+    this.graphics.lineStyle(s(1), 0xFFFFFF, 0.2);
+    this.graphics.strokeRoundedRect(bx + s(1), by + s(1), bw - s(2), bh - s(2), r - s(1));
+
+    const cr = s(12); // Slightly more rounded cell corners
     for (let row = 0; row < this.rows; row++) {
       for (let col = 0; col < this.cols; col++) {
         const cell = this.cells[row][col];
@@ -83,24 +98,40 @@ export class Board {
         if (cell.locked) {
           this.graphics.fillStyle(0xE0D8E8, 0.5);
           this.graphics.fillRoundedRect(cx, cy, this.cellSize, this.cellSize, cr);
+          // Locked pattern: diagonal lines
+          this.graphics.lineStyle(s(0.5), 0xD0C4D8, 0.3);
+          for (let d = -this.cellSize; d < this.cellSize * 2; d += s(6)) {
+            this.graphics.lineBetween(
+              Math.max(cx, cx + d), Math.max(cy, cy - d + this.cellSize),
+              Math.min(cx + this.cellSize, cx + d + this.cellSize), Math.min(cy + this.cellSize, cy - d)
+            );
+          }
           continue;
         }
 
-        // Cell shadow
-        this.graphics.fillStyle(COLORS.CELL_SHADOW, 0.15);
+        // Cell outer shadow (more pronounced)
+        this.graphics.fillStyle(COLORS.CELL_SHADOW, 0.2);
         this.graphics.fillRoundedRect(cx + s(1), cy + s(2), this.cellSize, this.cellSize, cr);
 
-        // Cell fill — pale lavender
-        this.graphics.fillStyle(COLORS.CELL_BG, 0.8);
+        // Cell fill
+        this.graphics.fillStyle(COLORS.CELL_BG, 0.85);
         this.graphics.fillRoundedRect(cx, cy, this.cellSize, this.cellSize, cr);
 
-        // Inner highlight (top half, lighter)
-        this.graphics.fillStyle(0xFFFFFF, 0.15);
-        this.graphics.fillRoundedRect(cx + s(1), cy + s(1), this.cellSize - s(2), this.cellSize / 2, { tl: cr, tr: cr, bl: 0, br: 0 });
+        // Inner highlight (top half, lighter) -- more pronounced
+        this.graphics.fillStyle(0xFFFFFF, 0.22);
+        this.graphics.fillRoundedRect(cx + s(1), cy + s(1), this.cellSize - s(2), this.cellSize * 0.45, { tl: cr, tr: cr, bl: 0, br: 0 });
+
+        // Inner shadow along bottom edge
+        this.graphics.fillStyle(COLORS.CELL_SHADOW, 0.08);
+        this.graphics.fillRoundedRect(cx + s(1), cy + this.cellSize * 0.6, this.cellSize - s(2), this.cellSize * 0.4 - s(1), { tl: 0, tr: 0, bl: cr, br: cr });
 
         // Border
-        this.graphics.lineStyle(s(1), COLORS.CELL_BORDER, 0.35);
+        this.graphics.lineStyle(s(1), COLORS.CELL_BORDER, 0.4);
         this.graphics.strokeRoundedRect(cx, cy, this.cellSize, this.cellSize, cr);
+
+        // Subtle inner border highlight (top-left)
+        this.graphics.lineStyle(s(0.5), 0xFFFFFF, 0.15);
+        this.graphics.strokeRoundedRect(cx + s(1), cy + s(1), this.cellSize - s(2), this.cellSize - s(2), cr - s(1));
       }
     }
   }
@@ -111,7 +142,7 @@ export class Board {
     this.drawBoard();
     const cx = cell.x - this.cellSize / 2;
     const cy = cell.y - this.cellSize / 2;
-    const cr = s(10);
+    const cr = s(12);
     this.graphics.fillStyle(color, 0.4);
     this.graphics.fillRoundedRect(cx, cy, this.cellSize, this.cellSize, cr);
     this.graphics.lineStyle(s(2), color, 0.6);

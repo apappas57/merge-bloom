@@ -9,7 +9,7 @@ import { HintSystem } from '../systems/HintSystem';
 import { AchievementSystem } from '../systems/AchievementSystem';
 import { AchievementDef } from '../data/achievements';
 import { SaveSystem, SaveData } from '../systems/SaveSystem';
-import { GENERATORS } from '../data/chains';
+import { GENERATORS, getNextInChain, getChainItem, isMaxTier } from '../data/chains';
 import { SIZES, COLORS, TIMING, FONT, FONT_BODY, TEXT, fs, s } from '../utils/constants';
 
 export class GameScene extends Phaser.Scene {
@@ -95,6 +95,78 @@ export class GameScene extends Phaser.Scene {
     this.input.on('pointerdown', () => this.mascot.wakeUp());
 
     this.cameras.main.fadeIn(400, 255, 240, 245);
+
+    // Trash zone — drag items to bottom-right to delete
+    this.createTrashZone(width, height);
+
+    // First-play tutorial
+    if (!save) this.showTutorial(width, height);
+  }
+
+  private createTrashZone(width: number, height: number): void {
+    const trashY = height - SIZES.BOTTOM_BAR - s(38);
+    const trashX = width - s(32);
+    const trashIcon = this.add.text(trashX, trashY, '🗑️', { fontSize: fs(16) })
+      .setOrigin(0.5).setAlpha(0.3).setDepth(4);
+    const trashLabel = this.add.text(trashX, trashY + s(14), 'Trash', {
+      fontSize: fs(7), color: TEXT.SECONDARY, fontFamily: FONT_BODY,
+    }).setOrigin(0.5).setAlpha(0.3).setDepth(4);
+
+    // Listen for drags near trash zone
+    this.events.on('item-near-trash', (near: boolean) => {
+      trashIcon.setAlpha(near ? 0.9 : 0.3);
+      trashLabel.setAlpha(near ? 0.9 : 0.3);
+      if (near) {
+        trashIcon.setScale(1.2);
+      } else {
+        trashIcon.setScale(1);
+      }
+    });
+  }
+
+  private showTutorial(_width: number, _height: number): void {
+    const { width, height } = this.scale;
+
+    // Semi-transparent overlay
+    const overlay = this.add.graphics().setDepth(5000);
+    overlay.fillStyle(0x6D3A5B, 0.5);
+    overlay.fillRect(0, 0, width, height);
+
+    const steps = [
+      { text: '🌸 Welcome to Merge Bloom!\n\nTap generators to spawn items', y: height * 0.3 },
+      { text: '✨ Drag matching items\nonto each other to merge!', y: height * 0.4 },
+      { text: '💕 Keep merging to discover\nbeautiful new items!', y: height * 0.5 },
+      { text: '🗑️ Drag items to the trash\nto free up space', y: height * 0.6 },
+    ];
+
+    let step = 0;
+
+    const textObj = this.add.text(width / 2, steps[0].y, steps[0].text, {
+      fontSize: fs(16), color: TEXT.WHITE, fontFamily: FONT, fontStyle: '600',
+      align: 'center', lineSpacing: s(6),
+      backgroundColor: 'rgba(109,58,91,0.85)', padding: { x: s(20), y: s(16) },
+    }).setOrigin(0.5).setDepth(5001);
+
+    const tapHint = this.add.text(width / 2, steps[0].y + s(60), 'Tap to continue', {
+      fontSize: fs(11), color: 'rgba(255,255,255,0.6)', fontFamily: FONT_BODY,
+    }).setOrigin(0.5).setDepth(5001);
+    this.tweens.add({ targets: tapHint, alpha: 0.3, duration: 800, yoyo: true, repeat: -1 });
+
+    const advanceZone = this.add.zone(width / 2, height / 2, width, height).setInteractive().setDepth(5002);
+    advanceZone.on('pointerdown', () => {
+      step++;
+      if (step >= steps.length) {
+        overlay.destroy();
+        textObj.destroy();
+        tapHint.destroy();
+        advanceZone.destroy();
+        this.mascot.showSpeech('Let\'s bloom! 🌸', 3000);
+        return;
+      }
+      textObj.setText(steps[step].text);
+      textObj.setY(steps[step].y);
+      tapHint.setY(steps[step].y + s(60));
+    });
   }
 
   private drawBackground(width: number, height: number): void {
@@ -207,6 +279,25 @@ export class GameScene extends Phaser.Scene {
   }
 
   private handleDrop(dropped: MergeItem, targetCell: CellData): void {
+    const { width, height } = this.scale;
+    this.events.emit('item-near-trash', false);
+
+    // Check if dropped on trash zone (bottom-right corner)
+    const trashX = width - s(32);
+    const trashY = height - SIZES.BOTTOM_BAR - s(38);
+    if (Math.abs(dropped.x - trashX) < s(30) && Math.abs(dropped.y - trashY) < s(30)) {
+      const data = dropped.data_;
+      this.items.delete(data.id);
+      this.board.setOccupied(data.col, data.row, null);
+      // Poof animation
+      this.tweens.add({
+        targets: dropped, scaleX: 0, scaleY: 0, alpha: 0, duration: 200,
+        ease: 'Back.easeIn', onComplete: () => dropped.destroy(),
+      });
+      this.saveGame();
+      return;
+    }
+
     // Check if dropped on storage tray area
     const trayY = this.storageTray.trayY;
     if (dropped.y > trayY - s(25) && dropped.y < trayY + s(25)) {

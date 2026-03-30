@@ -5,6 +5,8 @@ import { MenuScene } from './scenes/MenuScene';
 import { GameScene } from './scenes/GameScene';
 import { UIScene } from './scenes/UIScene';
 import { ShopScene } from './scenes/ShopScene';
+import { CollectionScene } from './scenes/CollectionScene';
+import { SettingsScene } from './scenes/SettingsScene';
 import { COLORS, DPR } from './utils/constants';
 
 const w = window.innerWidth;
@@ -20,7 +22,7 @@ const config: Phaser.Types.Core.GameConfig = {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
   },
-  scene: [BootScene, PreloadScene, MenuScene, GameScene, UIScene, ShopScene],
+  scene: [BootScene, PreloadScene, MenuScene, GameScene, UIScene, ShopScene, CollectionScene, SettingsScene],
   input: {
     activePointers: 1,
   },

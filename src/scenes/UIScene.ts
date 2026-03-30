@@ -76,16 +76,15 @@ export class UIScene extends Phaser.Scene {
 
       const zone = this.add.zone(btnWidth * i + btnWidth / 2, bottomY + SIZES.BOTTOM_BAR / 2, btnWidth, SIZES.BOTTOM_BAR).setInteractive();
 
-      if (i === 0) {
-        // Shop button
-        zone.on('pointerdown', () => {
-          if (!this.scene.isActive('ShopScene')) {
-            this.scene.launch('ShopScene');
-          }
-        });
-        zone.on('pointerover', () => btnText.setColor('#2ecc71'));
-        zone.on('pointerout', () => btnText.setColor('#8899aa'));
-      }
+      const sceneNames = ['ShopScene', 'CollectionScene', 'SettingsScene'];
+      zone.on('pointerdown', () => {
+        const target = sceneNames[i];
+        if (!this.scene.isActive(target)) {
+          this.scene.launch(target);
+        }
+      });
+      zone.on('pointerover', () => btnText.setColor('#2ecc71'));
+      zone.on('pointerout', () => btnText.setColor('#8899aa'));
     });
 
     this.scene.get('GameScene').events.on('update-ui', this.onUpdate, this);

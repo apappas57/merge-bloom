@@ -123,11 +123,11 @@ export class UIScene extends Phaser.Scene {
       const char = CHARACTERS.find(c => c.id === order.def.characterId);
       const isComplete = order.completed;
 
-      // Card background
+      // Card background — clean white, green border hint when complete
       const card = this.add.graphics();
-      card.fillStyle(isComplete ? 0xC8E6C9 : 0xFFFFFF, 0.95);
+      card.fillStyle(0xFFFFFF, 0.95);
       card.fillRoundedRect(x, cardY, cardW, cardH, s(10));
-      card.lineStyle(s(1), isComplete ? 0x81C784 : COLORS.CELL_BORDER, 0.4);
+      card.lineStyle(s(1), isComplete ? 0x81C784 : COLORS.CELL_BORDER, isComplete ? 0.6 : 0.3);
       card.strokeRoundedRect(x, cardY, cardW, cardH, s(10));
       this.orderElements.push(card);
 
@@ -194,32 +194,12 @@ export class UIScene extends Phaser.Scene {
         this.orderElements.push(rt);
       }
 
-      // GO button when complete
+      // Completed indicator — static, no animation (prevents tween buildup)
       if (isComplete) {
-        const btnW = s(36), btnH = s(20);
-        const btnX = x + cardW - btnW - s(4);
-        const btnY2 = cardY + s(6);
-        const btnGfx = this.add.graphics();
-        btnGfx.fillStyle(0x66BB6A, 1);
-        btnGfx.fillRoundedRect(btnX, btnY2, btnW, btnH, btnH / 2);
-        this.orderElements.push(btnGfx);
-
-        const goText = this.add.text(btnX + btnW / 2, btnY2 + btnH / 2, '✓', {
-          fontSize: fs(11), color: TEXT.WHITE, fontFamily: FONT, fontStyle: '700',
+        const checkText = this.add.text(x + cardW - s(18), cardY + s(10), '✅', {
+          fontSize: fs(12),
         }).setOrigin(0.5);
-        this.orderElements.push(goText);
-
-        // Pulse the GO button
-        this.tweens.add({
-          targets: [btnGfx, goText], scaleX: 1.05, scaleY: 1.05,
-          duration: 600, yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
-        });
-
-        const goZone = this.add.zone(btnX + btnW / 2, btnY2 + btnH / 2, btnW + s(16), s(44)).setInteractive();
-        goZone.on('pointerdown', () => {
-          this.scene.get('GameScene').events.emit('claim-order', i);
-        });
-        this.orderElements.push(goZone);
+        this.orderElements.push(checkText);
       }
     });
   }

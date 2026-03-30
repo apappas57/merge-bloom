@@ -412,12 +412,11 @@ export class GameScene extends Phaser.Scene {
 
         const completed = this.orderSystem.fulfillItem(orderMatch.orderIdx, orderMatch.slotIdx);
         if (completed) {
-          // Auto-claim completed orders after a brief delay
-          this.time.delayedCall(600, () => {
-            this.onClaimOrder(orderMatch.orderIdx);
-          });
+          // Auto-claim immediately — no visible "complete" state needed
+          this.onClaimOrder(orderMatch.orderIdx);
+        } else {
+          this.updateUI();
         }
-        this.updateUI();
       }
 
       const c1 = this.questSystem.onItemCreated(result.newItem.chainId, result.newItem.tier);

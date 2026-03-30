@@ -77,7 +77,7 @@ export class SettingsScene extends Phaser.Scene {
     resetZone.on('pointerdown', () => this.showConfirmReset());
 
     // Version
-    this.add.text(width / 2, panelY + panelH - s(25), 'Merge Bloom v1.0 — Made with 💕', {
+    this.add.text(width / 2, panelY + panelH - s(25), 'm3rg3r v1.0 — Made with 💕', {
       fontSize: fs(10), color: TEXT.SECONDARY, fontFamily: FONT_BODY,
     }).setOrigin(0.5);
   }
@@ -138,7 +138,7 @@ export class SettingsScene extends Phaser.Scene {
     });
 
     resetZone.on('pointerdown', () => {
-      localStorage.removeItem('merge_bloom_save');
+      localStorage.removeItem('m3rg3r_save');
       this.scene.stop('SettingsScene');
       this.scene.stop('UIScene');
       this.scene.stop('GameScene');

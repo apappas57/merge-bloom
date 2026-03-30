@@ -13,8 +13,8 @@ export default defineConfig({
         clientsClaim: true,
       },
       manifest: {
-        name: 'Merge Bloom',
-        short_name: 'Merge Bloom',
+        name: 'm3rg3r',
+        short_name: 'm3rg3r',
         description: 'A cozy garden merge game',
         theme_color: '#FFF0F5',
         background_color: '#FFF0F5',

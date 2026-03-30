@@ -143,7 +143,7 @@ export class GameScene extends Phaser.Scene {
     overlay.fillRect(0, 0, width, height);
 
     const steps = [
-      { text: '🌸 Welcome to Merge Bloom!\n\nTap generators to spawn items', y: height * 0.3 },
+      { text: '🌸 Welcome to m3rg3r!\n\nTap generators to spawn items', y: height * 0.3 },
       { text: '✨ Drag matching items\nonto each other to merge!', y: height * 0.4 },
       { text: '💕 Keep merging to discover\nbeautiful new items!', y: height * 0.5 },
       { text: '🗑️ Drag items to the trash\nto free up space', y: height * 0.6 },

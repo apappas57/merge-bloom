@@ -1,4 +1,4 @@
-# Merge Bloom — Project Instructions
+# m3rg3r — Project Instructions
 
 ## What Is This
 A cozy kawaii merge game built as a gift for Alex's girlfriend. Inspired by Travel Town / Mystery Town. No ads, no energy system, no IAP — unlimited gems and instant generators.

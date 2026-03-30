@@ -71,7 +71,7 @@ export class MenuScene extends Phaser.Scene {
     });
 
     // Title
-    this.add.text(width / 2, height * 0.37, 'Merge Bloom', {
+    this.add.text(width / 2, height * 0.37, 'm3rg3r', {
       fontSize: fs(38), color: TEXT.PRIMARY, fontFamily: FONT, fontStyle: '700',
       shadow: { offsetX: 0, offsetY: s(2), color: 'rgba(212,184,232,0.4)', blur: s(8), fill: true }
     }).setOrigin(0.5).setDepth(10);

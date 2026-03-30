@@ -33,7 +33,7 @@ export interface SaveData {
   };
 }
 
-const SAVE_KEY = 'merge_bloom_save';
+const SAVE_KEY = 'm3rg3r_save';
 const SAVE_VERSION = 3;
 
 export class SaveSystem {

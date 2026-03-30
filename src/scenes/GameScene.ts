@@ -10,8 +10,10 @@ import { AchievementSystem } from '../systems/AchievementSystem';
 import { AchievementDef } from '../data/achievements';
 import { OrderSystem } from '../systems/OrderSystem';
 import { SaveSystem, SaveData } from '../systems/SaveSystem';
-import { GENERATORS, getNextInChain, getChainItem, isMaxTier } from '../data/chains';
+import { GENERATORS, getNextInChain, getChainItem, isMaxTier, getChain } from '../data/chains';
+import { GardenDecorationManager, GardenDecoData } from '../objects/GardenDecoration';
 import { SIZES, COLORS, TIMING, FONT, FONT_BODY, TEXT, fs, s } from '../utils/constants';
+import { SoundManager } from '../utils/SoundManager';
 
 export class GameScene extends Phaser.Scene {
   private board!: Board;
@@ -20,6 +22,8 @@ export class GameScene extends Phaser.Scene {
   private hintSystem!: HintSystem;
   private achievementSystem!: AchievementSystem;
   private orderSystem!: OrderSystem;
+  private gardenManager!: GardenDecorationManager;
+  public sound_!: SoundManager;
   private mascot!: Mascot;
   private storageTray!: StorageTray;
 
@@ -50,6 +54,14 @@ export class GameScene extends Phaser.Scene {
       + 8 * (this.board.cellDimension + SIZES.CELL_GAP) - SIZES.CELL_GAP + SIZES.BOARD_PADDING;
     const trayY = boardBottom + s(28);
     this.storageTray = new StorageTray(this, trayY);
+
+    // Sound manager
+    this.sound_ = new SoundManager(this);
+
+    // Garden decoration manager
+    this.gardenManager = new GardenDecorationManager(this, {
+      x: 0, y: SIZES.TOP_BAR, w: width, h: height - SIZES.TOP_BAR - SIZES.BOTTOM_BAR
+    });
 
     // Mascot — bottom-left corner
     this.mascot = new Mascot(this, s(32), height - SIZES.BOTTOM_BAR - s(40));
@@ -239,6 +251,7 @@ export class GameScene extends Phaser.Scene {
     for (const item of data.board.items) this.createItem(item);
     this.questSystem.initialize(data.quests.active, data.quests.completed);
     if (data.storage) this.storageTray.loadItems(data.storage);
+    if (data.garden) this.gardenManager.load(data.garden);
   }
 
   private createItem(data: MergeItemData): MergeItem {
@@ -346,11 +359,31 @@ export class GameScene extends Phaser.Scene {
     if (result.success && result.newItem) {
       const newItem = this.createItem(result.newItem);
       newItem.playMergeResult();
+      this.sound_.merge(result.newItem.tier);
       this.totalMerges++;
       this.addXP(result.xpGained || 0);
       this.gems = Math.min(this.gems + (result.gemsGained || 0), 999999);
       const cur = this.collection.get(result.newItem.chainId) || 0;
-      if (result.newItem.tier > cur) this.collection.set(result.newItem.chainId, result.newItem.tier);
+      const isNewDiscovery = result.newItem.tier > cur;
+      if (isNewDiscovery) this.collection.set(result.newItem.chainId, result.newItem.tier);
+
+      // NEW! discovery animation
+      if (isNewDiscovery) {
+        this.playDiscoveryAnimation(newItem);
+        this.sound_.discovery();
+      }
+
+      // Check if this is a max-tier item — offer garden placement
+      if (isMaxTier(result.newItem.chainId, result.newItem.tier) &&
+          !this.gardenManager.hasChain(result.newItem.chainId)) {
+        const chainDef = getChain(result.newItem.chainId);
+        const itemDef = getChainItem(result.newItem.chainId, result.newItem.tier);
+        if (chainDef && itemDef) {
+          this.time.delayedCall(800, () => {
+            this.showGardenPrompt(newItem, itemDef.emoji, itemDef.name, result.newItem!.chainId, result.newItem!.tier);
+          });
+        }
+      }
 
       // Mascot reacts + check achievements + check orders
       this.mascot.reactToMerge(result.newItem.tier);
@@ -366,8 +399,9 @@ export class GameScene extends Phaser.Scene {
   }
 
   private handleGenTap(_gen: Generator, cell: CellData): void {
+    this.sound_.generatorTap();
     const item = this.spawnItem(_gen.genDef.chainId, _gen.genDef.spawnTier, cell.col, cell.row);
-    if (item) this.createSpawnParticles(cell.x, cell.y);
+    if (item) { this.sound_.spawn(); this.createSpawnParticles(cell.x, cell.y); }
   }
 
   private createSpawnParticles(x: number, y: number): void {
@@ -437,6 +471,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private onLevelUp(): void {
+    this.sound_.levelUp();
     const { width, height } = this.scale;
     const txt = this.add.text(width / 2, height / 2 - s(60), `🎉 Level ${this.playerLevel}!`, {
       fontSize: fs(34), color: TEXT.ACCENT, fontFamily: FONT, fontStyle: '700',
@@ -476,6 +511,156 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
+  private showGardenPrompt(item: MergeItem, emoji: string, name: string, chainId: string, tier: number): void {
+    const { width, height } = this.scale;
+
+    // Semi-transparent overlay
+    const overlay = this.add.graphics().setDepth(4000);
+    overlay.fillStyle(0x6D3A5B, 0.4);
+    overlay.fillRect(0, 0, width, height);
+
+    // Prompt card
+    const cardW = width * 0.75;
+    const cardH = s(160);
+    const cardX = (width - cardW) / 2;
+    const cardY = (height - cardH) / 2;
+    const r = s(20);
+
+    const card = this.add.graphics().setDepth(4001);
+    card.fillStyle(0xFFF8F0, 1);
+    card.fillRoundedRect(cardX, cardY, cardW, cardH, r);
+    card.lineStyle(s(1.5), 0xF8BBD0, 0.5);
+    card.strokeRoundedRect(cardX, cardY, cardW, cardH, r);
+
+    // Item emoji large
+    const emojiText = this.add.text(width / 2, cardY + s(30), emoji, {
+      fontSize: fs(36),
+    }).setOrigin(0.5).setDepth(4002);
+
+    // Title
+    const title = this.add.text(width / 2, cardY + s(65), `Place ${name} in your garden?`, {
+      fontSize: fs(13), color: TEXT.PRIMARY, fontFamily: FONT, fontStyle: '600',
+      align: 'center', wordWrap: { width: cardW - s(24) },
+    }).setOrigin(0.5).setDepth(4002);
+
+    // Buttons
+    const btnW = s(80), btnH = s(32);
+    const gap = s(12);
+
+    // "Keep" button (left)
+    const keepBg = this.add.graphics().setDepth(4002);
+    keepBg.fillStyle(0xA8D8EA, 1);
+    keepBg.fillRoundedRect(width / 2 - btnW - gap / 2, cardY + cardH - s(48), btnW, btnH, btnH / 2);
+
+    const keepText = this.add.text(width / 2 - btnW / 2 - gap / 2, cardY + cardH - s(32), 'Keep', {
+      fontSize: fs(12), color: TEXT.WHITE, fontFamily: FONT, fontStyle: '600',
+    }).setOrigin(0.5).setDepth(4003);
+
+    const keepZone = this.add.zone(width / 2 - btnW / 2 - gap / 2, cardY + cardH - s(32), btnW, btnH)
+      .setInteractive().setDepth(4003);
+
+    // "Place" button (right)
+    const placeBg = this.add.graphics().setDepth(4002);
+    placeBg.fillStyle(0xFF9CAD, 1);
+    placeBg.fillRoundedRect(width / 2 + gap / 2, cardY + cardH - s(48), btnW, btnH, btnH / 2);
+
+    const placeText = this.add.text(width / 2 + btnW / 2 + gap / 2, cardY + cardH - s(32), '🌸 Place', {
+      fontSize: fs(12), color: TEXT.WHITE, fontFamily: FONT, fontStyle: '600',
+    }).setOrigin(0.5).setDepth(4003);
+
+    const placeZone = this.add.zone(width / 2 + btnW / 2 + gap / 2, cardY + cardH - s(32), btnW, btnH)
+      .setInteractive().setDepth(4003);
+
+    const cleanup = () => {
+      [overlay, card, emojiText, title, keepBg, keepText, keepZone, placeBg, placeText, placeZone].forEach(o => o.destroy());
+    };
+
+    keepZone.on('pointerdown', () => cleanup());
+
+    placeZone.on('pointerdown', () => {
+      // Remove the item from the board
+      this.items.delete(item.data_.id);
+      this.board.setOccupied(item.data_.col, item.data_.row, null);
+      item.destroy();
+
+      // Place in garden
+      this.gardenManager.place(chainId, tier, emoji, name);
+
+      this.mascot.react('excited');
+      this.mascot.showSpeech('The garden looks even prettier now! 🌸', 3000);
+
+      cleanup();
+      this.saveGame();
+    });
+  }
+
+  private playDiscoveryAnimation(item: MergeItem): void {
+    const x = item.x;
+    const y = item.y;
+
+    // Golden glow expanding from item
+    const glow = this.add.graphics();
+    glow.fillStyle(0xFFD700, 0.3);
+    glow.fillCircle(0, 0, s(5));
+    glow.setPosition(x, y).setDepth(1500);
+    this.tweens.add({
+      targets: glow, scaleX: 6, scaleY: 6, alpha: 0,
+      duration: 500, ease: 'Power2',
+      onComplete: () => glow.destroy(),
+    });
+
+    // "NEW!" badge
+    const badge = this.add.text(x, y - s(30), 'NEW!', {
+      fontSize: fs(16), color: '#FFD700', fontFamily: FONT, fontStyle: '700',
+      stroke: '#FFFFFF', strokeThickness: s(3),
+      shadow: { offsetX: 0, offsetY: s(2), color: 'rgba(0,0,0,0.15)', blur: s(4), fill: true },
+    }).setOrigin(0.5).setDepth(2500).setScale(0);
+
+    this.tweens.add({
+      targets: badge, scaleX: 1.3, scaleY: 1.3, duration: 200, ease: 'Back.easeOut',
+      onComplete: () => {
+        this.tweens.add({
+          targets: badge, scaleX: 1, scaleY: 1, duration: 100,
+          onComplete: () => {
+            this.tweens.add({
+              targets: badge, y: y - s(60), alpha: 0,
+              delay: 1200, duration: 500,
+              onComplete: () => badge.destroy(),
+            });
+          }
+        });
+      }
+    });
+
+    // Gold sparkle particles
+    const goldColors = [0xFFD700, 0xFFECB3, 0xFFF176, 0xFFB300];
+    for (let i = 0; i < 8; i++) {
+      const p = this.add.graphics();
+      const color = goldColors[Phaser.Math.Between(0, goldColors.length - 1)];
+      p.fillStyle(color, 0.9);
+      p.fillCircle(0, 0, s(Phaser.Math.Between(2, 5)));
+      p.setPosition(x, y).setDepth(2000);
+      const angle = (i / 8) * Math.PI * 2;
+      const dist = s(Phaser.Math.Between(25, 45));
+      this.tweens.add({
+        targets: p,
+        x: x + Math.cos(angle) * dist,
+        y: y + Math.sin(angle) * dist - s(10),
+        alpha: 0, scaleX: 0, scaleY: 0,
+        duration: 600 + Phaser.Math.Between(0, 200),
+        ease: 'Power2',
+        onComplete: () => p.destroy(),
+      });
+    }
+
+    // Mascot reacts
+    const discoveryLines = [
+      'Ooh, what\'s this? ✨', 'A new discovery! 💕', 'So pretty! 🌸',
+      'I\'ve never seen this before! 🤩', 'How beautiful! 💖',
+    ];
+    this.mascot.showSpeech(discoveryLines[Phaser.Math.Between(0, discoveryLines.length - 1)], 2500);
+  }
+
   private checkOrders(chainId: string, tier: number): void {
     // Check if this item matches any active order
     const match = this.orderSystem.findMatchingOrder(chainId, tier);
@@ -491,6 +676,7 @@ export class GameScene extends Phaser.Scene {
   private onClaimOrder(orderIdx: number): void {
     const rewards = this.orderSystem.claimOrder(orderIdx);
     if (!rewards) return;
+    this.sound_.complete();
 
     let xpGained = 0;
     let gemsGained = 0;
@@ -616,6 +802,7 @@ export class GameScene extends Phaser.Scene {
       collection: coll,
       storage: this.storageTray.getStoredItems(),
       achievements: this.achievementSystem.getUnlocked(),
+      garden: this.gardenManager.getDecorations(),
       orders: this.orderSystem.getSaveData(),
     });
   }

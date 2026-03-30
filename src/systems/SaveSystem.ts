@@ -25,6 +25,7 @@ export interface SaveData {
   collection: { chainId: string; maxTier: number }[];
   storage?: ({ chainId: string; tier: number } | null)[];
   achievements?: { id: string; unlockedAt: number }[];
+  garden?: { chainId: string; tier: number; emoji: string; name: string; x: number; y: number }[];
   orders?: {
     active: ActiveOrder[];
     completedIds: string[];

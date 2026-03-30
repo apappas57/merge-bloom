@@ -220,7 +220,7 @@ export class EmojiRenderer {
       ctx.globalAlpha = 1;
     }
 
-    // === Plush body (centered circle/blob) ===
+    // === Plush body (unique shape per chain) ===
     const plushR = bodyR * 0.55;
     const plushY = cy + size * 0.02;
 
@@ -236,13 +236,15 @@ export class EmojiRenderer {
     plushGrad.addColorStop(0.4, colors.from);
     plushGrad.addColorStop(1, colors.to);
     ctx.fillStyle = plushGrad;
-    ctx.beginPath();
-    ctx.arc(cx, plushY, plushR, 0, Math.PI * 2);
+
+    // Draw chain-specific plush body shape
+    EmojiRenderer.drawPlushBody(ctx, cx, plushY, plushR, chainId);
     ctx.fill();
 
     // Plush border
     ctx.strokeStyle = colors.to + '80';
     ctx.lineWidth = size * 0.01;
+    EmojiRenderer.drawPlushBody(ctx, cx, plushY, plushR, chainId);
     ctx.stroke();
 
     // === Cute face ===
@@ -258,6 +260,266 @@ export class EmojiRenderer {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(emoji, cx, plushY + plushR * 0.45);
+  }
+
+  /** Draw the plush body path for a specific chain shape */
+  private static drawPlushBody(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number, chainId: string): void {
+    ctx.beginPath();
+
+    switch (chainId) {
+      case 'flower': {
+        // Petal/tulip shape -- wider at top, tapered bottom
+        const w = r * 1.1;
+        const h = r * 1.15;
+        ctx.moveTo(cx, cy + h);
+        // Taper up from bottom-center to the wide top
+        ctx.bezierCurveTo(cx - w * 0.3, cy + h * 0.4, cx - w * 1.1, cy + h * 0.1, cx - w * 0.85, cy - h * 0.3);
+        // Round across the wide top (left petal lobe)
+        ctx.bezierCurveTo(cx - w * 0.7, cy - h * 0.85, cx - w * 0.25, cy - h * 1.0, cx, cy - h * 0.8);
+        // Top right petal lobe
+        ctx.bezierCurveTo(cx + w * 0.25, cy - h * 1.0, cx + w * 0.7, cy - h * 0.85, cx + w * 0.85, cy - h * 0.3);
+        // Taper back down to bottom
+        ctx.bezierCurveTo(cx + w * 1.1, cy + h * 0.1, cx + w * 0.3, cy + h * 0.4, cx, cy + h);
+        break;
+      }
+
+      case 'butterfly': {
+        // Wing/oval shape -- wider than tall, pinched at center
+        const w = r * 1.2;
+        const h = r * 0.85;
+        ctx.moveTo(cx, cy - h);
+        // Top-right to right wing bulge
+        ctx.bezierCurveTo(cx + w * 0.6, cy - h * 1.1, cx + w * 1.2, cy - h * 0.5, cx + w, cy);
+        // Right pinch to bottom-right
+        ctx.bezierCurveTo(cx + w * 1.2, cy + h * 0.5, cx + w * 0.6, cy + h * 1.1, cx, cy + h);
+        // Bottom-left to left wing bulge
+        ctx.bezierCurveTo(cx - w * 0.6, cy + h * 1.1, cx - w * 1.2, cy + h * 0.5, cx - w, cy);
+        // Left pinch back to top
+        ctx.bezierCurveTo(cx - w * 1.2, cy - h * 0.5, cx - w * 0.6, cy - h * 1.1, cx, cy - h);
+        break;
+      }
+
+      case 'fruit': {
+        // Apple shape -- round but slightly wider at bottom with a small indent at top
+        const w = r * 1.0;
+        const h = r * 1.05;
+        ctx.moveTo(cx, cy - h * 0.9);
+        // Top-right curve (slight indent at center top)
+        ctx.bezierCurveTo(cx + w * 0.35, cy - h * 1.05, cx + w * 1.05, cy - h * 0.6, cx + w * 0.95, cy - h * 0.05);
+        // Right side to bottom-right (wider at bottom)
+        ctx.bezierCurveTo(cx + w * 1.1, cy + h * 0.5, cx + w * 0.7, cy + h * 1.05, cx, cy + h);
+        // Bottom-left to left side
+        ctx.bezierCurveTo(cx - w * 0.7, cy + h * 1.05, cx - w * 1.1, cy + h * 0.5, cx - w * 0.95, cy - h * 0.05);
+        // Left side back up to top indent
+        ctx.bezierCurveTo(cx - w * 1.05, cy - h * 0.6, cx - w * 0.35, cy - h * 1.05, cx, cy - h * 0.9);
+        break;
+      }
+
+      case 'crystal': {
+        // Hexagonal gem shape -- faceted with soft rounded corners
+        const w = r * 0.95;
+        const h = r * 1.05;
+        const softR = r * 0.12;
+        // 6-sided gem: flat top/bottom, angled sides
+        const points: [number, number][] = [
+          [cx - w * 0.5, cy - h],        // top-left
+          [cx + w * 0.5, cy - h],         // top-right
+          [cx + w, cy - h * 0.15],        // right-upper
+          [cx + w * 0.7, cy + h * 0.85],  // right-lower
+          [cx - w * 0.7, cy + h * 0.85],  // left-lower
+          [cx - w, cy - h * 0.15],        // left-upper
+        ];
+        // Draw with rounded corners between each pair of edges
+        ctx.moveTo(
+          (points[5][0] + points[0][0]) / 2,
+          (points[5][1] + points[0][1]) / 2
+        );
+        for (let i = 0; i < 6; i++) {
+          const curr = points[i];
+          const next = points[(i + 1) % 6];
+          const midX = (curr[0] + next[0]) / 2;
+          const midY = (curr[1] + next[1]) / 2;
+          ctx.quadraticCurveTo(curr[0] + (curr[0] > cx ? -softR * 0.3 : softR * 0.3), curr[1], midX, midY);
+        }
+        break;
+      }
+
+      case 'nature': {
+        // Leaf/teardrop shape -- pointed at top, round at bottom
+        const w = r * 0.95;
+        const h = r * 1.15;
+        ctx.moveTo(cx, cy - h);
+        // Right side -- curves outward then rounds at bottom
+        ctx.bezierCurveTo(cx + w * 0.6, cy - h * 0.5, cx + w * 1.1, cy + h * 0.1, cx + w * 0.8, cy + h * 0.5);
+        // Bottom-right to bottom center (round bottom)
+        ctx.bezierCurveTo(cx + w * 0.55, cy + h * 0.95, cx + w * 0.15, cy + h * 1.05, cx, cy + h * 0.95);
+        // Bottom-left
+        ctx.bezierCurveTo(cx - w * 0.15, cy + h * 1.05, cx - w * 0.55, cy + h * 0.95, cx - w * 0.8, cy + h * 0.5);
+        // Left side back up to point
+        ctx.bezierCurveTo(cx - w * 1.1, cy + h * 0.1, cx - w * 0.6, cy - h * 0.5, cx, cy - h);
+        break;
+      }
+
+      case 'star': {
+        // 5-pointed star with very rounded points (plush star cushion)
+        const outerR = r * 1.1;
+        const innerR = r * 0.55;
+        const points = 5;
+        const startAngle = -Math.PI / 2;
+        // Build star vertices
+        const verts: [number, number][] = [];
+        for (let i = 0; i < points * 2; i++) {
+          const angle = startAngle + (i * Math.PI) / points;
+          const rad = i % 2 === 0 ? outerR : innerR;
+          verts.push([cx + Math.cos(angle) * rad, cy + Math.sin(angle) * rad]);
+        }
+        // Draw with rounded corners using quadratic curves through midpoints
+        const first = verts[0];
+        const last = verts[verts.length - 1];
+        ctx.moveTo((last[0] + first[0]) / 2, (last[1] + first[1]) / 2);
+        for (let i = 0; i < verts.length; i++) {
+          const curr = verts[i];
+          const next = verts[(i + 1) % verts.length];
+          const midX = (curr[0] + next[0]) / 2;
+          const midY = (curr[1] + next[1]) / 2;
+          ctx.quadraticCurveTo(curr[0], curr[1], midX, midY);
+        }
+        break;
+      }
+
+      case 'tea': {
+        // Mug/cup shape -- rounded rectangle, wider at top
+        const topW = r * 1.05;
+        const botW = r * 0.8;
+        const h = r * 1.0;
+        const cornerR = r * 0.25;
+        ctx.moveTo(cx - topW + cornerR, cy - h);
+        // Top edge
+        ctx.lineTo(cx + topW - cornerR, cy - h);
+        // Top-right corner
+        ctx.quadraticCurveTo(cx + topW, cy - h, cx + topW, cy - h + cornerR);
+        // Right side (tapers in toward bottom)
+        ctx.lineTo(cx + botW, cy + h - cornerR);
+        // Bottom-right corner
+        ctx.quadraticCurveTo(cx + botW, cy + h, cx + botW - cornerR, cy + h);
+        // Bottom edge
+        ctx.lineTo(cx - botW + cornerR, cy + h);
+        // Bottom-left corner
+        ctx.quadraticCurveTo(cx - botW, cy + h, cx - botW, cy + h - cornerR);
+        // Left side (tapers out toward top)
+        ctx.lineTo(cx - topW, cy - h + cornerR);
+        // Top-left corner
+        ctx.quadraticCurveTo(cx - topW, cy - h, cx - topW + cornerR, cy - h);
+        break;
+      }
+
+      case 'shell': {
+        // Shell/swirl shape -- slightly asymmetric, organic curves
+        const w = r * 1.0;
+        const h = r * 1.05;
+        ctx.moveTo(cx + w * 0.1, cy - h);
+        // Top-right -- asymmetric bulge
+        ctx.bezierCurveTo(cx + w * 0.8, cy - h * 1.05, cx + w * 1.15, cy - h * 0.4, cx + w * 0.95, cy + h * 0.1);
+        // Right to bottom-right -- sweeping curve
+        ctx.bezierCurveTo(cx + w * 0.8, cy + h * 0.6, cx + w * 0.5, cy + h * 1.05, cx - w * 0.1, cy + h);
+        // Bottom-left -- tighter curve
+        ctx.bezierCurveTo(cx - w * 0.6, cy + h * 0.95, cx - w * 1.05, cy + h * 0.5, cx - w * 0.95, cy - h * 0.05);
+        // Left back up to top -- softer asymmetry
+        ctx.bezierCurveTo(cx - w * 0.85, cy - h * 0.55, cx - w * 0.5, cy - h * 0.95, cx + w * 0.1, cy - h);
+        break;
+      }
+
+      case 'sweet': {
+        // Cupcake shape -- wider top dome, narrower bottom base
+        const topW = r * 1.05;
+        const botW = r * 0.7;
+        const h = r * 1.05;
+        const domeH = h * 0.55;
+        // Start at bottom-left
+        ctx.moveTo(cx - botW, cy + h);
+        // Bottom edge
+        ctx.lineTo(cx + botW, cy + h);
+        // Right side tapers up to dome start
+        ctx.lineTo(cx + topW * 0.85, cy + h - domeH);
+        // Dome -- wide rounded top
+        ctx.bezierCurveTo(
+          cx + topW * 1.15, cy - h * 0.3,
+          cx + topW * 0.6, cy - h * 1.05,
+          cx, cy - h * 0.95
+        );
+        ctx.bezierCurveTo(
+          cx - topW * 0.6, cy - h * 1.05,
+          cx - topW * 1.15, cy - h * 0.3,
+          cx - topW * 0.85, cy + h - domeH
+        );
+        // Left side down to bottom
+        ctx.lineTo(cx - botW, cy + h);
+        break;
+      }
+
+      case 'love': {
+        // Heart shape -- classic soft plush heart
+        const w = r * 1.0;
+        const h = r * 1.1;
+        // Start at the bottom point of the heart
+        ctx.moveTo(cx, cy + h * 0.85);
+        // Left side curve up to the left hump
+        ctx.bezierCurveTo(
+          cx - w * 0.3, cy + h * 0.4,
+          cx - w * 1.2, cy + h * 0.1,
+          cx - w * 1.0, cy - h * 0.3
+        );
+        // Left hump to center dip
+        ctx.bezierCurveTo(
+          cx - w * 0.85, cy - h * 0.85,
+          cx - w * 0.2, cy - h * 0.95,
+          cx, cy - h * 0.55
+        );
+        // Center dip to right hump
+        ctx.bezierCurveTo(
+          cx + w * 0.2, cy - h * 0.95,
+          cx + w * 0.85, cy - h * 0.85,
+          cx + w * 1.0, cy - h * 0.3
+        );
+        // Right hump down to bottom point
+        ctx.bezierCurveTo(
+          cx + w * 1.2, cy + h * 0.1,
+          cx + w * 0.3, cy + h * 0.4,
+          cx, cy + h * 0.85
+        );
+        break;
+      }
+
+      case 'cosmic': {
+        // Crescent/planet shape -- main circle body with a small ring arc
+        const bodyR = r * 0.85;
+        // Main planet circle
+        ctx.arc(cx, cy, bodyR, 0, Math.PI * 2);
+        ctx.closePath();
+        // Draw the ring as a separate ellipse (stroked later separately via fill only here)
+        // The ring wraps around -- draw it as a thick elliptical path behind
+        ctx.moveTo(cx + r * 1.2, cy + r * 0.05);
+        ctx.ellipse(cx, cy + r * 0.05, r * 1.2, r * 0.3, -0.15, 0, Math.PI * 2);
+        break;
+      }
+
+      case 'cafe': {
+        // Coffee bean shape -- vertical oval with a curved line through the middle
+        const w = r * 0.8;
+        const h = r * 1.1;
+        // Main bean oval
+        ctx.ellipse(cx, cy, w, h, 0, 0, Math.PI * 2);
+        break;
+      }
+
+      default: {
+        // Fallback: simple circle
+        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        break;
+      }
+    }
+
+    ctx.closePath();
   }
 
   /** Draw a generator — special plush with "tap me" energy */

@@ -6,15 +6,18 @@ import { StorageTray } from '../objects/StorageTray';
 import { MergeSystem } from '../systems/MergeSystem';
 import { QuestSystem, ActiveQuest } from '../systems/QuestSystem';
 import { HintSystem } from '../systems/HintSystem';
+import { AchievementSystem } from '../systems/AchievementSystem';
+import { AchievementDef } from '../data/achievements';
 import { SaveSystem, SaveData } from '../systems/SaveSystem';
 import { GENERATORS } from '../data/chains';
-import { SIZES, COLORS, TIMING, FONT, TEXT, fs, s } from '../utils/constants';
+import { SIZES, COLORS, TIMING, FONT, FONT_BODY, TEXT, fs, s } from '../utils/constants';
 
 export class GameScene extends Phaser.Scene {
   private board!: Board;
   private mergeSystem!: MergeSystem;
   private questSystem!: QuestSystem;
   private hintSystem!: HintSystem;
+  private achievementSystem!: AchievementSystem;
   private mascot!: Mascot;
   private storageTray!: StorageTray;
 
@@ -52,8 +55,10 @@ export class GameScene extends Phaser.Scene {
     const save = SaveSystem.load();
     if (save) { this.loadSave(save); } else { this.startFresh(); }
 
-    // Hint system
+    // Systems
     this.hintSystem = new HintSystem(this, this.board, this.items);
+    this.achievementSystem = new AchievementSystem(this);
+    this.achievementSystem.initialize(save?.achievements);
 
     // Events
     this.events.on('item-dropped', this.handleDrop, this);
@@ -246,8 +251,9 @@ export class GameScene extends Phaser.Scene {
       const cur = this.collection.get(result.newItem.chainId) || 0;
       if (result.newItem.tier > cur) this.collection.set(result.newItem.chainId, result.newItem.tier);
 
-      // Mascot reacts to merges
+      // Mascot reacts + check achievements
       this.mascot.reactToMerge(result.newItem.tier);
+      this.checkAchievements(result.newItem.chainId, result.newItem.tier);
 
       const c1 = this.questSystem.onItemCreated(result.newItem.chainId, result.newItem.tier);
       const c2 = this.questSystem.onMerge();
@@ -342,6 +348,7 @@ export class GameScene extends Phaser.Scene {
       }
     });
     this.questSystem.setLevel(this.playerLevel);
+    this.checkAchievements();
     this.createConfetti();
     this.mascot.react('excited');
     this.mascot.showSpeech(`Level ${this.playerLevel}! 🌟`, 3000);
@@ -366,6 +373,63 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
+  private checkAchievements(newChainId?: string, newTier?: number): void {
+    const newlyUnlocked = this.achievementSystem.check({
+      totalMerges: this.totalMerges,
+      level: this.playerLevel,
+      collection: this.collection,
+      newChainId, newTier,
+    });
+    for (const ach of newlyUnlocked) {
+      this.showAchievementToast(ach);
+    }
+  }
+
+  private showAchievementToast(ach: AchievementDef): void {
+    const { width } = this.scale;
+    const toastW = width * 0.75;
+    const toastH = s(52);
+    const toastX = (width - toastW) / 2;
+    const toastY = -toastH;
+
+    const container = this.add.container(0, 0).setDepth(4000);
+
+    const bg = this.add.graphics();
+    bg.fillStyle(0xFFF0F5, 0.97);
+    bg.fillRoundedRect(toastX, toastY, toastW, toastH, toastH / 2);
+    bg.lineStyle(s(1.5), 0xD4B8E8, 0.5);
+    bg.strokeRoundedRect(toastX, toastY, toastW, toastH, toastH / 2);
+    container.add(bg);
+
+    const emoji = this.add.text(toastX + s(18), toastY + toastH / 2, ach.emoji, { fontSize: fs(20) }).setOrigin(0, 0.5);
+    container.add(emoji);
+
+    const title = this.add.text(toastX + s(48), toastY + s(12), ach.name, {
+      fontSize: fs(12), color: TEXT.PRIMARY, fontFamily: FONT, fontStyle: '700',
+    });
+    container.add(title);
+
+    const desc = this.add.text(toastX + s(48), toastY + s(30), ach.description, {
+      fontSize: fs(9), color: TEXT.SECONDARY, fontFamily: FONT_BODY,
+    });
+    container.add(desc);
+
+    // Slide in from top
+    this.tweens.add({
+      targets: container, y: s(110), duration: 400, ease: 'Back.easeOut',
+      onComplete: () => {
+        this.time.delayedCall(3000, () => {
+          this.tweens.add({
+            targets: container, y: -toastH - s(20), duration: 300, ease: 'Power2',
+            onComplete: () => container.destroy(),
+          });
+        });
+      }
+    });
+
+    this.mascot.showSpeech('Badge earned! 🎀', 2000);
+  }
+
   private updateUI(): void {
     this.scene.get('UIScene').events.emit('update-ui', {
       gems: this.gems, level: this.playerLevel,
@@ -388,6 +452,7 @@ export class GameScene extends Phaser.Scene {
       quests: this.questSystem.getSaveData(),
       collection: coll,
       storage: this.storageTray.getStoredItems(),
+      achievements: this.achievementSystem.getUnlocked(),
     });
   }
 }

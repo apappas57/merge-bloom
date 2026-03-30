@@ -23,6 +23,7 @@ export interface SaveData {
   };
   collection: { chainId: string; maxTier: number }[];
   storage?: ({ chainId: string; tier: number } | null)[];
+  achievements?: { id: string; unlockedAt: number }[];
 }
 
 const SAVE_KEY = 'merge_bloom_save';
@@ -48,6 +49,7 @@ export class SaveSystem {
       if (data.version < 1) return null;
       // Migrate v1 → v2
       if (!data.storage) data.storage = [null, null, null, null];
+      if (!data.achievements) data.achievements = [];
       return data;
     } catch {
       return null;
@@ -63,6 +65,7 @@ export class SaveSystem {
       quests: { active: [], completed: [] },
       collection: [],
       storage: [null, null, null, null],
+      achievements: [],
     };
   }
 }

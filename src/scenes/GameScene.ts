@@ -1,8 +1,11 @@
 import { Board, CellData } from '../objects/Board';
 import { MergeItem, MergeItemData, newItemId } from '../objects/MergeItem';
 import { Generator } from '../objects/Generator';
+import { Mascot } from '../objects/Mascot';
+import { StorageTray } from '../objects/StorageTray';
 import { MergeSystem } from '../systems/MergeSystem';
 import { QuestSystem, ActiveQuest } from '../systems/QuestSystem';
+import { HintSystem } from '../systems/HintSystem';
 import { SaveSystem, SaveData } from '../systems/SaveSystem';
 import { GENERATORS } from '../data/chains';
 import { SIZES, COLORS, TIMING, FONT, TEXT, fs, s } from '../utils/constants';
@@ -11,6 +14,9 @@ export class GameScene extends Phaser.Scene {
   private board!: Board;
   private mergeSystem!: MergeSystem;
   private questSystem!: QuestSystem;
+  private hintSystem!: HintSystem;
+  private mascot!: Mascot;
+  private storageTray!: StorageTray;
 
   private items: Map<string, MergeItem> = new Map();
   private generators: Generator[] = [];
@@ -27,7 +33,6 @@ export class GameScene extends Phaser.Scene {
   create() {
     const { width, height } = this.scale;
 
-    // Pastel time-of-day background
     this.drawBackground(width, height);
     this.createAmbientSparkles(width, height);
 
@@ -35,12 +40,26 @@ export class GameScene extends Phaser.Scene {
     this.mergeSystem = new MergeSystem(this);
     this.questSystem = new QuestSystem(this.playerLevel);
 
+    // Storage tray — positioned between board and bottom bar
+    const boardBottom = SIZES.TOP_BAR + SIZES.QUEST_BAR + SIZES.BOARD_PADDING
+      + 8 * (this.board.cellDimension + SIZES.CELL_GAP) - SIZES.CELL_GAP + SIZES.BOARD_PADDING;
+    const trayY = boardBottom + s(28);
+    this.storageTray = new StorageTray(this, trayY);
+
+    // Mascot — bottom-left corner
+    this.mascot = new Mascot(this, s(32), height - SIZES.BOTTOM_BAR - s(40));
+
     const save = SaveSystem.load();
     if (save) { this.loadSave(save); } else { this.startFresh(); }
 
+    // Hint system
+    this.hintSystem = new HintSystem(this, this.board, this.items);
+
+    // Events
     this.events.on('item-dropped', this.handleDrop, this);
     this.events.on('generator-tapped', this.handleGenTap, this);
     this.events.on('shop-buy-generator', this.onBuyGenerator, this);
+    this.events.on('storage-retrieve', this.onStorageRetrieve, this);
 
     this.scene.launch('UIScene', {
       gems: this.gems, level: this.playerLevel,
@@ -51,22 +70,35 @@ export class GameScene extends Phaser.Scene {
     this.time.addEvent({ delay: TIMING.AUTOSAVE, loop: true, callback: () => this.saveGame() });
     document.addEventListener('visibilitychange', () => { if (document.hidden) this.saveGame(); });
 
+    // Mascot greeting
+    this.time.delayedCall(1500, () => {
+      const greetings = ['Welcome back! 🌸', 'Let\'s garden! ✨', 'Hi there! 💕', 'Ready to merge? 🌷'];
+      this.mascot.showSpeech(greetings[Phaser.Math.Between(0, greetings.length - 1)], 3000);
+    });
+
+    // Mascot sleep timer
+    this.time.addEvent({
+      delay: 5000, loop: true,
+      callback: () => {
+        if (Date.now() - (this.hintSystem as any).lastInteraction > 30000) {
+          this.mascot.goToSleep();
+        }
+      }
+    });
+
+    // Wake mascot on input
+    this.input.on('pointerdown', () => this.mascot.wakeUp());
+
     this.cameras.main.fadeIn(400, 255, 248, 240);
   }
 
   private drawBackground(width: number, height: number): void {
     const hour = new Date().getHours();
     let topColor: number, botColor: number;
-
-    if (hour >= 6 && hour < 12) {
-      topColor = 0xFFF8F0; botColor = 0xFFE4EC;  // Morning — cream to soft pink
-    } else if (hour >= 12 && hour < 17) {
-      topColor = 0xE8F5E9; botColor = 0xFFF0F5;  // Afternoon — mint to pink
-    } else if (hour >= 17 && hour < 21) {
-      topColor = 0xFFE4EC; botColor = 0xE8DAEF;  // Evening — pink to lavender
-    } else {
-      topColor = 0xE8DAEF; botColor = 0xC8B8D8;  // Night — soft lavender (never black)
-    }
+    if (hour >= 6 && hour < 12) { topColor = 0xFFF8F0; botColor = 0xFFE4EC; }
+    else if (hour >= 12 && hour < 17) { topColor = 0xE8F5E9; botColor = 0xFFF0F5; }
+    else if (hour >= 17 && hour < 21) { topColor = 0xFFE4EC; botColor = 0xE8DAEF; }
+    else { topColor = 0xE8DAEF; botColor = 0xC8B8D8; }
 
     const bg = this.add.graphics();
     bg.fillGradientStyle(topColor, topColor, botColor, botColor, 1);
@@ -74,20 +106,16 @@ export class GameScene extends Phaser.Scene {
   }
 
   private createAmbientSparkles(width: number, height: number): void {
-    const sparkleEmoji = ['✨', '⭐', '💫', '🌸'];
+    const sparkles = ['✨', '⭐', '💫', '🌸'];
     for (let i = 0; i < 6; i++) {
-      const emoji = sparkleEmoji[Phaser.Math.Between(0, sparkleEmoji.length - 1)];
+      const e = sparkles[Phaser.Math.Between(0, sparkles.length - 1)];
       const x = Phaser.Math.Between(0, width);
       const y = Phaser.Math.Between(SIZES.TOP_BAR, height - SIZES.BOTTOM_BAR);
-      const t = this.add.text(x, y, emoji, { fontSize: fs(Phaser.Math.Between(8, 14)) })
+      const t = this.add.text(x, y, e, { fontSize: fs(Phaser.Math.Between(8, 14)) })
         .setOrigin(0.5).setAlpha(0.08).setDepth(0);
-
       this.tweens.add({
-        targets: t,
-        y: y - s(Phaser.Math.Between(40, 100)),
-        alpha: 0,
-        duration: Phaser.Math.Between(5000, 10000),
-        delay: Phaser.Math.Between(0, 5000),
+        targets: t, y: y - s(Phaser.Math.Between(40, 100)), alpha: 0,
+        duration: Phaser.Math.Between(5000, 10000), delay: Phaser.Math.Between(0, 5000),
         repeat: -1,
         onRepeat: () => {
           t.setPosition(Phaser.Math.Between(0, width), Phaser.Math.Between(SIZES.TOP_BAR, height - SIZES.BOTTOM_BAR));
@@ -123,6 +151,7 @@ export class GameScene extends Phaser.Scene {
     }
     for (const item of data.board.items) this.createItem(item);
     this.questSystem.initialize(data.quests.active, data.quests.completed);
+    if (data.storage) this.storageTray.loadItems(data.storage);
   }
 
   private createItem(data: MergeItemData): MergeItem {
@@ -159,7 +188,34 @@ export class GameScene extends Phaser.Scene {
     this.saveGame();
   }
 
+  private onStorageRetrieve(itemData: { chainId: string; tier: number }, slotIndex: number): void {
+    const cell = this.board.findEmptyCell();
+    if (!cell) {
+      this.mascot.showSpeech('Board is full! 😅', 2000);
+      return;
+    }
+    const removed = this.storageTray.removeItem(slotIndex);
+    if (removed) {
+      this.spawnItem(removed.chainId, removed.tier, cell.col, cell.row);
+      this.saveGame();
+    }
+  }
+
   private handleDrop(dropped: MergeItem, targetCell: CellData): void {
+    // Check if dropped on storage tray area
+    const trayY = this.storageTray.trayY;
+    if (dropped.y > trayY - s(25) && dropped.y < trayY + s(25)) {
+      if (!this.storageTray.isFull()) {
+        const data = dropped.data_;
+        this.items.delete(data.id);
+        this.board.setOccupied(data.col, data.row, null);
+        dropped.destroy();
+        this.storageTray.storeItem(data.chainId, data.tier);
+        this.saveGame();
+        return;
+      }
+    }
+
     const targetId = targetCell.itemId;
     if (targetId) {
       const target = this.items.get(targetId);
@@ -189,6 +245,10 @@ export class GameScene extends Phaser.Scene {
       this.gems = Math.min(this.gems + (result.gemsGained || 0), 999999);
       const cur = this.collection.get(result.newItem.chainId) || 0;
       if (result.newItem.tier > cur) this.collection.set(result.newItem.chainId, result.newItem.tier);
+
+      // Mascot reacts to merges
+      this.mascot.reactToMerge(result.newItem.tier);
+
       const c1 = this.questSystem.onItemCreated(result.newItem.chainId, result.newItem.tier);
       const c2 = this.questSystem.onMerge();
       for (const q of [...c1, ...c2]) this.handleQuestComplete(q);
@@ -225,6 +285,18 @@ export class GameScene extends Phaser.Scene {
     this.addXP(reward.xp);
     const { width, height } = this.scale;
 
+    // Hearts instead of generic confetti
+    for (let i = 0; i < 8; i++) {
+      const h = this.add.text(
+        width / 2 + Phaser.Math.Between(-s(80), s(80)),
+        height / 2 + s(20), '💕', { fontSize: fs(Phaser.Math.Between(12, 20)) }
+      ).setOrigin(0.5).setDepth(3001);
+      this.tweens.add({
+        targets: h, y: h.y - s(Phaser.Math.Between(60, 120)), alpha: 0,
+        duration: 1200, delay: i * 80, onComplete: () => h.destroy(),
+      });
+    }
+
     const banner = this.add.text(width / 2, height / 2, `✅ ${quest.def.description}`, {
       fontSize: fs(17), color: TEXT.PRIMARY, fontFamily: FONT, fontStyle: '600',
       backgroundColor: 'rgba(255,240,245,0.95)', padding: { x: s(16), y: s(12) },
@@ -240,6 +312,9 @@ export class GameScene extends Phaser.Scene {
       duration: 2000, delay: 1500,
       onComplete: () => { banner.destroy(); rewardTxt.destroy(); },
     });
+
+    this.mascot.react('excited');
+    this.mascot.showSpeech('Quest done! 🎉', 2500);
     this.updateUI();
   }
 
@@ -268,6 +343,8 @@ export class GameScene extends Phaser.Scene {
     });
     this.questSystem.setLevel(this.playerLevel);
     this.createConfetti();
+    this.mascot.react('excited');
+    this.mascot.showSpeech(`Level ${this.playerLevel}! 🌟`, 3000);
     this.updateUI();
   }
 
@@ -277,7 +354,6 @@ export class GameScene extends Phaser.Scene {
     for (let i = 0; i < 30; i++) {
       const c = this.add.graphics();
       c.fillStyle(colors[Phaser.Math.Between(0, colors.length - 1)], 1);
-      // Mix of shapes — hearts and stars via small circles
       c.fillCircle(0, 0, s(Phaser.Math.Between(3, 6)));
       c.setPosition(Phaser.Math.Between(0, width), -s(20)).setDepth(3000);
       this.tweens.add({
@@ -306,11 +382,12 @@ export class GameScene extends Phaser.Scene {
     this.collection.forEach((maxTier, chainId) => coll.push({ chainId, maxTier }));
 
     SaveSystem.save({
-      version: 1, timestamp: Date.now(),
+      version: 2, timestamp: Date.now(),
       player: { level: this.playerLevel, xp: this.playerXP, xpToNext: this.xpToNext, gems: this.gems, totalMerges: this.totalMerges },
       board: { cols: 6, rows: 8, items, generators: gens },
       quests: this.questSystem.getSaveData(),
       collection: coll,
+      storage: this.storageTray.getStoredItems(),
     });
   }
 }

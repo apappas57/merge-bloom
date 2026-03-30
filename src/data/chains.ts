@@ -91,6 +91,48 @@ export const MERGE_CHAINS: MergeChain[] = [
       { emoji: '🌙', name: 'Moon', tier: 5 },
       { emoji: '🌈', name: 'Rainbow', tier: 6 },
     ]
+  },
+  {
+    id: 'tea',
+    name: 'Cozy Tea',
+    unlockedAtLevel: 6,
+    items: [
+      { emoji: '🫘', name: 'Tea Leaf', tier: 1 },
+      { emoji: '🍵', name: 'Matcha', tier: 2 },
+      { emoji: '☕', name: 'Coffee', tier: 3 },
+      { emoji: '🧋', name: 'Boba Tea', tier: 4 },
+      { emoji: '🍰', name: 'Cake Slice', tier: 5 },
+      { emoji: '🫖', name: 'Tea Set', tier: 6 },
+      { emoji: '🏠', name: 'Tea House', tier: 7 },
+    ]
+  },
+  {
+    id: 'shell',
+    name: 'Ocean Dreams',
+    unlockedAtLevel: 7,
+    items: [
+      { emoji: '🪸', name: 'Coral', tier: 1 },
+      { emoji: '🐚', name: 'Shell', tier: 2 },
+      { emoji: '🦀', name: 'Crab', tier: 3 },
+      { emoji: '🐠', name: 'Tropical Fish', tier: 4 },
+      { emoji: '🐬', name: 'Dolphin', tier: 5 },
+      { emoji: '🧜‍♀️', name: 'Mermaid', tier: 6 },
+    ]
+  },
+  {
+    id: 'sweet',
+    name: 'Sweet Treats',
+    unlockedAtLevel: 8,
+    items: [
+      { emoji: '🍬', name: 'Candy', tier: 1 },
+      { emoji: '🍭', name: 'Lollipop', tier: 2 },
+      { emoji: '🍪', name: 'Cookie', tier: 3 },
+      { emoji: '🧁', name: 'Cupcake', tier: 4 },
+      { emoji: '🍩', name: 'Donut', tier: 5 },
+      { emoji: '🍫', name: 'Chocolate', tier: 6 },
+      { emoji: '🎂', name: 'Birthday Cake', tier: 7 },
+      { emoji: '🏰', name: 'Candy Castle', tier: 8 },
+    ]
   }
 ];
 
@@ -137,5 +179,8 @@ export const GENERATORS: GeneratorDef[] = [
   { id: 'gen_fruit', chainId: 'fruit', emoji: '🧺', name: 'Basket', spawnTier: 1, cooldown: 8000, cost: 200, unlockedAtLevel: 2 },
   { id: 'gen_crystal', chainId: 'crystal', emoji: '⛏️', name: 'Pickaxe', spawnTier: 1, cooldown: 12000, cost: 500, unlockedAtLevel: 3 },
   { id: 'gen_nature', chainId: 'nature', emoji: '🪵', name: 'Stump', spawnTier: 1, cooldown: 10000, cost: 800, unlockedAtLevel: 4 },
+  { id: 'gen_tea', chainId: 'tea', emoji: '🍃', name: 'Tea Garden', spawnTier: 1, cooldown: 9000, cost: 600, unlockedAtLevel: 6 },
+  { id: 'gen_shell', chainId: 'shell', emoji: '🌊', name: 'Tide Pool', spawnTier: 1, cooldown: 11000, cost: 900, unlockedAtLevel: 7 },
+  { id: 'gen_sweet', chainId: 'sweet', emoji: '🍯', name: 'Honey Pot', spawnTier: 1, cooldown: 10000, cost: 1200, unlockedAtLevel: 8 },
   { id: 'gen_star', chainId: 'star', emoji: '🔭', name: 'Telescope', spawnTier: 1, cooldown: 15000, cost: 1000, unlockedAtLevel: 5 },
 ];

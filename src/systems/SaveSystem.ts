@@ -22,10 +22,11 @@ export interface SaveData {
     completed: string[];
   };
   collection: { chainId: string; maxTier: number }[];
+  storage?: ({ chainId: string; tier: number } | null)[];
 }
 
 const SAVE_KEY = 'merge_bloom_save';
-const SAVE_VERSION = 1;
+const SAVE_VERSION = 2;
 
 export class SaveSystem {
   static save(data: SaveData): void {
@@ -43,7 +44,10 @@ export class SaveSystem {
       const raw = localStorage.getItem(SAVE_KEY);
       if (!raw) return null;
       const data = JSON.parse(raw) as SaveData;
-      if (data.version !== SAVE_VERSION) return null;
+      // Accept v1 and v2
+      if (data.version < 1) return null;
+      // Migrate v1 → v2
+      if (!data.storage) data.storage = [null, null, null, null];
       return data;
     } catch {
       return null;
@@ -58,6 +62,7 @@ export class SaveSystem {
       board: { cols: 6, rows: 8, items: [], generators: [] },
       quests: { active: [], completed: [] },
       collection: [],
+      storage: [null, null, null, null],
     };
   }
 }

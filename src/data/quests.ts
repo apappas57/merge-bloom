@@ -31,4 +31,17 @@ export const QUEST_POOL: QuestDef[] = [
   { id: 'q18', description: 'Create a Peacock 🦚', type: 'create', chainId: 'butterfly', targetTier: 6, targetCount: 1, rewardGems: 250, rewardXP: 600, level: 3 },
   { id: 'q19', description: 'Create a Rainbow 🌈', type: 'create', chainId: 'star', targetTier: 6, targetCount: 1, rewardGems: 300, rewardXP: 800, level: 5 },
   { id: 'q20', description: 'Merge 100 items', type: 'merge_count', targetCount: 100, rewardGems: 300, rewardXP: 800, level: 5 },
+  // Tea chain
+  { id: 'q21', description: 'Brew a Matcha 🍵', type: 'create', chainId: 'tea', targetTier: 2, targetCount: 1, rewardGems: 50, rewardXP: 100, level: 6 },
+  { id: 'q22', description: 'Make Boba Tea 🧋', type: 'create', chainId: 'tea', targetTier: 4, targetCount: 1, rewardGems: 120, rewardXP: 250, level: 6 },
+  { id: 'q23', description: 'Build a Tea House 🏠', type: 'create', chainId: 'tea', targetTier: 7, targetCount: 1, rewardGems: 300, rewardXP: 700, level: 6 },
+  // Shell chain
+  { id: 'q24', description: 'Find a Shell 🐚', type: 'create', chainId: 'shell', targetTier: 2, targetCount: 1, rewardGems: 60, rewardXP: 120, level: 7 },
+  { id: 'q25', description: 'Befriend a Dolphin 🐬', type: 'create', chainId: 'shell', targetTier: 5, targetCount: 1, rewardGems: 180, rewardXP: 400, level: 7 },
+  { id: 'q26', description: 'Summon a Mermaid 🧜‍♀️', type: 'create', chainId: 'shell', targetTier: 6, targetCount: 1, rewardGems: 300, rewardXP: 700, level: 7 },
+  // Sweet chain
+  { id: 'q27', description: 'Bake a Cookie 🍪', type: 'create', chainId: 'sweet', targetTier: 3, targetCount: 1, rewardGems: 80, rewardXP: 150, level: 8 },
+  { id: 'q28', description: 'Frost a Cupcake 🧁', type: 'create', chainId: 'sweet', targetTier: 4, targetCount: 1, rewardGems: 120, rewardXP: 250, level: 8 },
+  { id: 'q29', description: 'Build Candy Castle 🏰', type: 'create', chainId: 'sweet', targetTier: 8, targetCount: 1, rewardGems: 400, rewardXP: 1000, level: 8 },
+  { id: 'q30', description: 'Merge 200 items', type: 'merge_count', targetCount: 200, rewardGems: 500, rewardXP: 1200, level: 7 },
 ];

@@ -147,7 +147,7 @@ export class SettingsScene extends Phaser.Scene {
   }
 
   private closeScene(): void {
-    this.cameras.main.fadeOut(200, 255, 248, 240);
+    this.cameras.main.fadeOut(200, 255, 240, 245);
     this.time.delayedCall(200, () => this.scene.stop('SettingsScene'));
   }
 }

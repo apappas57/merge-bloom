@@ -11,43 +11,43 @@ export function s(v: number): number {
   return Math.round(v * DPR);
 }
 
-// Kawaii pastel palette — Sanrio / Cinnamoroll inspired
+// Cutesy pink palette — extra pink & warm
 export const COLORS = {
-  // Backgrounds
-  BG_CREAM: 0xFFF8F0,
-  BG_PINK: 0xFFF0F5,
-  BG_MINT: 0xE8F5E9,
+  // Backgrounds — soft pinks
+  BG_CREAM: 0xFFF0F5,
+  BG_PINK: 0xFFE4EC,
+  BG_MINT: 0xFCE4EC,
 
-  // Board
-  BOARD_BG: 0xE8F5E9,
-  CELL_BG: 0xF3E8FF,
-  CELL_BORDER: 0xD4B8E8,
-  CELL_SHADOW: 0xC9A8D8,
-  CELL_HIGHLIGHT: 0xA8E6CF,
-  CELL_VALID: 0xA8E6CF,
-  CELL_INVALID: 0xFFB3B3,
+  // Board — rosy pink
+  BOARD_BG: 0xFCE4EC,
+  CELL_BG: 0xFFF0F5,
+  CELL_BORDER: 0xF8BBD0,
+  CELL_SHADOW: 0xF48FB1,
+  CELL_HIGHLIGHT: 0xF8BBD0,
+  CELL_VALID: 0xF48FB1,
+  CELL_INVALID: 0xFFCDD2,
 
-  // UI
+  // UI — warm pink
   UI_BG: 0xFFF0F5,
-  UI_PANEL: 0xFFE4EC,
-  ACCENT_PINK: 0xFF9CAD,
+  UI_PANEL: 0xFCE4EC,
+  ACCENT_PINK: 0xF06292,
   ACCENT_GOLD: 0xFFD700,
-  ACCENT_TEAL: 0xA8E6CF,
-  ACCENT_ROSE: 0xFFB3D9,
-  ACCENT_BLUE: 0xA8D8EA,
+  ACCENT_TEAL: 0xF48FB1,
+  ACCENT_ROSE: 0xEC407A,
+  ACCENT_BLUE: 0xF8BBD0,
 
   // Text (as hex for Phaser graphics)
-  TEXT_DARK: 0x5C5470,
-  TEXT_MID: 0x9E8FA0,
+  TEXT_DARK: 0x880E4F,
+  TEXT_MID: 0xC2185B,
 };
 
 // Text colors as CSS strings
 export const TEXT = {
-  PRIMARY: '#5C5470',
-  SECONDARY: '#9E8FA0',
-  ACCENT: '#FF9CAD',
+  PRIMARY: '#6D3A5B',
+  SECONDARY: '#B07A9E',
+  ACCENT: '#EC407A',
   GOLD: '#E8A317',
-  MINT: '#6BBF8A',
+  MINT: '#E91E63',
   WHITE: '#FFFFFF',
 };
 
@@ -66,7 +66,7 @@ export const TIMING = {
   MERGE_DURATION: 250,
   SPAWN_DURATION: 300,
   BOUNCE_DURATION: 200,
-  GENERATOR_COOLDOWN: 8000,
+  GENERATOR_COOLDOWN: 1500,
   AUTOSAVE: 30000,
 };
 

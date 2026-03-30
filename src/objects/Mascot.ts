@@ -27,9 +27,9 @@ export class Mascot extends Phaser.GameObjects.Container {
 
     // Body — soft lavender circle
     this.bodyGfx = scene.add.graphics();
-    this.bodyGfx.fillStyle(0xE8D8F0, 1);
+    this.bodyGfx.fillStyle(0xFCE4EC, 1);
     this.bodyGfx.fillCircle(0, 0, sz);
-    this.bodyGfx.lineStyle(s(1.5), 0xD4B8E8, 0.6);
+    this.bodyGfx.lineStyle(s(1.5), 0xF48FB1, 0.6);
     this.bodyGfx.strokeCircle(0, 0, sz);
     this.add(this.bodyGfx);
 
@@ -57,12 +57,12 @@ export class Mascot extends Phaser.GameObjects.Container {
 
     // Blush marks — soft pink circles
     this.blushL = scene.add.graphics();
-    this.blushL.fillStyle(0xFFB3D9, 0.4);
+    this.blushL.fillStyle(0xF06292, 0.35);
     this.blushL.fillEllipse(-sz * 0.5, sz * 0.1, sz * 0.25, sz * 0.15);
     this.add(this.blushL);
 
     this.blushR = scene.add.graphics();
-    this.blushR.fillStyle(0xFFB3D9, 0.4);
+    this.blushR.fillStyle(0xF06292, 0.35);
     this.blushR.fillEllipse(sz * 0.5, sz * 0.1, sz * 0.25, sz * 0.15);
     this.add(this.blushR);
 

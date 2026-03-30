@@ -6,13 +6,13 @@ export class MenuScene extends Phaser.Scene {
   create() {
     const { width, height } = this.scale;
 
-    // Soft pastel gradient background
+    // Pink gradient background
     const bg = this.add.graphics();
-    bg.fillGradientStyle(0xFFF8F0, 0xFFF8F0, 0xFFE4EC, 0xE8F5E9, 1);
+    bg.fillGradientStyle(0xFFF0F5, 0xFFF0F5, 0xFCE4EC, 0xF8BBD0, 1);
     bg.fillRect(0, 0, width, height);
 
     // Floating decorative emoji
-    const deco = ['🌸', '🌷', '🌹', '🌺', '🦋', '🌿', '✨', '💐', '☘️', '💕', '⭐', '🌙'];
+    const deco = ['🌸', '💕', '🌷', '💗', '🦋', '✨', '💐', '🎀', '💖', '🌹', '⭐', '🍰'];
     for (let i = 0; i < 15; i++) {
       const e = deco[Phaser.Math.Between(0, deco.length - 1)];
       const x = Phaser.Math.Between(s(20), width - s(20));
@@ -51,17 +51,17 @@ export class MenuScene extends Phaser.Scene {
 
     // Button shadow
     const btnShadow = this.add.graphics();
-    btnShadow.fillStyle(0xE889A0, 0.3);
+    btnShadow.fillStyle(0xC2185B, 0.25);
     btnShadow.fillRoundedRect(btnX, btnY + s(4), btnW, btnH, btnH / 2);
 
     // Button glow
     const btnGlow = this.add.graphics();
-    btnGlow.fillStyle(0xFF9CAD, 0.25);
+    btnGlow.fillStyle(0xEC407A, 0.25);
     btnGlow.fillRoundedRect(btnX - s(4), btnY - s(4), btnW + s(8), btnH + s(8), (btnH + s(8)) / 2);
     this.tweens.add({ targets: btnGlow, alpha: 0.4, duration: 1000, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
 
     const btnBg = this.add.graphics();
-    btnBg.fillStyle(0xFF9CAD, 1);
+    btnBg.fillStyle(0xEC407A, 1);
     btnBg.fillRoundedRect(btnX, btnY, btnW, btnH, btnH / 2);
 
     this.add.text(width / 2, btnY + btnH / 2, '▶  Play', {
@@ -73,7 +73,7 @@ export class MenuScene extends Phaser.Scene {
       this.tweens.add({
         targets: [btnBg, btnShadow], scaleX: 0.95, scaleY: 0.95, duration: 80, yoyo: true,
         onComplete: () => {
-          this.cameras.main.fadeOut(400, 255, 248, 240);
+          this.cameras.main.fadeOut(400, 255, 240, 245);
           this.time.delayedCall(400, () => this.scene.start('GameScene'));
         }
       });
@@ -83,6 +83,6 @@ export class MenuScene extends Phaser.Scene {
       fontSize: fs(12), color: TEXT.SECONDARY, fontFamily: FONT,
     }).setOrigin(0.5);
 
-    this.cameras.main.fadeIn(600, 255, 248, 240);
+    this.cameras.main.fadeIn(600, 255, 240, 245);
   }
 }

@@ -94,16 +94,16 @@ export class GameScene extends Phaser.Scene {
     // Wake mascot on input
     this.input.on('pointerdown', () => this.mascot.wakeUp());
 
-    this.cameras.main.fadeIn(400, 255, 248, 240);
+    this.cameras.main.fadeIn(400, 255, 240, 245);
   }
 
   private drawBackground(width: number, height: number): void {
     const hour = new Date().getHours();
     let topColor: number, botColor: number;
-    if (hour >= 6 && hour < 12) { topColor = 0xFFF8F0; botColor = 0xFFE4EC; }
-    else if (hour >= 12 && hour < 17) { topColor = 0xE8F5E9; botColor = 0xFFF0F5; }
-    else if (hour >= 17 && hour < 21) { topColor = 0xFFE4EC; botColor = 0xE8DAEF; }
-    else { topColor = 0xE8DAEF; botColor = 0xC8B8D8; }
+    if (hour >= 6 && hour < 12) { topColor = 0xFFF0F5; botColor = 0xFCE4EC; }
+    else if (hour >= 12 && hour < 17) { topColor = 0xFCE4EC; botColor = 0xFFF0F5; }
+    else if (hour >= 17 && hour < 21) { topColor = 0xFFF0F5; botColor = 0xF3E5F5; }
+    else { topColor = 0xF3E5F5; botColor = 0xEDE7F6; }
 
     const bg = this.add.graphics();
     bg.fillGradientStyle(topColor, topColor, botColor, botColor, 1);
@@ -111,7 +111,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private createAmbientSparkles(width: number, height: number): void {
-    const sparkles = ['✨', '⭐', '💫', '🌸'];
+    const sparkles = ['💕', '✨', '🌸', '💗', '⭐', '🎀', '💖'];
     for (let i = 0; i < 6; i++) {
       const e = sparkles[Phaser.Math.Between(0, sparkles.length - 1)];
       const x = Phaser.Math.Between(0, width);

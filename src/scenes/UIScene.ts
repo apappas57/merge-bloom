@@ -66,6 +66,7 @@ export class UIScene extends Phaser.Scene {
     bottomBg.fillRect(0, bottomY, width, SIZES.BOTTOM_BAR);
 
     const btnDefs = [
+      { emoji: '📅', label: 'Daily', scene: 'DailyChallengeScene' },
       { emoji: '🛒', label: 'Shop', scene: 'ShopScene' },
       { emoji: '📖', label: 'Items', scene: 'CollectionScene' },
       { emoji: '⚙️', label: 'More', scene: 'SettingsScene' },

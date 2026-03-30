@@ -82,6 +82,13 @@ export class GameScene extends Phaser.Scene {
     this.events.on('shop-buy-generator', this.onBuyGenerator, this);
     this.events.on('storage-retrieve', this.onStorageRetrieve, this);
     this.events.on('claim-order', this.onClaimOrder, this);
+    this.events.on('daily-challenge-complete', (reward: { xp: number; coins: number }) => {
+      this.addXP(reward.xp);
+      this.orderSystem.coins += reward.coins;
+      this.mascot.showSpeech('Daily done! 🎉', 3000);
+      this.updateUI();
+      this.saveGame();
+    });
 
     this.scene.launch('UIScene', {
       gems: this.gems, coins: this.orderSystem.coins, level: this.playerLevel,

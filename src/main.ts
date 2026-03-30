@@ -7,6 +7,7 @@ import { UIScene } from './scenes/UIScene';
 import { ShopScene } from './scenes/ShopScene';
 import { CollectionScene } from './scenes/CollectionScene';
 import { SettingsScene } from './scenes/SettingsScene';
+import { DailyChallengeScene } from './scenes/DailyChallengeScene';
 import { COLORS, DPR } from './utils/constants';
 
 // Use dvh for true mobile viewport, fallback to innerHeight
@@ -25,7 +26,7 @@ const config: Phaser.Types.Core.GameConfig = {
     width: w * DPR,
     height: h * DPR,
   },
-  scene: [BootScene, PreloadScene, MenuScene, GameScene, UIScene, ShopScene, CollectionScene, SettingsScene],
+  scene: [BootScene, PreloadScene, MenuScene, GameScene, UIScene, ShopScene, CollectionScene, SettingsScene, DailyChallengeScene],
   input: { activePointers: 1 },
   render: { pixelArt: false, antialias: true, roundPixels: true },
   fps: { target: 60, forceSetTimeOut: false },

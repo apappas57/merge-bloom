@@ -46,7 +46,7 @@ export class GameScene extends Phaser.Scene {
     this.questSystem = new QuestSystem(this.playerLevel);
 
     // Storage tray — positioned between board and bottom bar
-    const boardBottom = SIZES.TOP_BAR + SIZES.QUEST_BAR + SIZES.BOARD_PADDING
+    const boardBottom = SIZES.TOP_BAR + SIZES.ORDER_BAR + SIZES.BOARD_PADDING
       + 8 * (this.board.cellDimension + SIZES.CELL_GAP) - SIZES.CELL_GAP + SIZES.BOARD_PADDING;
     const trayY = boardBottom + s(28);
     this.storageTray = new StorageTray(this, trayY);

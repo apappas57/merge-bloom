@@ -35,7 +35,7 @@ export class Board {
     const boardWidth = cols * (this.cellSize + this.gap) - this.gap;
     const boardHeight = rows * (this.cellSize + this.gap) - this.gap;
     this.offsetX = (width - boardWidth) / 2;
-    this.offsetY = SIZES.TOP_BAR + SIZES.QUEST_BAR + SIZES.BOARD_PADDING;
+    this.offsetY = SIZES.TOP_BAR + SIZES.ORDER_BAR + SIZES.BOARD_PADDING;
 
     for (let row = 0; row < rows; row++) {
       this.cells[row] = [];

@@ -56,9 +56,9 @@ export const SIZES = {
   CELL_GAP: s(4),
   BOARD_PADDING: s(16),
   ITEM_SIZE: s(40),
-  TOP_BAR: s(90),
-  BOTTOM_BAR: s(70),
-  QUEST_BAR: s(50),
+  TOP_BAR: s(68),
+  BOTTOM_BAR: s(64),
+  ORDER_BAR: s(80),
   CORNER_RADIUS: s(18),
 };
 

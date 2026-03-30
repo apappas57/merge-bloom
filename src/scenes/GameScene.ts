@@ -79,7 +79,11 @@ export class GameScene extends Phaser.Scene {
     });
 
     this.time.addEvent({ delay: TIMING.AUTOSAVE, loop: true, callback: () => this.saveGame() });
-    document.addEventListener('visibilitychange', () => { if (document.hidden) this.saveGame(); });
+
+    // Save on app background — store ref for cleanup
+    const visHandler = () => { if (document.hidden) this.saveGame(); };
+    document.addEventListener('visibilitychange', visHandler);
+    this.events.once('shutdown', () => document.removeEventListener('visibilitychange', visHandler));
 
     // Mascot greeting
     this.time.delayedCall(1500, () => {

@@ -109,7 +109,7 @@ export class Generator extends Phaser.GameObjects.Container {
     const half = this.board.cellDimension / 2;
 
     this.shimmerEvent = this.scene.time.addEvent({
-      delay: 60,
+      delay: 150, // Reduced from 60ms for better performance with many generators
       loop: true,
       callback: () => {
         if (!this.isReady) { this.shimmerGfx.clear(); return; }

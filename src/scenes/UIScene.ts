@@ -13,6 +13,7 @@ export class UIScene extends Phaser.Scene {
   private curGems = 0;
   private curCoins = 0;
   private curLevel = 1;
+  private lastOrderHash = '';
 
   constructor() { super('UIScene'); }
 
@@ -72,9 +73,9 @@ export class UIScene extends Phaser.Scene {
     const btnWidth = width / btnDefs.length;
     btnDefs.forEach((def, i) => {
       const cx = btnWidth * i + btnWidth / 2;
-      const cy = bottomY + SIZES.BOTTOM_BAR / 2;
-      this.add.text(cx, cy - s(4), def.emoji, { fontSize: fs(14) }).setOrigin(0.5);
-      this.add.text(cx, cy + s(12), def.label, {
+      const cy = bottomY + SIZES.BOTTOM_BAR / 2 - s(6); // Shift up above home indicator
+      this.add.text(cx, cy - s(2), def.emoji, { fontSize: fs(14) }).setOrigin(0.5);
+      this.add.text(cx, cy + s(14), def.label, {
         fontSize: fs(8), color: TEXT.SECONDARY, fontFamily: FONT,
       }).setOrigin(0.5);
       const zone = this.add.zone(cx, cy, btnWidth, SIZES.BOTTOM_BAR).setInteractive();
@@ -213,7 +214,7 @@ export class UIScene extends Phaser.Scene {
           duration: 600, yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
         });
 
-        const goZone = this.add.zone(btnX + btnW / 2, btnY2 + btnH / 2, btnW + s(10), btnH + s(10)).setInteractive();
+        const goZone = this.add.zone(btnX + btnW / 2, btnY2 + btnH / 2, btnW + s(16), s(44)).setInteractive();
         goZone.on('pointerdown', () => {
           this.scene.get('GameScene').events.emit('claim-order', i);
         });
@@ -252,7 +253,14 @@ export class UIScene extends Phaser.Scene {
       this.levelText.setText(`⭐${data.level}`);
     }
     this.drawXPBar(data.xp, data.xpToNext);
-    if (data.orders) this.renderOrders(data.orders);
+    // Only re-render orders if they actually changed
+    if (data.orders) {
+      const hash = JSON.stringify(data.orders.map(o => [o.def.id, o.progress, o.completed]));
+      if (hash !== this.lastOrderHash) {
+        this.lastOrderHash = hash;
+        this.renderOrders(data.orders);
+      }
+    }
   }
 
   private fmt(n: number): string {

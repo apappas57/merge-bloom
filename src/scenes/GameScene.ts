@@ -5,7 +5,7 @@ import { MergeSystem } from '../systems/MergeSystem';
 import { QuestSystem, ActiveQuest } from '../systems/QuestSystem';
 import { SaveSystem, SaveData } from '../systems/SaveSystem';
 import { GENERATORS } from '../data/chains';
-import { SIZES, COLORS, TIMING, fs, s } from '../utils/constants';
+import { SIZES, COLORS, TIMING, FONT, TEXT, fs, s } from '../utils/constants';
 
 export class GameScene extends Phaser.Scene {
   private board!: Board;
@@ -27,11 +27,9 @@ export class GameScene extends Phaser.Scene {
   create() {
     const { width, height } = this.scale;
 
-    // Garden-themed background with time-of-day tint
-    this.drawGardenBackground(width, height);
-
-    // Floating ambient particles
-    this.createAmbientParticles(width, height);
+    // Pastel time-of-day background
+    this.drawBackground(width, height);
+    this.createAmbientSparkles(width, height);
 
     this.board = new Board(this, 6, 8);
     this.mergeSystem = new MergeSystem(this);
@@ -42,8 +40,6 @@ export class GameScene extends Phaser.Scene {
 
     this.events.on('item-dropped', this.handleDrop, this);
     this.events.on('generator-tapped', this.handleGenTap, this);
-
-    // Listen for shop purchases
     this.events.on('shop-buy-generator', this.onBuyGenerator, this);
 
     this.scene.launch('UIScene', {
@@ -55,29 +51,21 @@ export class GameScene extends Phaser.Scene {
     this.time.addEvent({ delay: TIMING.AUTOSAVE, loop: true, callback: () => this.saveGame() });
     document.addEventListener('visibilitychange', () => { if (document.hidden) this.saveGame(); });
 
-    this.cameras.main.fadeIn(400, 0, 0, 0);
+    this.cameras.main.fadeIn(400, 255, 248, 240);
   }
 
-  private drawGardenBackground(width: number, height: number): void {
+  private drawBackground(width: number, height: number): void {
     const hour = new Date().getHours();
     let topColor: number, botColor: number;
 
     if (hour >= 6 && hour < 12) {
-      // Morning — warm peach to soft green
-      topColor = 0x1a2a1a;
-      botColor = 0x0f1f12;
+      topColor = 0xFFF8F0; botColor = 0xFFE4EC;  // Morning — cream to soft pink
     } else if (hour >= 12 && hour < 17) {
-      // Afternoon — brighter green
-      topColor = 0x152815;
-      botColor = 0x0d1f0d;
+      topColor = 0xE8F5E9; botColor = 0xFFF0F5;  // Afternoon — mint to pink
     } else if (hour >= 17 && hour < 21) {
-      // Evening — warm amber tint
-      topColor = 0x1f1a10;
-      botColor = 0x12180f;
+      topColor = 0xFFE4EC; botColor = 0xE8DAEF;  // Evening — pink to lavender
     } else {
-      // Night — deep blue-green
-      topColor = 0x0a1520;
-      botColor = 0x08101a;
+      topColor = 0xE8DAEF; botColor = 0xC8B8D8;  // Night — soft lavender (never black)
     }
 
     const bg = this.add.graphics();
@@ -85,24 +73,26 @@ export class GameScene extends Phaser.Scene {
     bg.fillRect(0, 0, width, height);
   }
 
-  private createAmbientParticles(width: number, height: number): void {
-    for (let i = 0; i < 8; i++) {
-      const p = this.add.graphics();
-      p.fillStyle(0x2ecc71, 0.08);
-      p.fillCircle(0, 0, s(Phaser.Math.Between(2, 5)));
+  private createAmbientSparkles(width: number, height: number): void {
+    const sparkleEmoji = ['✨', '⭐', '💫', '🌸'];
+    for (let i = 0; i < 6; i++) {
+      const emoji = sparkleEmoji[Phaser.Math.Between(0, sparkleEmoji.length - 1)];
       const x = Phaser.Math.Between(0, width);
       const y = Phaser.Math.Between(SIZES.TOP_BAR, height - SIZES.BOTTOM_BAR);
-      p.setPosition(x, y).setDepth(0);
+      const t = this.add.text(x, y, emoji, { fontSize: fs(Phaser.Math.Between(8, 14)) })
+        .setOrigin(0.5).setAlpha(0.08).setDepth(0);
 
       this.tweens.add({
-        targets: p,
-        y: y - s(Phaser.Math.Between(30, 80)),
-        x: x + s(Phaser.Math.Between(-30, 30)),
+        targets: t,
+        y: y - s(Phaser.Math.Between(40, 100)),
         alpha: 0,
-        duration: Phaser.Math.Between(4000, 8000),
+        duration: Phaser.Math.Between(5000, 10000),
         delay: Phaser.Math.Between(0, 5000),
         repeat: -1,
-        onRepeat: () => { p.setPosition(Phaser.Math.Between(0, width), Phaser.Math.Between(SIZES.TOP_BAR, height - SIZES.BOTTOM_BAR)); p.setAlpha(0.08); },
+        onRepeat: () => {
+          t.setPosition(Phaser.Math.Between(0, width), Phaser.Math.Between(SIZES.TOP_BAR, height - SIZES.BOTTOM_BAR));
+          t.setAlpha(0.08);
+        },
       });
     }
   }
@@ -176,19 +166,15 @@ export class GameScene extends Phaser.Scene {
       if (target && this.mergeSystem.canMerge(dropped, target)) { this.executeMerge(dropped, target); return; }
       if (this.generators.some(g => g.itemId === targetId)) { dropped.returnToOriginal(); return; }
       if (target) {
-        const origCol = dropped.data_.col;
-        const origRow = dropped.data_.row;
+        const origCol = dropped.data_.col, origRow = dropped.data_.row;
         this.board.setOccupied(targetCell.col, targetCell.row, null);
         target.moveToCell(origCol, origRow);
         dropped.moveToCell(targetCell.col, targetCell.row);
         return;
       }
     }
-    if (!targetCell.occupied && !targetCell.locked) {
-      dropped.moveToCell(targetCell.col, targetCell.row);
-    } else {
-      dropped.returnToOriginal();
-    }
+    if (!targetCell.occupied && !targetCell.locked) { dropped.moveToCell(targetCell.col, targetCell.row); }
+    else { dropped.returnToOriginal(); }
   }
 
   private async executeMerge(item1: MergeItem, item2: MergeItem): Promise<void> {
@@ -217,9 +203,10 @@ export class GameScene extends Phaser.Scene {
   }
 
   private createSpawnParticles(x: number, y: number): void {
+    const colors = [0xFFB3D9, 0xA8E6CF, 0xA8D8EA];
     for (let i = 0; i < 5; i++) {
       const p = this.add.graphics();
-      p.fillStyle(COLORS.ACCENT_TEAL, 0.8);
+      p.fillStyle(colors[Phaser.Math.Between(0, colors.length - 1)], 0.8);
       p.fillCircle(0, 0, s(3));
       p.setPosition(x, y).setDepth(2000);
       const angle = Math.random() * Math.PI * 2;
@@ -239,13 +226,13 @@ export class GameScene extends Phaser.Scene {
     const { width, height } = this.scale;
 
     const banner = this.add.text(width / 2, height / 2, `✅ ${quest.def.description}`, {
-      fontSize: fs(17), color: '#ffd700', fontFamily: 'system-ui', fontStyle: 'bold',
-      backgroundColor: 'rgba(0,0,0,0.8)', padding: { x: s(16), y: s(12) },
+      fontSize: fs(17), color: TEXT.PRIMARY, fontFamily: FONT, fontStyle: '600',
+      backgroundColor: 'rgba(255,240,245,0.95)', padding: { x: s(16), y: s(12) },
     }).setOrigin(0.5).setDepth(3000);
 
     const rewardTxt = this.add.text(width / 2, height / 2 + s(35), `+${reward.gems} 💎  +${reward.xp} ⭐`, {
-      fontSize: fs(14), color: '#2ecc71', fontFamily: 'system-ui', fontStyle: 'bold',
-      backgroundColor: 'rgba(0,0,0,0.8)', padding: { x: s(12), y: s(8) },
+      fontSize: fs(14), color: TEXT.MINT, fontFamily: FONT, fontStyle: '600',
+      backgroundColor: 'rgba(255,240,245,0.95)', padding: { x: s(12), y: s(8) },
     }).setOrigin(0.5).setDepth(3000);
 
     this.tweens.add({
@@ -269,8 +256,8 @@ export class GameScene extends Phaser.Scene {
   private onLevelUp(): void {
     const { width, height } = this.scale;
     const txt = this.add.text(width / 2, height / 2 - s(60), `🎉 Level ${this.playerLevel}!`, {
-      fontSize: fs(32), color: '#ffd700', fontFamily: 'system-ui', fontStyle: 'bold',
-      stroke: '#000', strokeThickness: s(4),
+      fontSize: fs(34), color: TEXT.ACCENT, fontFamily: FONT, fontStyle: '700',
+      stroke: '#FFFFFF', strokeThickness: s(4),
     }).setOrigin(0.5).setDepth(3000).setScale(0);
 
     this.tweens.add({
@@ -286,17 +273,17 @@ export class GameScene extends Phaser.Scene {
 
   private createConfetti(): void {
     const { width } = this.scale;
-    const colors = [0xff69b4, 0xffd700, 0x87ceeb, 0x2ecc71, 0xff6347, 0x9b59b6];
+    const colors = [0xFF9CAD, 0xFFB3D9, 0xA8D8EA, 0xA8E6CF, 0xFFECB3, 0xC8A8E9];
     for (let i = 0; i < 30; i++) {
       const c = this.add.graphics();
       c.fillStyle(colors[Phaser.Math.Between(0, colors.length - 1)], 1);
-      c.fillRect(-s(3), -s(6), s(6), s(12));
+      // Mix of shapes — hearts and stars via small circles
+      c.fillCircle(0, 0, s(Phaser.Math.Between(3, 6)));
       c.setPosition(Phaser.Math.Between(0, width), -s(20)).setDepth(3000);
-      c.setRotation(Math.random() * Math.PI);
       this.tweens.add({
         targets: c, y: this.scale.height + s(20),
-        x: c.x + Phaser.Math.Between(-s(100), s(100)),
-        rotation: c.rotation + Phaser.Math.FloatBetween(-3, 3),
+        x: c.x + Phaser.Math.Between(-s(80), s(80)),
+        rotation: Phaser.Math.FloatBetween(-3, 3),
         duration: Phaser.Math.Between(1500, 3000), ease: 'Power1',
         onComplete: () => c.destroy(),
       });

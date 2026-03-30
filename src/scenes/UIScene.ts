@@ -1,4 +1,4 @@
-import { SIZES, COLORS, FONT, fs, s } from '../utils/constants';
+import { SIZES, COLORS, FONT, FONT_BODY, TEXT, fs, s } from '../utils/constants';
 import { ActiveQuest } from '../systems/QuestSystem';
 
 export class UIScene extends Phaser.Scene {
@@ -17,41 +17,42 @@ export class UIScene extends Phaser.Scene {
     this.curGems = data.gems;
     this.curLevel = data.level;
 
-    // Top bar
+    // Top bar — soft pink
     const topBg = this.add.graphics();
     topBg.fillStyle(COLORS.UI_BG, 0.95);
     topBg.fillRect(0, 0, width, SIZES.TOP_BAR);
 
+    // Subtle bottom border
     const accent = this.add.graphics();
-    accent.fillStyle(COLORS.ACCENT_TEAL, 0.5);
-    accent.fillRect(0, SIZES.TOP_BAR - s(2), width, s(2));
+    accent.fillStyle(COLORS.ACCENT_ROSE, 0.3);
+    accent.fillRect(0, SIZES.TOP_BAR - s(1.5), width, s(1.5));
 
     // Level
     this.levelText = this.add.text(s(20), s(18), `⭐ Lv.${data.level}`, {
-      fontSize: fs(18), color: '#ffd700', fontFamily: FONT, fontStyle: 'bold',
+      fontSize: fs(18), color: TEXT.GOLD, fontFamily: FONT, fontStyle: '600',
     });
 
-    // XP bar
+    // XP bar — gradient fill (mint to rose)
     const xpBarY = s(48);
     const xpBg = this.add.graphics();
-    xpBg.fillStyle(0x2a2a4e, 1);
+    xpBg.fillStyle(COLORS.UI_PANEL, 1);
     xpBg.fillRoundedRect(s(20), xpBarY, width - s(40), s(8), s(4));
 
     this.xpBar = this.add.graphics();
     this.drawXPBar(data.xp, data.xpToNext);
 
     this.xpText = this.add.text(width - s(20), xpBarY + s(12), `${data.xp}/${data.xpToNext} XP`, {
-      fontSize: fs(9), color: '#8899aa', fontFamily: 'system-ui',
+      fontSize: fs(9), color: TEXT.SECONDARY, fontFamily: FONT_BODY,
     }).setOrigin(1, 0);
 
     // Gems
     this.gemsText = this.add.text(width - s(20), s(18), `💎 ${this.fmt(data.gems)}`, {
-      fontSize: fs(18), color: '#87ceeb', fontFamily: FONT, fontStyle: 'bold',
+      fontSize: fs(18), color: '#A8D8EA', fontFamily: FONT, fontStyle: '600',
     }).setOrigin(1, 0);
 
     // Quest bar
     const questBg = this.add.graphics();
-    questBg.fillStyle(COLORS.UI_PANEL, 0.9);
+    questBg.fillStyle(COLORS.UI_PANEL, 0.85);
     questBg.fillRect(0, SIZES.TOP_BAR, width, SIZES.QUEST_BAR);
 
     this.renderQuests(data.quests);
@@ -59,32 +60,30 @@ export class UIScene extends Phaser.Scene {
     // Bottom bar
     const bottomY = this.scale.height - SIZES.BOTTOM_BAR;
     const bottomBg = this.add.graphics();
-    bottomBg.fillStyle(COLORS.UI_BG, 0.93);
+    bottomBg.fillStyle(COLORS.UI_BG, 0.95);
     bottomBg.fillRect(0, bottomY, width, SIZES.BOTTOM_BAR);
 
     const bottomAccent = this.add.graphics();
-    bottomAccent.fillStyle(COLORS.ACCENT_TEAL, 0.3);
+    bottomAccent.fillStyle(COLORS.ACCENT_ROSE, 0.2);
     bottomAccent.fillRect(0, bottomY, width, s(1));
 
-    // Bottom buttons — Shop is interactive
+    // Bottom buttons
     const btnLabels = ['🛒 Shop', '📖 Collection', '⚙️ Settings'];
+    const sceneNames = ['ShopScene', 'CollectionScene', 'SettingsScene'];
     const btnWidth = width / 3;
+
     btnLabels.forEach((label, i) => {
       const btnText = this.add.text(btnWidth * i + btnWidth / 2, bottomY + SIZES.BOTTOM_BAR / 2, label, {
-        fontSize: fs(13), color: '#8899aa', fontFamily: 'system-ui',
+        fontSize: fs(13), color: TEXT.SECONDARY, fontFamily: FONT,
       }).setOrigin(0.5);
 
       const zone = this.add.zone(btnWidth * i + btnWidth / 2, bottomY + SIZES.BOTTOM_BAR / 2, btnWidth, SIZES.BOTTOM_BAR).setInteractive();
-
-      const sceneNames = ['ShopScene', 'CollectionScene', 'SettingsScene'];
       zone.on('pointerdown', () => {
+        // Button press animation
+        this.tweens.add({ targets: btnText, scaleX: 0.9, scaleY: 0.9, duration: 80, yoyo: true });
         const target = sceneNames[i];
-        if (!this.scene.isActive(target)) {
-          this.scene.launch(target);
-        }
+        if (!this.scene.isActive(target)) this.scene.launch(target);
       });
-      zone.on('pointerover', () => btnText.setColor('#2ecc71'));
-      zone.on('pointerout', () => btnText.setColor('#8899aa'));
     });
 
     this.scene.get('GameScene').events.on('update-ui', this.onUpdate, this);
@@ -96,7 +95,8 @@ export class UIScene extends Phaser.Scene {
     const progress = Math.min(xp / xpToNext, 1);
     this.xpBar.clear();
     if (progress > 0) {
-      this.xpBar.fillStyle(COLORS.ACCENT_TEAL, 1);
+      // Gradient effect: mint to rose
+      this.xpBar.fillGradientStyle(0xA8E6CF, 0xFF9CAD, 0xA8E6CF, 0xFF9CAD, 1);
       this.xpBar.fillRoundedRect(s(20), s(48), barW * progress, s(8), s(4));
     }
   }
@@ -109,7 +109,7 @@ export class UIScene extends Phaser.Scene {
 
     if (quests.length === 0) {
       const t = this.add.text(width / 2, startY + s(14), 'No active quests', {
-        fontSize: fs(12), color: '#8899aa', fontFamily: 'system-ui',
+        fontSize: fs(12), color: TEXT.SECONDARY, fontFamily: FONT,
       }).setOrigin(0.5);
       this.questTexts.push(t);
       return;
@@ -119,9 +119,9 @@ export class UIScene extends Phaser.Scene {
     quests.slice(0, 3).forEach((q, i) => {
       const x = s(15) + i * qw;
       const status = q.completed ? '✅' : `${q.progress}/${q.def.targetCount}`;
-      const color = q.completed ? '#2ecc71' : '#8899aa';
+      const color = q.completed ? TEXT.MINT : TEXT.SECONDARY;
       const t = this.add.text(x + qw / 2, startY + s(16), `${q.def.description} ${status}`, {
-        fontSize: fs(10), color, fontFamily: 'system-ui',
+        fontSize: fs(10), color, fontFamily: FONT_BODY,
         wordWrap: { width: qw - s(10) },
       }).setOrigin(0.5);
       this.questTexts.push(t);

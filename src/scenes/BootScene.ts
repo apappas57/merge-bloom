@@ -1,4 +1,4 @@
-import { FONT, fs } from '../utils/constants';
+import { FONT, TEXT, fs } from '../utils/constants';
 
 export class BootScene extends Phaser.Scene {
   constructor() { super('BootScene'); }
@@ -6,14 +6,17 @@ export class BootScene extends Phaser.Scene {
   create() {
     const { width, height } = this.scale;
 
-    this.add.text(width / 2, height / 2 - height * 0.05, '🌸', { fontSize: fs(64) }).setOrigin(0.5);
-    this.add.text(width / 2, height / 2 + height * 0.04, 'Merge Bloom', {
-      fontSize: fs(28), color: '#ffffff', fontFamily: FONT, fontStyle: 'bold'
-    }).setOrigin(0.5);
-    this.add.text(width / 2, height / 2 + height * 0.08, 'Loading...', {
-      fontSize: fs(16), color: '#8899aa', fontFamily: FONT
-    }).setOrigin(0.5);
+    // Wait for custom fonts to load
+    document.fonts.ready.then(() => {
+      this.add.text(width / 2, height / 2 - height * 0.05, '🌸', { fontSize: fs(64) }).setOrigin(0.5);
+      this.add.text(width / 2, height / 2 + height * 0.04, 'Merge Bloom', {
+        fontSize: fs(30), color: TEXT.PRIMARY, fontFamily: FONT, fontStyle: '600'
+      }).setOrigin(0.5);
+      this.add.text(width / 2, height / 2 + height * 0.08, 'Loading...', {
+        fontSize: fs(14), color: TEXT.SECONDARY, fontFamily: FONT
+      }).setOrigin(0.5);
 
-    this.time.delayedCall(400, () => this.scene.start('PreloadScene'));
+      this.time.delayedCall(400, () => this.scene.start('PreloadScene'));
+    });
   }
 }

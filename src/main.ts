@@ -15,7 +15,7 @@ const h = window.innerHeight;
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
   parent: 'game-container',
-  backgroundColor: COLORS.BG_DARK,
+  backgroundColor: COLORS.BG_CREAM,
   width: w * DPR,
   height: h * DPR,
   scale: {
@@ -23,18 +23,9 @@ const config: Phaser.Types.Core.GameConfig = {
     autoCenter: Phaser.Scale.CENTER_BOTH,
   },
   scene: [BootScene, PreloadScene, MenuScene, GameScene, UIScene, ShopScene, CollectionScene, SettingsScene],
-  input: {
-    activePointers: 1,
-  },
-  render: {
-    pixelArt: false,
-    antialias: true,
-    roundPixels: true,
-  },
-  fps: {
-    target: 60,
-    forceSetTimeOut: false,
-  },
+  input: { activePointers: 1 },
+  render: { pixelArt: false, antialias: true, roundPixels: true },
+  fps: { target: 60, forceSetTimeOut: false },
   disableContextMenu: true,
 };
 

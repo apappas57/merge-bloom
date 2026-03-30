@@ -30,10 +30,10 @@ export class Generator extends Phaser.GameObjects.Container {
 
     const half = board.cellDimension / 2;
     const bg = scene.add.graphics();
-    bg.fillStyle(0x1a3a2a, 0.85);
-    bg.fillRoundedRect(-half, -half, half * 2, half * 2, s(8));
-    bg.lineStyle(s(2), COLORS.ACCENT_TEAL, 0.6);
-    bg.strokeRoundedRect(-half, -half, half * 2, half * 2, s(8));
+    bg.fillStyle(0xFFE4EC, 0.9);
+    bg.fillRoundedRect(-half, -half, half * 2, half * 2, s(10));
+    bg.lineStyle(s(1.5), COLORS.ACCENT_PINK, 0.5);
+    bg.strokeRoundedRect(-half, -half, half * 2, half * 2, s(10));
     this.add(bg);
 
     const key = `gen_${def.id}`;
@@ -55,7 +55,7 @@ export class Generator extends Phaser.GameObjects.Container {
   private drawReadyGlow(): void {
     this.readyGlow.clear();
     if (!this.isReady) return;
-    this.readyGlow.fillStyle(COLORS.ACCENT_TEAL, 0.2);
+    this.readyGlow.fillStyle(COLORS.ACCENT_ROSE, 0.2);
     this.readyGlow.fillCircle(0, 0, this.board.cellDimension / 2 + s(4));
     this.scene.tweens.add({
       targets: this.readyGlow, alpha: 0.5, scaleX: 1.1, scaleY: 1.1,
@@ -70,7 +70,11 @@ export class Generator extends Phaser.GameObjects.Container {
       this.scene.tweens.add({ targets: this, x: this.x - s(5), duration: 50, yoyo: true, repeat: 3 });
       return;
     }
-    this.scene.tweens.add({ targets: this.sprite, scaleX: 0.8, scaleY: 0.8, duration: 80, yoyo: true });
+    // Bounce animation on tap
+    this.scene.tweens.add({
+      targets: this, scaleX: 0.9, scaleY: 0.9, duration: 80, yoyo: true,
+      ease: 'Back.easeOut',
+    });
     this.scene.events.emit('generator-tapped', this, emptyCell);
     this.startCooldown();
   }
@@ -91,12 +95,14 @@ export class Generator extends Phaser.GameObjects.Container {
         elapsed += 50;
         const pct = elapsed / duration;
         this.cooldownGfx.clear();
-        this.cooldownGfx.fillStyle(0x000000, 0.5 * (1 - pct));
-        this.cooldownGfx.fillRoundedRect(-half, -half, half * 2, half * 2 * (1 - pct), s(8));
+        this.cooldownGfx.fillStyle(0x5C5470, 0.25 * (1 - pct));
+        this.cooldownGfx.fillRoundedRect(-half, -half, half * 2, half * 2 * (1 - pct), s(10));
         if (elapsed >= duration) {
           this.cooldownGfx.clear();
           this.isReady = true;
           this.drawReadyGlow();
+          // Ready bounce
+          this.scene.tweens.add({ targets: this, scaleX: 1.1, scaleY: 1.1, duration: 150, yoyo: true, ease: 'Back.easeOut' });
         }
       }
     });

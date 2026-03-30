@@ -62,20 +62,18 @@ export class Board {
     const by = this.offsetY - pad;
     const r = SIZES.CORNER_RADIUS;
 
-    // Board background — garden green gradient
-    this.graphics.fillStyle(COLORS.BOARD_BG, 0.7);
+    // Board background — soft mint with subtle shadow
+    this.graphics.fillStyle(COLORS.BOARD_BG, 0.6);
+    this.graphics.fillRoundedRect(bx + s(2), by + s(3), bw, bh, r + s(4));
+
+    this.graphics.fillStyle(COLORS.BOARD_BG, 0.85);
     this.graphics.fillRoundedRect(bx, by, bw, bh, r + s(4));
 
-    // Inner border glow
-    this.graphics.lineStyle(s(2), 0x2d5a3d, 0.5);
-    this.graphics.strokeRoundedRect(bx + s(1), by + s(1), bw - s(2), bh - s(2), r + s(2));
-
-    // Outer subtle border
-    this.graphics.lineStyle(s(1), 0x3a7d5a, 0.3);
+    // Soft border
+    this.graphics.lineStyle(s(1.5), COLORS.CELL_BORDER, 0.3);
     this.graphics.strokeRoundedRect(bx, by, bw, bh, r + s(4));
 
-    // Draw cells
-    const cr = s(8);
+    const cr = s(10);
     for (let row = 0; row < this.rows; row++) {
       for (let col = 0; col < this.cols; col++) {
         const cell = this.cells[row][col];
@@ -83,21 +81,25 @@ export class Board {
         const cy = cell.y - this.cellSize / 2;
 
         if (cell.locked) {
-          this.graphics.fillStyle(0x0a1a0f, 0.8);
+          this.graphics.fillStyle(0xE0D8E8, 0.5);
           this.graphics.fillRoundedRect(cx, cy, this.cellSize, this.cellSize, cr);
           continue;
         }
 
-        // Cell fill — garden-themed with subtle depth
-        this.graphics.fillStyle(COLORS.CELL_GARDEN, 0.7);
+        // Cell shadow
+        this.graphics.fillStyle(COLORS.CELL_SHADOW, 0.15);
+        this.graphics.fillRoundedRect(cx + s(1), cy + s(2), this.cellSize, this.cellSize, cr);
+
+        // Cell fill — pale lavender
+        this.graphics.fillStyle(COLORS.CELL_BG, 0.8);
         this.graphics.fillRoundedRect(cx, cy, this.cellSize, this.cellSize, cr);
 
-        // Inner shadow (top-left highlight)
-        this.graphics.fillStyle(0x2a5a3a, 0.2);
+        // Inner highlight (top half, lighter)
+        this.graphics.fillStyle(0xFFFFFF, 0.15);
         this.graphics.fillRoundedRect(cx + s(1), cy + s(1), this.cellSize - s(2), this.cellSize / 2, { tl: cr, tr: cr, bl: 0, br: 0 });
 
         // Border
-        this.graphics.lineStyle(s(1), COLORS.CELL_GARDEN_BORDER, 0.4);
+        this.graphics.lineStyle(s(1), COLORS.CELL_BORDER, 0.35);
         this.graphics.strokeRoundedRect(cx, cy, this.cellSize, this.cellSize, cr);
       }
     }
@@ -109,28 +111,23 @@ export class Board {
     this.drawBoard();
     const cx = cell.x - this.cellSize / 2;
     const cy = cell.y - this.cellSize / 2;
-    const cr = s(8);
-    this.graphics.fillStyle(color, 0.35);
+    const cr = s(10);
+    this.graphics.fillStyle(color, 0.4);
     this.graphics.fillRoundedRect(cx, cy, this.cellSize, this.cellSize, cr);
-    this.graphics.lineStyle(s(2), color, 0.7);
+    this.graphics.lineStyle(s(2), color, 0.6);
     this.graphics.strokeRoundedRect(cx, cy, this.cellSize, this.cellSize, cr);
   }
 
-  clearHighlights(): void {
-    this.drawBoard();
-  }
+  clearHighlights(): void { this.drawBoard(); }
 
   getCellAt(worldX: number, worldY: number): CellData | null {
     const half = this.cellSize / 2;
-    for (let row = 0; row < this.rows; row++) {
+    for (let row = 0; row < this.rows; row++)
       for (let col = 0; col < this.cols; col++) {
         const cell = this.cells[row][col];
         if (worldX >= cell.x - half && worldX <= cell.x + half &&
-            worldY >= cell.y - half && worldY <= cell.y + half) {
-          return cell;
-        }
+            worldY >= cell.y - half && worldY <= cell.y + half) return cell;
       }
-    }
     return null;
   }
 
@@ -184,7 +181,5 @@ export class Board {
     return n;
   }
 
-  destroy(): void {
-    this.graphics.destroy();
-  }
+  destroy(): void { this.graphics.destroy(); }
 }

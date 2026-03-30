@@ -1,4 +1,4 @@
-import { SIZES, COLORS, TIMING, fs, s } from '../utils/constants';
+import { SIZES, COLORS, TIMING, TEXT, fs, s } from '../utils/constants';
 import { Board } from './Board';
 import { getTextureKey } from '../data/chains';
 
@@ -45,8 +45,8 @@ export class MergeItem extends Phaser.GameObjects.Container {
     this.tierText = scene.add.text(
       SIZES.ITEM_SIZE / 2 - s(2), SIZES.ITEM_SIZE / 2 - s(2),
       `${data.tier}`,
-      { fontSize: fs(9), color: '#fff', fontFamily: 'system-ui', fontStyle: 'bold',
-        backgroundColor: 'rgba(0,0,0,0.5)', padding: { x: s(2), y: s(1) } }
+      { fontSize: fs(8), color: TEXT.WHITE, fontFamily: 'Nunito, system-ui', fontStyle: 'bold',
+        backgroundColor: 'rgba(92,84,112,0.6)', padding: { x: s(3), y: s(1) } }
     ).setOrigin(1, 1);
     this.add(this.tierText);
 
@@ -60,7 +60,7 @@ export class MergeItem extends Phaser.GameObjects.Container {
 
   private addGlow(): void {
     this.glowGfx.clear();
-    this.glowGfx.fillStyle(COLORS.ACCENT_GOLD, 0.15);
+    this.glowGfx.fillStyle(COLORS.ACCENT_ROSE, 0.2);
     this.glowGfx.fillCircle(0, 0, SIZES.ITEM_SIZE / 2 + s(6));
     this.scene.tweens.add({
       targets: this.glowGfx, alpha: 0.4,
@@ -81,11 +81,8 @@ export class MergeItem extends Phaser.GameObjects.Container {
       this.x = dragX;
       this.y = dragY;
       const cell = this.board.getCellAt(dragX, dragY);
-      if (cell) {
-        this.board.highlightCell(cell.col, cell.row, COLORS.CELL_VALID);
-      } else {
-        this.board.clearHighlights();
-      }
+      if (cell) { this.board.highlightCell(cell.col, cell.row, COLORS.CELL_VALID); }
+      else { this.board.clearHighlights(); }
     });
 
     this.on('dragend', () => {
@@ -93,11 +90,8 @@ export class MergeItem extends Phaser.GameObjects.Container {
       this.board.clearHighlights();
       this.scene.tweens.add({ targets: this, scaleX: 1, scaleY: 1, duration: 100 });
       const cell = this.board.getCellAt(this.x, this.y);
-      if (cell && !cell.locked) {
-        this.scene.events.emit('item-dropped', this, cell);
-      } else {
-        this.returnToOriginal();
-      }
+      if (cell && !cell.locked) { this.scene.events.emit('item-dropped', this, cell); }
+      else { this.returnToOriginal(); }
     });
   }
 
@@ -115,16 +109,11 @@ export class MergeItem extends Phaser.GameObjects.Container {
     const cell = this.board.getCell(col, row);
     if (!cell) return;
     this.board.setOccupied(this.data_.col, this.data_.row, null);
-    this.data_.col = col;
-    this.data_.row = row;
-    this.origCol = col;
-    this.origRow = row;
+    this.data_.col = col; this.data_.row = row;
+    this.origCol = col; this.origRow = row;
     this.board.setOccupied(col, row, this.data_.id);
-    if (animate) {
-      this.scene.tweens.add({ targets: this, x: cell.x, y: cell.y, duration: 150, ease: 'Power2' });
-    } else {
-      this.x = cell.x; this.y = cell.y;
-    }
+    if (animate) { this.scene.tweens.add({ targets: this, x: cell.x, y: cell.y, duration: 150, ease: 'Power2' }); }
+    else { this.x = cell.x; this.y = cell.y; }
   }
 
   playMergeAway(): Promise<void> {
@@ -157,7 +146,5 @@ export class MergeItem extends Phaser.GameObjects.Container {
     });
   }
 
-  getData(): MergeItemData {
-    return { ...this.data_ };
-  }
+  getData(): MergeItemData { return { ...this.data_ }; }
 }

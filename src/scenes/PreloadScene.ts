@@ -26,13 +26,14 @@ export class PreloadScene extends Phaser.Scene {
       { key: 'sparkle', emoji: '✨' },
     );
 
-    EmojiRenderer.generateTextures(this, list, SIZES.ITEM_SIZE + s(16));
+    // Render at 2x the display size for extra crispness on 3x Retina
+    EmojiRenderer.generateTextures(this, list, SIZES.ITEM_SIZE * 2);
 
-    // Generate kawaii character portraits
+    // Character portraits — large for crisp rendering in order cards
     CharacterRenderer.generateTextures(
       this,
       CHARACTERS.map(c => c.id),
-      s(36)
+      s(48)
     );
 
     this.time.delayedCall(200, () => this.scene.start('MenuScene'));

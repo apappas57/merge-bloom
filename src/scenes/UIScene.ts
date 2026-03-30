@@ -1,4 +1,4 @@
-import { SIZES, COLORS, FONT, FONT_BODY, TEXT, fs, s } from '../utils/constants';
+import { SIZES, COLORS, FONT, FONT_BODY, TEXT, SAFE_AREA_TOP, fs, s } from '../utils/constants';
 import { ActiveQuest } from '../systems/QuestSystem';
 import { ActiveOrder } from '../systems/OrderSystem';
 import { CHARACTERS } from '../data/orders';
@@ -32,21 +32,23 @@ export class UIScene extends Phaser.Scene {
     topBg.fillStyle(COLORS.ACCENT_ROSE, 0.2);
     topBg.fillRect(0, SIZES.TOP_BAR - s(1), width, s(1));
 
-    // Level + XP bar + Coins + Gems all in one compact row
-    this.levelText = this.add.text(s(10), s(10), `⭐${data.level}`, {
+    // Content starts below safe area (Dynamic Island on iPhone 16)
+    const contentY = SAFE_AREA_TOP + s(4);
+
+    this.levelText = this.add.text(s(10), contentY, `⭐${data.level}`, {
       fontSize: fs(13), color: TEXT.GOLD, fontFamily: FONT, fontStyle: '600',
     });
 
-    this.coinsText = this.add.text(width / 2 - s(20), s(10), `🪙${this.fmt(data.coins || 0)}`, {
+    this.coinsText = this.add.text(width / 2 - s(20), contentY, `🪙${this.fmt(data.coins || 0)}`, {
       fontSize: fs(13), color: '#E8A317', fontFamily: FONT, fontStyle: '600',
     }).setOrigin(0.5, 0);
 
-    this.gemsText = this.add.text(width - s(10), s(10), `💎${this.fmt(data.gems)}`, {
+    this.gemsText = this.add.text(width - s(10), contentY, `💎${this.fmt(data.gems)}`, {
       fontSize: fs(13), color: '#A8D8EA', fontFamily: FONT, fontStyle: '600',
     }).setOrigin(1, 0);
 
     // Thin XP bar
-    const xpY = s(30);
+    const xpY = contentY + s(20);
     const xpBg = this.add.graphics();
     xpBg.fillStyle(COLORS.UI_PANEL, 1);
     xpBg.fillRoundedRect(s(10), xpY, width - s(20), s(6), s(3));
@@ -223,7 +225,7 @@ export class UIScene extends Phaser.Scene {
   private drawXPBar(xp: number, xpToNext: number): void {
     const { width } = this.scale;
     const barW = width - s(20);
-    const barY = s(30);
+    const barY = SAFE_AREA_TOP + s(24);
     const progress = Math.min(xp / xpToNext, 1);
     this.xpBar.clear();
     if (progress > 0) {

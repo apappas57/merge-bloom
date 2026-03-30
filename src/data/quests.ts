@@ -44,4 +44,16 @@ export const QUEST_POOL: QuestDef[] = [
   { id: 'q28', description: 'Frost a Cupcake 🧁', type: 'create', chainId: 'sweet', targetTier: 4, targetCount: 1, rewardGems: 120, rewardXP: 250, level: 8 },
   { id: 'q29', description: 'Build Candy Castle 🏰', type: 'create', chainId: 'sweet', targetTier: 8, targetCount: 1, rewardGems: 400, rewardXP: 1000, level: 8 },
   { id: 'q30', description: 'Merge 200 items', type: 'merge_count', targetCount: 200, rewardGems: 500, rewardXP: 1200, level: 7 },
+  // Love Letters chain
+  { id: 'q31', description: 'Write a Growing Heart 💗', type: 'create', chainId: 'love', targetTier: 2, targetCount: 1, rewardGems: 60, rewardXP: 120, level: 3 },
+  { id: 'q32', description: 'Craft a Gift Heart 💝', type: 'create', chainId: 'love', targetTier: 4, targetCount: 1, rewardGems: 150, rewardXP: 350, level: 3 },
+  { id: 'q33', description: 'Find Eternal Love 💞', type: 'create', chainId: 'love', targetTier: 6, targetCount: 1, rewardGems: 300, rewardXP: 700, level: 3 },
+  // Cosmic Voyage
+  { id: 'q34', description: 'Spot a Comet ☄️', type: 'create', chainId: 'cosmic', targetTier: 2, targetCount: 1, rewardGems: 60, rewardXP: 120, level: 9 },
+  { id: 'q35', description: 'Discover Saturn 🪐', type: 'create', chainId: 'cosmic', targetTier: 5, targetCount: 1, rewardGems: 150, rewardXP: 350, level: 9 },
+  { id: 'q36', description: 'Launch a Rocket 🚀', type: 'create', chainId: 'cosmic', targetTier: 7, targetCount: 1, rewardGems: 300, rewardXP: 700, level: 9 },
+  // Cozy Cafe
+  { id: 'q37', description: 'Brew an Espresso ☕', type: 'create', chainId: 'cafe', targetTier: 2, targetCount: 1, rewardGems: 60, rewardXP: 120, level: 5 },
+  { id: 'q38', description: 'Stack some Pancakes 🥞', type: 'create', chainId: 'cafe', targetTier: 5, targetCount: 1, rewardGems: 150, rewardXP: 350, level: 5 },
+  { id: 'q39', description: 'Open a Bakery 🏪', type: 'create', chainId: 'cafe', targetTier: 7, targetCount: 1, rewardGems: 300, rewardXP: 700, level: 5 },
 ];

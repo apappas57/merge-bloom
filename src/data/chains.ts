@@ -133,6 +133,47 @@ export const MERGE_CHAINS: MergeChain[] = [
       { emoji: '🎂', name: 'Birthday Cake', tier: 7 },
       { emoji: '🏰', name: 'Candy Castle', tier: 8 },
     ]
+  },
+  {
+    id: 'love',
+    name: 'Love Letters',
+    unlockedAtLevel: 3,
+    items: [
+      { emoji: '💌', name: 'Love Note', tier: 1 },
+      { emoji: '💗', name: 'Growing Heart', tier: 2 },
+      { emoji: '💖', name: 'Sparkling Heart', tier: 3 },
+      { emoji: '💝', name: 'Gift Heart', tier: 4 },
+      { emoji: '💕', name: 'Twin Hearts', tier: 5 },
+      { emoji: '💞', name: 'Eternal Love', tier: 6 },
+    ]
+  },
+  {
+    id: 'cosmic',
+    name: 'Cosmic Voyage',
+    unlockedAtLevel: 9,
+    items: [
+      { emoji: '🪨', name: 'Space Rock', tier: 1 },
+      { emoji: '☄️', name: 'Comet', tier: 2 },
+      { emoji: '🛸', name: 'UFO', tier: 3 },
+      { emoji: '🌍', name: 'Earth', tier: 4 },
+      { emoji: '🪐', name: 'Saturn', tier: 5 },
+      { emoji: '🌌', name: 'Nebula', tier: 6 },
+      { emoji: '🚀', name: 'Rocket Ship', tier: 7 },
+    ]
+  },
+  {
+    id: 'cafe',
+    name: 'Cozy Cafe',
+    unlockedAtLevel: 5,
+    items: [
+      { emoji: '🫘', name: 'Coffee Bean', tier: 1 },
+      { emoji: '☕', name: 'Espresso', tier: 2 },
+      { emoji: '🥐', name: 'Croissant', tier: 3 },
+      { emoji: '🧇', name: 'Waffle', tier: 4 },
+      { emoji: '🥞', name: 'Pancake Stack', tier: 5 },
+      { emoji: '🎂', name: 'Layer Cake', tier: 6 },
+      { emoji: '🏪', name: 'Bakery', tier: 7 },
+    ]
   }
 ];
 
@@ -183,4 +224,7 @@ export const GENERATORS: GeneratorDef[] = [
   { id: 'gen_shell', chainId: 'shell', emoji: '🌊', name: 'Tide Pool', spawnTier: 1, cooldown: 500, cost: 900, unlockedAtLevel: 7 },
   { id: 'gen_sweet', chainId: 'sweet', emoji: '🍯', name: 'Honey Pot', spawnTier: 1, cooldown: 500, cost: 1200, unlockedAtLevel: 8 },
   { id: 'gen_star', chainId: 'star', emoji: '🔭', name: 'Telescope', spawnTier: 1, cooldown: 500, cost: 1000, unlockedAtLevel: 5 },
+  { id: 'gen_love', chainId: 'love', emoji: '💘', name: "Cupid's Bow", spawnTier: 1, cooldown: 500, cost: 600, unlockedAtLevel: 3 },
+  { id: 'gen_cosmic', chainId: 'cosmic', emoji: '🔭', name: 'Observatory', spawnTier: 1, cooldown: 500, cost: 1800, unlockedAtLevel: 9 },
+  { id: 'gen_cafe', chainId: 'cafe', emoji: '☕', name: 'Coffee Machine', spawnTier: 1, cooldown: 500, cost: 1000, unlockedAtLevel: 5 },
 ];

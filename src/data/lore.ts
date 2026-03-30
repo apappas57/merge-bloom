@@ -76,6 +76,32 @@ const ITEM_LORE: Record<string, string> = {
   sweet_6: 'Chocolate melts just to be closer to you.',
   sweet_7: 'A birthday cake with candles: because every day deserves a wish.',
   sweet_8: 'The Candy Castle stands at the top of the sweetest mountain in the world.',
+
+  // Love Letters chain
+  love_1: 'A love note, folded carefully and tucked inside a pocket close to the heart.',
+  love_2: 'A growing heart beats a little faster when someone special is near.',
+  love_3: 'A sparkling heart catches the light and refuses to let it go.',
+  love_4: 'A gift heart, wrapped in ribbon, waiting to be given to someone who deserves it.',
+  love_5: 'Twin hearts that beat in perfect rhythm, even from far away.',
+  love_6: 'Eternal love is not loud. It is a quiet promise that never breaks.',
+
+  // Cosmic Voyage chain
+  cosmic_1: 'A space rock drifting silently, carrying the dust of a thousand stars.',
+  cosmic_2: 'The comet streaks across the sky, leaving a trail of wishes behind.',
+  cosmic_3: 'A UFO hums softly. Its passengers wave. They are just visiting.',
+  cosmic_4: 'Earth, seen from far away, looks like a blue marble someone dropped in space.',
+  cosmic_5: 'Saturn wears its rings like a crown, spinning slowly in the dark.',
+  cosmic_6: 'A nebula is where stars are born. It smells like cotton candy. Probably.',
+  cosmic_7: 'The rocket ship carries all our dreams. Next stop: everywhere.',
+
+  // Cozy Cafe chain
+  cafe_1: 'A single coffee bean holds the promise of an entire morning.',
+  cafe_2: 'An espresso: small, strong, and full of opinions.',
+  cafe_3: 'A croissant so flaky it leaves a trail of crumbs like breadcrumb directions home.',
+  cafe_4: 'Waffles are just pancakes with abs.',
+  cafe_5: 'A stack of pancakes tall enough to see the future from the top.',
+  cafe_6: 'A layer cake with so many layers it has its own backstory.',
+  cafe_7: 'A bakery where the door is always open and the oven is always warm.',
 };
 
 export function getLore(chainId: string, tier: number): string | undefined {

@@ -9,6 +9,9 @@ const CHAIN_COLORS: Record<string, { from: string; to: string; fromHex: number; 
   tea:       { from: '#D7CCC8', to: '#BCAAA4', fromHex: 0xD7CCC8, toHex: 0xBCAAA4 },
   shell:     { from: '#B2EBF2', to: '#80DEEA', fromHex: 0xB2EBF2, toHex: 0x80DEEA },
   sweet:     { from: '#F8BBD0', to: '#F06292', fromHex: 0xF8BBD0, toHex: 0xF06292 },
+  love:      { from: '#FFB3C6', to: '#FF6B8A', fromHex: 0xFFB3C6, toHex: 0xFF6B8A },
+  cosmic:    { from: '#D1C4E9', to: '#7C4DFF', fromHex: 0xD1C4E9, toHex: 0x7C4DFF },
+  cafe:      { from: '#EFEBE9', to: '#BCAAA4', fromHex: 0xEFEBE9, toHex: 0xBCAAA4 },
 };
 
 /** Default fallback for unknown chains or UI textures */

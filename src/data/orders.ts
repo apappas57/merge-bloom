@@ -67,4 +67,14 @@ export const ORDER_POOL: OrderDef[] = [
   { id: 'o20', characterId: 'sunny', flavorText: 'Stars for the night sky!', items: [{ chainId: 'star', tier: 3, quantity: 2 }], rewards: [{ type: 'coins', amount: 300 }, { type: 'xp', amount: 40 }], difficulty: 'hard', unlockLevel: 5 },
   { id: 'o21', characterId: 'luna', flavorText: 'A bouquet and a crown!', items: [{ chainId: 'flower', tier: 8, quantity: 1 }, { chainId: 'crystal', tier: 5, quantity: 1 }], rewards: [{ type: 'coins', amount: 1000 }, { type: 'gems', amount: 25 }], difficulty: 'hard', unlockLevel: 5 },
   { id: 'o22', characterId: 'cocoa', flavorText: 'Boba and cookies!', items: [{ chainId: 'tea', tier: 4, quantity: 1 }, { chainId: 'sweet', tier: 3, quantity: 2 }], rewards: [{ type: 'coins', amount: 350 }, { type: 'gems', amount: 8 }], difficulty: 'hard', unlockLevel: 7 },
+  // Love Letters
+  { id: 'o23', characterId: 'petal', flavorText: 'Love notes for the fairy ball!', items: [{ chainId: 'love', tier: 1, quantity: 3 }], rewards: [{ type: 'coins', amount: 60 }], difficulty: 'easy', unlockLevel: 3 },
+  { id: 'o24', characterId: 'rose', flavorText: 'A gift heart for someone special!', items: [{ chainId: 'love', tier: 4, quantity: 1 }], rewards: [{ type: 'coins', amount: 200 }, { type: 'xp', amount: 30 }], difficulty: 'medium', unlockLevel: 3 },
+  { id: 'o25', characterId: 'luna', flavorText: 'Eternal love for my enchantment...', items: [{ chainId: 'love', tier: 6, quantity: 1 }], rewards: [{ type: 'coins', amount: 500 }, { type: 'gems', amount: 12 }], difficulty: 'hard', unlockLevel: 4 },
+  // Cosmic Voyage
+  { id: 'o26', characterId: 'sunny', flavorText: 'A comet for my collection!', items: [{ chainId: 'cosmic', tier: 2, quantity: 2 }], rewards: [{ type: 'coins', amount: 120 }], difficulty: 'easy', unlockLevel: 9 },
+  { id: 'o27', characterId: 'luna', flavorText: 'A nebula for my star map...', items: [{ chainId: 'cosmic', tier: 6, quantity: 1 }], rewards: [{ type: 'coins', amount: 500 }, { type: 'gems', amount: 15 }], difficulty: 'hard', unlockLevel: 9 },
+  // Cozy Cafe
+  { id: 'o28', characterId: 'bramble', flavorText: 'Croissants for the cafe!', items: [{ chainId: 'cafe', tier: 3, quantity: 2 }], rewards: [{ type: 'coins', amount: 150 }, { type: 'xp', amount: 25 }], difficulty: 'medium', unlockLevel: 5 },
+  { id: 'o29', characterId: 'cocoa', flavorText: 'A layer cake for the display!', items: [{ chainId: 'cafe', tier: 6, quantity: 1 }], rewards: [{ type: 'coins', amount: 400 }, { type: 'gems', amount: 10 }], difficulty: 'hard', unlockLevel: 6 },
 ];

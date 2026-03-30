@@ -21,7 +21,6 @@ export class MergeItem extends Phaser.GameObjects.Container {
   private board: Board;
   private origCol: number;
   private origRow: number;
-  private tierText: Phaser.GameObjects.Text;
   private glowGfx: Phaser.GameObjects.Graphics;
 
   constructor(scene: Phaser.Scene, board: Board, data: MergeItemData) {
@@ -42,13 +41,7 @@ export class MergeItem extends Phaser.GameObjects.Container {
     this.sprite.setDisplaySize(SIZES.ITEM_SIZE, SIZES.ITEM_SIZE);
     this.add(this.sprite);
 
-    this.tierText = scene.add.text(
-      SIZES.ITEM_SIZE / 2 - s(2), SIZES.ITEM_SIZE / 2 - s(2),
-      `${data.tier}`,
-      { fontSize: fs(8), color: TEXT.WHITE, fontFamily: 'Nunito, system-ui', fontStyle: 'bold',
-        backgroundColor: 'rgba(92,84,112,0.6)', padding: { x: s(3), y: s(1) } }
-    ).setOrigin(1, 1);
-    this.add(this.tierText);
+    // No tier number — the card frame indicates tier visually
 
     this.setSize(board.cellDimension, board.cellDimension);
     this.setInteractive({ draggable: true });

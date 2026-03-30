@@ -16,16 +16,15 @@
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body {
       width: 100%; height: 100%; overflow: hidden;
-      background: #FFF8F0; touch-action: none;
+      background: #FFF0F5; touch-action: none;
       -webkit-user-select: none; user-select: none;
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
     }
-    body {
-      display: flex; justify-content: center; align-items: center;
-      padding-top: env(safe-area-inset-top);
-      padding-bottom: env(safe-area-inset-bottom);
+    #game-container {
+      width: 100vw; height: 100vh; height: 100dvh;
+      position: fixed; top: 0; left: 0;
     }
-    #game-container { width: 100%; height: 100%; }
-    canvas { display: block; }
+    canvas { display: block; width: 100% !important; height: 100% !important; }
   </style>
 </head>
 <body>

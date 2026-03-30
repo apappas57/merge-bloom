@@ -9,8 +9,9 @@ import { CollectionScene } from './scenes/CollectionScene';
 import { SettingsScene } from './scenes/SettingsScene';
 import { COLORS, DPR } from './utils/constants';
 
+// Use dvh for true mobile viewport, fallback to innerHeight
 const w = window.innerWidth;
-const h = window.innerHeight;
+const h = window.visualViewport?.height || window.innerHeight;
 
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
@@ -21,6 +22,8 @@ const config: Phaser.Types.Core.GameConfig = {
   scale: {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
+    width: w * DPR,
+    height: h * DPR,
   },
   scene: [BootScene, PreloadScene, MenuScene, GameScene, UIScene, ShopScene, CollectionScene, SettingsScene],
   input: { activePointers: 1 },

@@ -237,20 +237,21 @@ export class Mascot extends Phaser.GameObjects.Container {
   }
 
   goToSleep(): void {
+    if (this.mood === 'sleeping') return;
     this.mood = 'sleeping';
     this.drawMouth('sleep');
     this.leftEye.setScale(1, 0.1);
     this.rightEye.setScale(1, 0.1);
 
-    // Zzz
-    const zzz = this.scene.add.text(this.x + s(20), this.y - s(30), '💤', { fontSize: fs(12) })
-      .setOrigin(0.5).setDepth(51).setAlpha(0);
+    // Zzz — add to THIS container so it moves with the mascot
+    const sz = this.size;
+    const zzz = this.scene.add.text(sz * 0.7, -sz * 0.6, '💤', { fontSize: fs(10) })
+      .setOrigin(0.5).setAlpha(0);
+    this.add(zzz);
     this.scene.tweens.add({
-      targets: zzz, alpha: 0.6, y: zzz.y - s(15),
-      duration: 1500, yoyo: true, repeat: -1,
+      targets: zzz, alpha: 0.7, y: -sz * 0.9,
+      duration: 1200, yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
     });
-
-    // Store ref for wake up
     (this as any)._zzzText = zzz;
   }
 
@@ -262,9 +263,11 @@ export class Mascot extends Phaser.GameObjects.Container {
     this.rightEye.setScale(1, 1);
 
     const zzz = (this as any)._zzzText;
-    if (zzz) { zzz.destroy(); (this as any)._zzzText = null; }
-
-    this.showSpeech('Good morning! 🌸', 2000);
+    if (zzz) {
+      this.scene.tweens.killTweensOf(zzz);
+      zzz.destroy();
+      (this as any)._zzzText = null;
+    }
   }
 
   destroy(fromScene?: boolean): void {

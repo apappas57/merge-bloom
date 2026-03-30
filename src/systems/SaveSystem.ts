@@ -1,5 +1,6 @@
 import { MergeItemData } from '../objects/MergeItem';
 import { ActiveQuest } from './QuestSystem';
+import { ActiveOrder } from './OrderSystem';
 
 export interface SaveData {
   version: number;
@@ -24,10 +25,16 @@ export interface SaveData {
   collection: { chainId: string; maxTier: number }[];
   storage?: ({ chainId: string; tier: number } | null)[];
   achievements?: { id: string; unlockedAt: number }[];
+  orders?: {
+    active: ActiveOrder[];
+    completedIds: string[];
+    coins: number;
+    totalCompleted: number;
+  };
 }
 
 const SAVE_KEY = 'merge_bloom_save';
-const SAVE_VERSION = 2;
+const SAVE_VERSION = 3;
 
 export class SaveSystem {
   static save(data: SaveData): void {
@@ -45,11 +52,11 @@ export class SaveSystem {
       const raw = localStorage.getItem(SAVE_KEY);
       if (!raw) return null;
       const data = JSON.parse(raw) as SaveData;
-      // Accept v1 and v2
       if (data.version < 1) return null;
-      // Migrate v1 → v2
+      // Migrate
       if (!data.storage) data.storage = [null, null, null, null];
       if (!data.achievements) data.achievements = [];
+      if (!data.orders) data.orders = undefined;
       return data;
     } catch {
       return null;

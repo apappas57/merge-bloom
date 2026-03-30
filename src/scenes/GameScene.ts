@@ -8,6 +8,7 @@ import { QuestSystem, ActiveQuest } from '../systems/QuestSystem';
 import { HintSystem } from '../systems/HintSystem';
 import { AchievementSystem } from '../systems/AchievementSystem';
 import { AchievementDef } from '../data/achievements';
+import { OrderSystem } from '../systems/OrderSystem';
 import { SaveSystem, SaveData } from '../systems/SaveSystem';
 import { GENERATORS, getNextInChain, getChainItem, isMaxTier } from '../data/chains';
 import { SIZES, COLORS, TIMING, FONT, FONT_BODY, TEXT, fs, s } from '../utils/constants';
@@ -18,6 +19,7 @@ export class GameScene extends Phaser.Scene {
   private questSystem!: QuestSystem;
   private hintSystem!: HintSystem;
   private achievementSystem!: AchievementSystem;
+  private orderSystem!: OrderSystem;
   private mascot!: Mascot;
   private storageTray!: StorageTray;
 
@@ -59,17 +61,21 @@ export class GameScene extends Phaser.Scene {
     this.hintSystem = new HintSystem(this, this.board, this.items);
     this.achievementSystem = new AchievementSystem(this);
     this.achievementSystem.initialize(save?.achievements);
+    this.orderSystem = new OrderSystem(this.playerLevel);
+    this.orderSystem.initialize(save?.orders || undefined);
 
     // Events
     this.events.on('item-dropped', this.handleDrop, this);
     this.events.on('generator-tapped', this.handleGenTap, this);
     this.events.on('shop-buy-generator', this.onBuyGenerator, this);
     this.events.on('storage-retrieve', this.onStorageRetrieve, this);
+    this.events.on('claim-order', this.onClaimOrder, this);
 
     this.scene.launch('UIScene', {
-      gems: this.gems, level: this.playerLevel,
+      gems: this.gems, coins: this.orderSystem.coins, level: this.playerLevel,
       xp: this.playerXP, xpToNext: this.xpToNext,
       quests: this.questSystem.getActiveQuests(),
+      orders: this.orderSystem.getActiveOrders(),
     });
 
     this.time.addEvent({ delay: TIMING.AUTOSAVE, loop: true, callback: () => this.saveGame() });
@@ -342,9 +348,10 @@ export class GameScene extends Phaser.Scene {
       const cur = this.collection.get(result.newItem.chainId) || 0;
       if (result.newItem.tier > cur) this.collection.set(result.newItem.chainId, result.newItem.tier);
 
-      // Mascot reacts + check achievements
+      // Mascot reacts + check achievements + check orders
       this.mascot.reactToMerge(result.newItem.tier);
       this.checkAchievements(result.newItem.chainId, result.newItem.tier);
+      this.checkOrders(result.newItem.chainId, result.newItem.tier);
 
       const c1 = this.questSystem.onItemCreated(result.newItem.chainId, result.newItem.tier);
       const c2 = this.questSystem.onMerge();
@@ -439,6 +446,7 @@ export class GameScene extends Phaser.Scene {
       }
     });
     this.questSystem.setLevel(this.playerLevel);
+    this.orderSystem.setLevel(this.playerLevel);
     this.checkAchievements();
     this.createConfetti();
     this.mascot.react('excited');
@@ -462,6 +470,65 @@ export class GameScene extends Phaser.Scene {
         onComplete: () => c.destroy(),
       });
     }
+  }
+
+  private checkOrders(chainId: string, tier: number): void {
+    // Check if this item matches any active order
+    const match = this.orderSystem.findMatchingOrder(chainId, tier);
+    if (match) {
+      const completed = this.orderSystem.fulfillItem(match.orderIdx, match.slotIdx);
+      if (completed) {
+        this.mascot.showSpeech('Order ready! Tap GO! 🎉', 2500);
+      }
+      this.updateUI();
+    }
+  }
+
+  private onClaimOrder(orderIdx: number): void {
+    const rewards = this.orderSystem.claimOrder(orderIdx);
+    if (!rewards) return;
+
+    let xpGained = 0;
+    let gemsGained = 0;
+    for (const r of rewards) {
+      if (r.type === 'xp') xpGained += r.amount;
+      if (r.type === 'gems') gemsGained += r.amount;
+    }
+    if (xpGained > 0) this.addXP(xpGained);
+    if (gemsGained > 0) this.gems = Math.min(this.gems + gemsGained, 999999);
+
+    // Celebration
+    const { width, height } = this.scale;
+    const coinReward = rewards.find(r => r.type === 'coins');
+    if (coinReward) {
+      const ct = this.add.text(width / 2, height / 2, `+${coinReward.amount} 🪙`, {
+        fontSize: fs(24), color: TEXT.GOLD, fontFamily: FONT, fontStyle: '700',
+        stroke: '#FFFFFF', strokeThickness: s(3),
+      }).setOrigin(0.5).setDepth(3000).setScale(0);
+      this.tweens.add({
+        targets: ct, scaleX: 1, scaleY: 1, duration: 300, ease: 'Back.easeOut',
+        onComplete: () => {
+          this.tweens.add({ targets: ct, y: `-=${s(50)}`, alpha: 0, delay: 1000, duration: 600, onComplete: () => ct.destroy() });
+        }
+      });
+    }
+
+    // Hearts
+    for (let i = 0; i < 6; i++) {
+      const h = this.add.text(
+        width / 2 + Phaser.Math.Between(-s(60), s(60)),
+        height / 2, '💕', { fontSize: fs(Phaser.Math.Between(12, 18)) }
+      ).setOrigin(0.5).setDepth(3001);
+      this.tweens.add({
+        targets: h, y: h.y - s(Phaser.Math.Between(50, 100)), alpha: 0,
+        duration: 1000, delay: i * 60, onComplete: () => h.destroy(),
+      });
+    }
+
+    this.mascot.react('excited');
+    this.mascot.showSpeech('Order complete! 💕', 2500);
+    this.updateUI();
+    this.saveGame();
   }
 
   private checkAchievements(newChainId?: string, newTier?: number): void {
@@ -523,9 +590,10 @@ export class GameScene extends Phaser.Scene {
 
   private updateUI(): void {
     this.scene.get('UIScene').events.emit('update-ui', {
-      gems: this.gems, level: this.playerLevel,
+      gems: this.gems, coins: this.orderSystem.coins, level: this.playerLevel,
       xp: this.playerXP, xpToNext: this.xpToNext,
       quests: this.questSystem.getActiveQuests(),
+      orders: this.orderSystem.getActiveOrders(),
     });
   }
 
@@ -537,13 +605,14 @@ export class GameScene extends Phaser.Scene {
     this.collection.forEach((maxTier, chainId) => coll.push({ chainId, maxTier }));
 
     SaveSystem.save({
-      version: 2, timestamp: Date.now(),
+      version: 3, timestamp: Date.now(),
       player: { level: this.playerLevel, xp: this.playerXP, xpToNext: this.xpToNext, gems: this.gems, totalMerges: this.totalMerges },
       board: { cols: 6, rows: 8, items, generators: gens },
       quests: this.questSystem.getSaveData(),
       collection: coll,
       storage: this.storageTray.getStoredItems(),
       achievements: this.achievementSystem.getUnlocked(),
+      orders: this.orderSystem.getSaveData(),
     });
   }
 }

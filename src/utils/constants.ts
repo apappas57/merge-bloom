@@ -47,6 +47,11 @@ export const COLORS = {
   ACCENT_BLUE: 0xF8BBD0,
   TEXT_DARK: 0x880E4F,
   TEXT_MID: 0xC2185B,
+  // Y2K accent colors
+  CHROME_PINK: 0xE8A4C8,
+  HOLO_BLUE: 0x87CEEB,
+  JELLY_PURPLE: 0xD4A5FF,
+  Y2K_SILVER: 0xC0C0C0,
 };
 
 export const TEXT = {
@@ -58,11 +63,30 @@ export const TEXT = {
   WHITE: '#FFFFFF',
 };
 
+// Calculate responsive cell size based on actual screen dimensions
+function calcMaxCell(): number {
+  const w = (window.innerWidth) * DPR;
+  const h = (window.visualViewport?.height || window.innerHeight) * DPR;
+  const safeTop = getSafeAreaTop();
+  const topBar = safeTop + s(42);
+  const orderBar = s(76);
+  const bottomBar = s(58);
+  const boardPad = s(12);
+  const gap = s(3);
+  const traySpace = s(60); // storage tray + padding below board
+
+  const cols = 6, rows = 8;
+  const maxFromWidth = Math.floor((w - boardPad * 2 - (cols - 1) * gap) / cols);
+  const maxFromHeight = Math.floor((h - topBar - orderBar - boardPad * 2 - bottomBar - traySpace - (rows - 1) * gap) / rows);
+  // Use the smaller of width/height constraints, capped at s(65) for readability
+  return Math.min(maxFromWidth, maxFromHeight, s(65));
+}
+
 export const SIZES = {
-  CELL: s(50),
+  CELL: calcMaxCell(),
   CELL_GAP: s(3),
   BOARD_PADDING: s(12),
-  ITEM_SIZE: s(40),
+  ITEM_SIZE: Math.round(calcMaxCell() * 0.8),
   TOP_BAR: SAFE_AREA_TOP + s(42),
   BOTTOM_BAR: s(58),
   ORDER_BAR: s(76),

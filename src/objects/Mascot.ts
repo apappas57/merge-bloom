@@ -22,57 +22,105 @@ export class Mascot extends Phaser.GameObjects.Container {
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
     super(scene, x, y);
-    this.size = s(28);
+    this.size = s(16);
     const sz = this.size;
 
-    // Body — soft lavender circle
+    // Body — soft pink circle with gradient feel
     this.bodyGfx = scene.add.graphics();
+    // Outer glow
+    this.bodyGfx.fillStyle(0xFFB8D0, 0.3);
+    this.bodyGfx.fillCircle(0, 0, sz + s(2));
+    // Main body
     this.bodyGfx.fillStyle(0xFCE4EC, 1);
     this.bodyGfx.fillCircle(0, 0, sz);
-    this.bodyGfx.lineStyle(s(1.5), 0xF48FB1, 0.6);
+    this.bodyGfx.lineStyle(s(1), 0xF48FB1, 0.5);
     this.bodyGfx.strokeCircle(0, 0, sz);
     this.add(this.bodyGfx);
 
-    // Inner highlight
+    // Inner highlight — glossy candy look
     const highlight = scene.add.graphics();
-    highlight.fillStyle(0xFFFFFF, 0.25);
-    highlight.fillCircle(-sz * 0.15, -sz * 0.2, sz * 0.6);
+    highlight.fillStyle(0xFFFFFF, 0.3);
+    highlight.fillEllipse(-sz * 0.15, -sz * 0.25, sz * 0.7, sz * 0.45);
     this.add(highlight);
 
-    // Eyes — big cute dots
+    // Cat-like ears for extra kawaii (two small triangles)
+    const ears = scene.add.graphics();
+    ears.fillStyle(0xFCE4EC, 1);
+    // Left ear
+    ears.beginPath();
+    ears.moveTo(-sz * 0.6, -sz * 0.4);
+    ears.lineTo(-sz * 0.25, -sz * 0.95);
+    ears.lineTo(-sz * 0.05, -sz * 0.45);
+    ears.closePath();
+    ears.fill();
+    // Left ear inner
+    ears.fillStyle(0xF8BBD0, 0.8);
+    ears.beginPath();
+    ears.moveTo(-sz * 0.5, -sz * 0.5);
+    ears.lineTo(-sz * 0.28, -sz * 0.82);
+    ears.lineTo(-sz * 0.15, -sz * 0.52);
+    ears.closePath();
+    ears.fill();
+    // Right ear
+    ears.fillStyle(0xFCE4EC, 1);
+    ears.beginPath();
+    ears.moveTo(sz * 0.6, -sz * 0.4);
+    ears.lineTo(sz * 0.25, -sz * 0.95);
+    ears.lineTo(sz * 0.05, -sz * 0.45);
+    ears.closePath();
+    ears.fill();
+    // Right ear inner
+    ears.fillStyle(0xF8BBD0, 0.8);
+    ears.beginPath();
+    ears.moveTo(sz * 0.5, -sz * 0.5);
+    ears.lineTo(sz * 0.28, -sz * 0.82);
+    ears.lineTo(sz * 0.15, -sz * 0.52);
+    ears.closePath();
+    ears.fill();
+    ears.lineStyle(s(0.5), 0xF48FB1, 0.4);
+    ears.beginPath();
+    ears.moveTo(-sz * 0.6, -sz * 0.4);
+    ears.lineTo(-sz * 0.25, -sz * 0.95);
+    ears.lineTo(-sz * 0.05, -sz * 0.45);
+    ears.moveTo(sz * 0.6, -sz * 0.4);
+    ears.lineTo(sz * 0.25, -sz * 0.95);
+    ears.lineTo(sz * 0.05, -sz * 0.45);
+    ears.strokePath();
+    this.add(ears);
+
+    // Eyes — bigger relative to body for maximum cute
     this.leftEye = scene.add.graphics();
-    this.leftEye.fillStyle(0x5C5470, 1);
-    this.leftEye.fillCircle(-sz * 0.3, -sz * 0.15, sz * 0.13);
-    // Eye shine
+    this.leftEye.fillStyle(0x3D2B1F, 1);
+    this.leftEye.fillCircle(-sz * 0.28, -sz * 0.08, sz * 0.15);
     this.leftEye.fillStyle(0xFFFFFF, 1);
-    this.leftEye.fillCircle(-sz * 0.25, -sz * 0.22, sz * 0.05);
+    this.leftEye.fillCircle(-sz * 0.23, -sz * 0.15, sz * 0.06);
     this.add(this.leftEye);
 
     this.rightEye = scene.add.graphics();
-    this.rightEye.fillStyle(0x5C5470, 1);
-    this.rightEye.fillCircle(sz * 0.3, -sz * 0.15, sz * 0.13);
+    this.rightEye.fillStyle(0x3D2B1F, 1);
+    this.rightEye.fillCircle(sz * 0.28, -sz * 0.08, sz * 0.15);
     this.rightEye.fillStyle(0xFFFFFF, 1);
-    this.rightEye.fillCircle(sz * 0.35, -sz * 0.22, sz * 0.05);
+    this.rightEye.fillCircle(sz * 0.33, -sz * 0.15, sz * 0.06);
     this.add(this.rightEye);
 
-    // Blush marks — soft pink circles
+    // Blush marks
     this.blushL = scene.add.graphics();
-    this.blushL.fillStyle(0xF06292, 0.35);
-    this.blushL.fillEllipse(-sz * 0.5, sz * 0.1, sz * 0.25, sz * 0.15);
+    this.blushL.fillStyle(0xF06292, 0.3);
+    this.blushL.fillEllipse(-sz * 0.48, sz * 0.15, sz * 0.2, sz * 0.12);
     this.add(this.blushL);
 
     this.blushR = scene.add.graphics();
-    this.blushR.fillStyle(0xF06292, 0.35);
-    this.blushR.fillEllipse(sz * 0.5, sz * 0.1, sz * 0.25, sz * 0.15);
+    this.blushR.fillStyle(0xF06292, 0.3);
+    this.blushR.fillEllipse(sz * 0.48, sz * 0.15, sz * 0.2, sz * 0.12);
     this.add(this.blushR);
 
-    // Mouth — small happy curve
+    // Mouth
     this.mouth = scene.add.graphics();
     this.drawMouth('smile');
     this.add(this.mouth);
 
-    // Flower on top
-    this.flower = scene.add.text(0, -sz * 0.85, '🌸', { fontSize: fs(14) }).setOrigin(0.5);
+    // Flower on ear instead of on top
+    this.flower = scene.add.text(sz * 0.45, -sz * 0.75, '🌸', { fontSize: fs(8) }).setOrigin(0.5);
     this.add(this.flower);
 
     this.setDepth(50);
@@ -114,11 +162,11 @@ export class Mascot extends Phaser.GameObjects.Container {
   }
 
   private startIdleAnimation(): void {
-    // Gentle bobbing
+    // Gentle bobbing (subtler for smaller size)
     this.scene.tweens.add({
       targets: this,
-      y: this.y - s(4),
-      duration: 1500,
+      y: this.y - s(2),
+      duration: 1800,
       yoyo: true,
       repeat: -1,
       ease: 'Sine.easeInOut',
@@ -127,8 +175,8 @@ export class Mascot extends Phaser.GameObjects.Container {
     // Flower sway
     this.scene.tweens.add({
       targets: this.flower,
-      angle: 8,
-      duration: 2000,
+      angle: 6,
+      duration: 2200,
       yoyo: true,
       repeat: -1,
       ease: 'Sine.easeInOut',
@@ -208,7 +256,7 @@ export class Mascot extends Phaser.GameObjects.Container {
       this.speechBubble.destroy();
     }
 
-    const bubble = this.scene.add.container(this.x + s(35), this.y - s(25));
+    const bubble = this.scene.add.container(this.x + s(25), this.y + s(20));
     bubble.setDepth(52);
 
     const txt = this.scene.add.text(0, 0, text, {

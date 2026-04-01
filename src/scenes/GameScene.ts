@@ -29,6 +29,7 @@ export class GameScene extends Phaser.Scene {
 
   private items: Map<string, MergeItem> = new Map();
   private generators: Generator[] = [];
+  private isMerging = false;
 
   public playerLevel = 1;
   private playerXP = 0;
@@ -63,8 +64,8 @@ export class GameScene extends Phaser.Scene {
       x: 0, y: SIZES.TOP_BAR, w: width, h: height - SIZES.TOP_BAR - SIZES.BOTTOM_BAR
     });
 
-    // Mascot — bottom-left corner
-    this.mascot = new Mascot(this, s(32), height - SIZES.BOTTOM_BAR - s(40));
+    // Mascot — top-left, tucked into the order bar area
+    this.mascot = new Mascot(this, s(24), SIZES.TOP_BAR + s(8));
 
     const save = SaveSystem.load();
     if (save) { this.loadSave(save); } else { this.startFresh(); }
@@ -309,6 +310,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private handleDrop(dropped: MergeItem, targetCell: CellData): void {
+    if (this.isMerging) { dropped.returnToOriginal(); return; }
     const { width, height } = this.scale;
     this.events.emit('item-near-trash', false);
 
@@ -349,8 +351,14 @@ export class GameScene extends Phaser.Scene {
       if (this.generators.some(g => g.itemId === targetId)) { dropped.returnToOriginal(); return; }
       if (target) {
         const origCol = dropped.data_.col, origRow = dropped.data_.row;
+        // Clear target's cell and swap both items' board state atomically
+        // to prevent moveToCell's auto-clear from corrupting board state
         this.board.setOccupied(targetCell.col, targetCell.row, null);
         target.moveToCell(origCol, origRow);
+        // Update dropped's data to point at target cell BEFORE moveToCell,
+        // so moveToCell's clear step doesn't wipe target's new position
+        dropped.data_.col = targetCell.col;
+        dropped.data_.row = targetCell.row;
         dropped.moveToCell(targetCell.col, targetCell.row);
         return;
       }
@@ -360,9 +368,11 @@ export class GameScene extends Phaser.Scene {
   }
 
   private async executeMerge(item1: MergeItem, item2: MergeItem): Promise<void> {
+    this.isMerging = true;
     this.items.delete(item1.data_.id);
     this.items.delete(item2.data_.id);
     const result = await this.mergeSystem.executeMerge(item1, item2);
+    this.isMerging = false;
     if (result.success && result.newItem) {
       const newItem = this.createItem(result.newItem);
       newItem.playMergeResult();
@@ -428,6 +438,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private handleGenTap(_gen: Generator, cell: CellData): void {
+    if (this.isMerging) return;
     this.sound_.generatorTap();
     const item = this.spawnItem(_gen.genDef.chainId, _gen.genDef.spawnTier, cell.col, cell.row);
     if (item) { this.sound_.spawn(); this.createSpawnParticles(cell.x, cell.y); }

@@ -11,7 +11,7 @@ import { AchievementDef } from '../data/achievements';
 import { OrderSystem } from '../systems/OrderSystem';
 import { SaveSystem, SaveData, LoginData, DAILY_REWARDS } from '../systems/SaveSystem';
 import { GENERATORS, MERGE_CHAINS, getNextInChain, getChainItem, isMaxTier, getChain } from '../data/chains';
-import { GardenDecorationManager, GardenDecoData } from '../objects/GardenDecoration';
+import { GardenDecorationManager } from '../objects/GardenDecoration';
 import { SIZES, COLORS, TIMING, FONT, FONT_BODY, TEXT, fs, s } from '../utils/constants';
 import { SoundManager, haptic } from '../utils/SoundManager';
 import { StoryBeat, getPendingBeats } from '../data/story';
@@ -73,10 +73,16 @@ export class GameScene extends Phaser.Scene {
 
   // ─── Story system ───
   private completedStoryBeats: string[] = [];
-  private storyQueue: StoryBeat[] = [];
-  private storyPopupActive = false;
   private hasEverMergedMaxTier = false;
   private hasEverMergedGen = false;
+
+  // ─── Global popup queue system (BUG 2 fix) ───
+  // Priority: mascot=1, quest=2, order=3, story=4, level=5 (higher = more important)
+  private popupQueue: Array<{ type: string; priority: number; show: () => void }> = [];
+  private popupActive = false;
+  private lastPopupDismissTime = 0;
+  private static readonly POPUP_MIN_GAP = 3000; // 3 seconds between popups
+  private static readonly POPUP_MAX_QUEUED = 5; // Drop low-priority if queue grows
 
   constructor() { super('GameScene'); }
 
@@ -128,10 +134,11 @@ export class GameScene extends Phaser.Scene {
     this.events.on('claim-order', this.onClaimOrder, this);
     this.events.on('claim-order-item', this.onClaimOrderItem, this);
     this.events.on('item-preview', this.showChainPreview, this);
+    this.events.on('toggle-garden-view', this.onToggleGardenView, this);
     this.events.on('daily-challenge-complete', (reward: { xp: number; coins: number }) => {
       this.addXP(reward.xp);
       this.orderSystem.coins += reward.coins;
-      this.mascot.showSpeech('Daily done! 🎉', 3000);
+      this.mascot.showSpeech('Daily done!', 2000);
       this.updateUI();
       this.saveGame();
     });
@@ -153,10 +160,10 @@ export class GameScene extends Phaser.Scene {
     document.addEventListener('visibilitychange', visHandler);
     this.events.once('shutdown', () => document.removeEventListener('visibilitychange', visHandler));
 
-    // Mascot greeting
+    // Mascot greeting (reduced to 2s for routine messages)
     this.time.delayedCall(1500, () => {
-      const greetings = ['Welcome back! 🌸', 'Let\'s garden! ✨', 'Hi there! 💕', 'Ready to merge? 🌷'];
-      this.mascot.showSpeech(greetings[Phaser.Math.Between(0, greetings.length - 1)], 3000);
+      const greetings = ['Welcome back!', 'Let\'s garden!', 'Hi there!', 'Ready to merge?'];
+      this.mascot.showSpeech(greetings[Phaser.Math.Between(0, greetings.length - 1)], 2000);
     });
 
     // Mascot sleep timer
@@ -486,7 +493,7 @@ export class GameScene extends Phaser.Scene {
       arrowTween.destroy();
       tutorialObjs.forEach(o => { if (o && o.active) o.destroy(); });
       this.tutorialActive = false;
-      this.mascot.showSpeech('Let\'s bloom! 🌸', 3000);
+      this.mascot.showSpeech('Let\'s bloom!', 2000);
     };
 
     // ─── STEP 1: Tap a generator ───
@@ -579,51 +586,115 @@ export class GameScene extends Phaser.Scene {
   private drawBackground(width: number, height: number): void {
     const hour = new Date().getHours();
     let topColor: number, botColor: number;
-    if (hour >= 6 && hour < 12) { topColor = 0xFFF0F5; botColor = 0xFCE4EC; }
-    else if (hour >= 12 && hour < 17) { topColor = 0xFCE4EC; botColor = 0xFFF0F5; }
-    else if (hour >= 17 && hour < 21) { topColor = 0xFFF0F5; botColor = 0xF3E5F5; }
-    else { topColor = 0xF3E5F5; botColor = 0xEDE7F6; }
+    // Dramatic time-of-day gradients
+    if (hour >= 6 && hour < 12) {
+      // Morning: warm peach sunrise
+      topColor = 0xFFF0E0; botColor = 0xFFE0CC;
+    } else if (hour >= 12 && hour < 17) {
+      // Afternoon: soft golden cream
+      topColor = 0xFFF8E8; botColor = 0xFFF0D4;
+    } else if (hour >= 17 && hour < 21) {
+      // Evening: warm lavender-peach sunset
+      topColor = 0xFFE8E0; botColor = 0xE8D0E8;
+    } else {
+      // Night: deep blue-purple
+      topColor = 0xD8C8E8; botColor = 0xC0B0D8;
+    }
 
     const bg = this.add.graphics();
     bg.fillGradientStyle(topColor, topColor, botColor, botColor, 1);
     bg.fillRect(0, 0, width, height);
+
+    // ── Soft bokeh circles (warm blurred orbs at 3-5% opacity) ──
+    const bokehDefs = [
+      { x: width * 0.15, y: height * 0.20, r: s(40), color: 0xFFD8A8, alpha: 0.04 },
+      { x: width * 0.80, y: height * 0.35, r: s(55), color: 0xF5D280, alpha: 0.03 },
+      { x: width * 0.50, y: height * 0.75, r: s(45), color: 0xFFBFA0, alpha: 0.04 },
+      { x: width * 0.25, y: height * 0.60, r: s(35), color: 0xE8C8D8, alpha: 0.035 },
+      { x: width * 0.70, y: height * 0.15, r: s(30), color: 0xFFF0C0, alpha: 0.04 },
+      { x: width * 0.90, y: height * 0.80, r: s(50), color: 0xF0D0B0, alpha: 0.03 },
+    ];
+    for (const b of bokehDefs) {
+      // Multi-layer soft circle for blur-like effect
+      bg.fillStyle(b.color, b.alpha * 0.5);
+      bg.fillCircle(b.x, b.y, b.r * 1.4);
+      bg.fillStyle(b.color, b.alpha);
+      bg.fillCircle(b.x, b.y, b.r);
+      bg.fillStyle(b.color, b.alpha * 1.5);
+      bg.fillCircle(b.x, b.y, b.r * 0.6);
+    }
+
+    // ── Garden silhouette decorations (soft rounded bush shapes at edges) ──
+    const bushColor = hour >= 17 || hour < 6 ? 0xA8B8A0 : 0xC8D8B8;
+    const bushAlpha = 0.06;
+    // Bottom-left bush cluster
+    bg.fillStyle(bushColor, bushAlpha);
+    bg.fillEllipse(s(-10), height - SIZES.BOTTOM_BAR + s(5), s(80), s(45));
+    bg.fillEllipse(s(30), height - SIZES.BOTTOM_BAR + s(10), s(60), s(35));
+    // Bottom-right bush cluster
+    bg.fillEllipse(width + s(10), height - SIZES.BOTTOM_BAR + s(5), s(70), s(40));
+    bg.fillEllipse(width - s(25), height - SIZES.BOTTOM_BAR + s(12), s(55), s(30));
+    // Top-right small leaves
+    bg.fillStyle(bushColor, bushAlpha * 0.7);
+    bg.fillEllipse(width - s(15), SIZES.TOP_BAR + s(20), s(50), s(25));
+
+    // ── Vignette (darker edges, lighter center) ──
+    const vigAlpha = 0.06;
+    // Top vignette
+    bg.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, vigAlpha, vigAlpha, 0, 0);
+    bg.fillRect(0, 0, width, height * 0.2);
+    // Bottom vignette
+    bg.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0, 0, vigAlpha, vigAlpha);
+    bg.fillRect(0, height * 0.8, width, height * 0.2);
+    // Left vignette
+    bg.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, vigAlpha, 0, vigAlpha, 0);
+    bg.fillRect(0, 0, width * 0.15, height);
+    // Right vignette
+    bg.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0, vigAlpha, 0, vigAlpha);
+    bg.fillRect(width * 0.85, 0, width * 0.15, height);
   }
 
   private createAmbientSparkles(width: number, height: number): void {
-    // Canvas-drawn shape sparkles (hearts, circles, blossoms)
-    const sparkleColors = [0xFF6B9D, 0xFFD93D, 0xD4A5FF, 0x87CEEB, 0xE8A4C8, 0xF48FB1, 0xA8E6CF];
+    // ── Shape sparkles — mixed sizes (tiny, small, medium) ──
+    const sparkleColors = [0xF5D280, 0xFFD93D, 0xFFBFA0, 0xE8A4C8, 0xF48FB1, 0xA8E6CF, 0xFF6B9D];
     const sparkleShapes = ['heart', 'circle', 'blossom', 'diamond'] as const;
 
-    for (let i = 0; i < 4; i++) {
-      const g = this.add.graphics().setDepth(0).setAlpha(0.08);
+    // 6 shape sparkles (increased from 4), with size variety
+    for (let i = 0; i < 6; i++) {
+      const g = this.add.graphics().setDepth(0);
       const color = sparkleColors[Phaser.Math.Between(0, sparkleColors.length - 1)];
       const shape = sparkleShapes[Phaser.Math.Between(0, sparkleShapes.length - 1)];
-      const r = s(Phaser.Math.Between(3, 6));
+      // Mixed sizes: tiny (2-3), small (4-5), medium (6-8)
+      const sizeClass = i < 2 ? Phaser.Math.Between(2, 3) : (i < 4 ? Phaser.Math.Between(4, 5) : Phaser.Math.Between(6, 8));
+      const r = s(sizeClass);
+      const startAlpha = i < 2 ? 0.06 : (i < 4 ? 0.08 : 0.05); // smaller = subtler, big = gentler
+      g.setAlpha(startAlpha);
       this.drawSparkleShape(g, 0, 0, r, color, shape);
 
       const x = Phaser.Math.Between(0, width);
       const y = Phaser.Math.Between(SIZES.TOP_BAR, height - SIZES.BOTTOM_BAR);
       g.setPosition(x, y);
 
+      // Mixed speeds: tiny drift slow, medium drift faster
+      const speed = sizeClass < 4 ? Phaser.Math.Between(7000, 14000) : Phaser.Math.Between(5000, 9000);
       this.tweens.add({
-        targets: g, y: y - s(Phaser.Math.Between(40, 100)), alpha: 0,
-        duration: Phaser.Math.Between(5000, 10000), delay: Phaser.Math.Between(0, 5000),
+        targets: g, y: y - s(Phaser.Math.Between(40, 110)), alpha: 0,
+        duration: speed, delay: Phaser.Math.Between(0, 6000),
         repeat: -1,
         onRepeat: () => {
           g.setPosition(Phaser.Math.Between(0, width), Phaser.Math.Between(SIZES.TOP_BAR, height - SIZES.BOTTOM_BAR));
-          g.setAlpha(0.08);
+          g.setAlpha(startAlpha);
         },
       });
     }
 
-    // Canvas-drawn 4-point star sparkles with drift animation
-    const starColors = [0xFF6B9D, 0xFFD93D, 0xD4A5FF, 0x87CEEB, 0xE8A4C8];
-    for (let i = 0; i < 4; i++) {
+    // ── 4-point star sparkles with drift — mixed sizes and colors ──
+    const starColors = [0xF5D280, 0xFFD93D, 0xFFBFA0, 0xE8A4C8, 0x87CEEB];
+    for (let i = 0; i < 5; i++) {
       const g = this.add.graphics().setDepth(0);
       const color = starColors[Phaser.Math.Between(0, starColors.length - 1)];
-      const starSize = s(Phaser.Math.Between(3, 6));
+      const starSize = s(i < 2 ? Phaser.Math.Between(2, 3) : Phaser.Math.Between(4, 7));
 
-      // Draw a 4-point star
       g.fillStyle(color, 0.7);
       g.beginPath();
       g.moveTo(0, -starSize * 1.5);
@@ -639,10 +710,10 @@ export class GameScene extends Phaser.Scene {
 
       const startX = Phaser.Math.Between(0, width);
       const startY = Phaser.Math.Between(SIZES.TOP_BAR, height - SIZES.BOTTOM_BAR);
-      g.setPosition(startX, startY).setAlpha(0.1);
+      g.setPosition(startX, startY).setAlpha(i < 2 ? 0.07 : 0.1);
 
-      // Drift up with horizontal sway
       const driftX = Phaser.Math.Between(-30, 30);
+      const speed = Phaser.Math.Between(6000, 13000);
       this.tweens.add({
         targets: g,
         y: startY - s(Phaser.Math.Between(50, 120)),
@@ -650,15 +721,48 @@ export class GameScene extends Phaser.Scene {
         alpha: 0,
         scaleX: { from: 0.5, to: 1.2 },
         scaleY: { from: 0.5, to: 1.2 },
-        duration: Phaser.Math.Between(6000, 12000),
+        duration: speed,
         delay: Phaser.Math.Between(0, 6000),
         repeat: -1,
         onRepeat: () => {
           const newX = Phaser.Math.Between(0, width);
           const newY = Phaser.Math.Between(SIZES.TOP_BAR, height - SIZES.BOTTOM_BAR);
           g.setPosition(newX, newY);
-          g.setAlpha(0.1);
+          g.setAlpha(i < 2 ? 0.07 : 0.1);
           g.setScale(0.5);
+        },
+      });
+    }
+
+    // ── Floating golden light motes (very small warm dots drifting upward) ──
+    for (let i = 0; i < 8; i++) {
+      const g = this.add.graphics().setDepth(0);
+      const moteColor = i < 5 ? 0xF5D280 : 0xFFE4B0; // warm gold / pale gold mix
+      const moteR = s(Phaser.Math.Between(1, 2));
+      g.fillStyle(moteColor, 0.8);
+      g.fillCircle(0, 0, moteR);
+      // Subtle glow ring
+      g.fillStyle(moteColor, 0.3);
+      g.fillCircle(0, 0, moteR * 2);
+
+      const startX = Phaser.Math.Between(s(20), width - s(20));
+      const startY = Phaser.Math.Between(height * 0.4, height - SIZES.BOTTOM_BAR);
+      g.setPosition(startX, startY).setAlpha(0.12);
+
+      const driftX = Phaser.Math.Between(-15, 15);
+      this.tweens.add({
+        targets: g,
+        y: startY - s(Phaser.Math.Between(80, 200)),
+        x: startX + s(driftX),
+        alpha: 0,
+        duration: Phaser.Math.Between(8000, 16000),
+        delay: Phaser.Math.Between(0, 8000),
+        repeat: -1,
+        onRepeat: () => {
+          const newX = Phaser.Math.Between(s(20), width - s(20));
+          const newY = Phaser.Math.Between(height * 0.4, height - SIZES.BOTTOM_BAR);
+          g.setPosition(newX, newY);
+          g.setAlpha(0.12);
         },
       });
     }
@@ -742,7 +846,7 @@ export class GameScene extends Phaser.Scene {
   private onStorageRetrieve(itemData: { chainId: string; tier: number }, slotIndex: number): void {
     const cell = this.board.findEmptyCell();
     if (!cell) {
-      this.mascot.showSpeech('Board is full! 😅', 2000);
+      this.mascot.showSpeech('Board is full!', 2000);
       return;
     }
     const removed = this.storageTray.removeItem(slotIndex);
@@ -950,7 +1054,7 @@ export class GameScene extends Phaser.Scene {
     if (now - this.boardFullCooldown < 3000) return;
     this.boardFullCooldown = now;
     this.sound_.boardFull();
-    this.mascot.showSpeech('Board is full! Clear some space!', 3000);
+    this.mascot.showSpeech('Board is full! Clear some space!', 2000);
   }
 
   private createSpawnParticles(x: number, y: number): void {
@@ -1060,7 +1164,7 @@ export class GameScene extends Phaser.Scene {
       const upgradeLines = [
         'Upgraded! So powerful!', 'Getting stronger!', 'Amazing upgrade!',
       ];
-      this.mascot.showSpeech(upgradeLines[Phaser.Math.Between(0, upgradeLines.length - 1)], 2500);
+      this.mascot.showSpeech(upgradeLines[Phaser.Math.Between(0, upgradeLines.length - 1)], 2000);
 
       this.updateUI();
       this.saveGame();
@@ -1072,6 +1176,13 @@ export class GameScene extends Phaser.Scene {
     if (!reward) return;
     this.gems = Math.min(this.gems + reward.gems, 999999);
     this.addXP(reward.xp);
+
+    // Queue the quest complete popup (priority 2)
+    this.queuePopup('quest', 2, () => this.showQuestCompletePopup(quest, reward));
+    this.updateUI();
+  }
+
+  private showQuestCompletePopup(quest: ActiveQuest, reward: { gems: number; xp: number }): void {
     const { width, height } = this.scale;
 
     // Canvas-drawn heart particles
@@ -1104,12 +1215,11 @@ export class GameScene extends Phaser.Scene {
     this.tweens.add({
       targets: [banner, rewardTxt], y: `-=${s(30)}`, alpha: 0,
       duration: 2000, delay: 1500,
-      onComplete: () => { banner.destroy(); rewardTxt.destroy(); },
+      onComplete: () => { banner.destroy(); rewardTxt.destroy(); this.onPopupDismissed(); },
     });
 
     this.mascot.react('excited');
-    this.mascot.showSpeech('Quest done! 🎉', 2500);
-    this.updateUI();
+    this.mascot.showSpeech('Quest done!', 2000);
   }
 
   private addXP(amount: number): void {
@@ -1124,8 +1234,22 @@ export class GameScene extends Phaser.Scene {
 
   private onLevelUp(): void {
     this.sound_.levelUp();
+    this.questSystem.setLevel(this.playerLevel);
+    this.orderSystem.setLevel(this.playerLevel);
+    this.checkAchievements();
+    this.updateUI();
+
+    // Queue the level-up celebration popup (priority 5 = highest)
+    const level = this.playerLevel;
+    this.queuePopup('level', 5, () => this.showLevelUpPopup(level));
+
+    // Check story beats after level-up fanfare settles
+    this.time.delayedCall(3500, () => this.checkStoryBeats());
+  }
+
+  private showLevelUpPopup(level: number): void {
     const { width, height } = this.scale;
-    const txt = this.add.text(width / 2, height / 2 - s(60), `Level ${this.playerLevel}!`, {
+    const txt = this.add.text(width / 2, height / 2 - s(60), `Level ${level}!`, {
       fontSize: fs(34), color: TEXT.ACCENT, fontFamily: FONT, fontStyle: '700',
       stroke: '#FFFFFF', strokeThickness: s(4),
     }).setOrigin(0.5).setDepth(3000).setScale(0);
@@ -1133,18 +1257,15 @@ export class GameScene extends Phaser.Scene {
     this.tweens.add({
       targets: txt, scaleX: 1, scaleY: 1, duration: 400, ease: 'Back.easeOut',
       onComplete: () => {
-        this.tweens.add({ targets: txt, y: `-=${s(40)}`, alpha: 0, delay: 2000, duration: 800, onComplete: () => txt.destroy() });
+        this.tweens.add({
+          targets: txt, y: `-=${s(40)}`, alpha: 0, delay: 2000, duration: 800,
+          onComplete: () => { txt.destroy(); this.onPopupDismissed(); },
+        });
       }
     });
-    this.questSystem.setLevel(this.playerLevel);
-    this.orderSystem.setLevel(this.playerLevel);
-    this.checkAchievements();
     this.createConfetti();
     this.mascot.react('excited');
-    this.mascot.showSpeech(`Level ${this.playerLevel}! 🌟`, 3000);
-    this.updateUI();
-    // Check story beats after level-up fanfare settles
-    this.time.delayedCall(2500, () => this.checkStoryBeats());
+    this.mascot.showSpeech(`Level ${level}!`, 2000);
   }
 
   private createConfetti(): void {
@@ -1167,15 +1288,39 @@ export class GameScene extends Phaser.Scene {
 
   private showGardenPrompt(item: MergeItem, emoji: string, name: string, chainId: string, tier: number): void {
     const { width, height } = this.scale;
+    const nextSlot = this.gardenManager.getNextSlot();
+    if (!nextSlot) return;
+
+    const allElements: Phaser.GameObjects.GameObject[] = [];
 
     // Semi-transparent overlay
     const overlay = this.add.graphics().setDepth(4000);
     overlay.fillStyle(0x6D3A5B, 0.4);
     overlay.fillRect(0, 0, width, height);
+    allElements.push(overlay);
+
+    // Pulsing indicator at target slot location
+    const slotX = nextSlot.x * width;
+    const slotY = nextSlot.y * height;
+    const slotIndicator = this.add.graphics().setDepth(4001);
+    slotIndicator.lineStyle(s(2), 0xFFD93D, 0.7);
+    slotIndicator.strokeCircle(slotX, slotY, s(24));
+    slotIndicator.fillStyle(0xFFD93D, 0.15);
+    slotIndicator.fillCircle(slotX, slotY, s(24));
+    allElements.push(slotIndicator);
+    this.tweens.add({
+      targets: slotIndicator, alpha: 0.4, scaleX: 1.15, scaleY: 1.15,
+      duration: 800, yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
+    });
+
+    const slotLabel = this.add.text(slotX, slotY + s(30), nextSlot.label, {
+      fontSize: fs(9), color: '#FFD93D', fontFamily: FONT, fontStyle: '600',
+    }).setOrigin(0.5).setDepth(4001);
+    allElements.push(slotLabel);
 
     // Prompt card
-    const cardW = width * 0.75;
-    const cardH = s(160);
+    const cardW = width * 0.8;
+    const cardH = s(185);
     const cardX = (width - cardW) / 2;
     const cardY = (height - cardH) / 2;
     const r = s(20);
@@ -1185,74 +1330,110 @@ export class GameScene extends Phaser.Scene {
     card.fillRoundedRect(cardX, cardY, cardW, cardH, r);
     card.lineStyle(s(1.5), 0xF8BBD0, 0.5);
     card.strokeRoundedRect(cardX, cardY, cardW, cardH, r);
+    allElements.push(card);
 
-    // Item icon large (use rendered texture)
-    let emojiText: Phaser.GameObjects.GameObject;
+    // Item icon
+    let emojiObj: Phaser.GameObjects.GameObject;
     const gardenTexKey = `${chainId}_${tier}`;
     if (this.textures.exists(gardenTexKey)) {
-      emojiText = this.add.image(width / 2, cardY + s(30), gardenTexKey)
+      emojiObj = this.add.image(width / 2, cardY + s(30), gardenTexKey)
         .setDisplaySize(s(40), s(40)).setDepth(4002);
     } else {
-      emojiText = this.add.text(width / 2, cardY + s(30), name.charAt(0), {
+      emojiObj = this.add.text(width / 2, cardY + s(30), name.charAt(0), {
         fontSize: fs(30), color: TEXT.PRIMARY, fontFamily: FONT, fontStyle: '700',
       }).setOrigin(0.5).setDepth(4002);
     }
+    allElements.push(emojiObj);
 
-    // Title
-    const title = this.add.text(width / 2, cardY + s(65), `Place ${name} in your garden?`, {
-      fontSize: fs(13), color: TEXT.PRIMARY, fontFamily: FONT, fontStyle: '600',
+    const title = this.add.text(width / 2, cardY + s(62), `Add ${name} to your garden!`, {
+      fontSize: fs(14), color: TEXT.PRIMARY, fontFamily: FONT, fontStyle: '700',
       align: 'center', wordWrap: { width: cardW - s(24) },
     }).setOrigin(0.5).setDepth(4002);
+    allElements.push(title);
 
-    // Buttons
-    const btnW = s(80), btnH = s(32);
+    const subtitle = this.add.text(width / 2, cardY + s(82),
+      `Placing at "${nextSlot.label}"`, {
+      fontSize: fs(10), color: TEXT.SECONDARY, fontFamily: FONT, align: 'center',
+    }).setOrigin(0.5).setDepth(4002);
+    allElements.push(subtitle);
+
+    const placed = this.gardenManager.count;
+    const total = this.gardenManager.totalSlots;
+    const progressText = this.add.text(width / 2, cardY + s(100),
+      `Garden: ${placed}/${total} filled`, {
+      fontSize: fs(9), color: '#B07A9E', fontFamily: FONT,
+    }).setOrigin(0.5).setDepth(4002);
+    allElements.push(progressText);
+
+    const btnW = s(85), btnH = s(34);
     const gap = s(12);
 
-    // "Keep" button (left)
     const keepBg = this.add.graphics().setDepth(4002);
     keepBg.fillStyle(0xA8D8EA, 1);
-    keepBg.fillRoundedRect(width / 2 - btnW - gap / 2, cardY + cardH - s(48), btnW, btnH, btnH / 2);
+    keepBg.fillRoundedRect(width / 2 - btnW - gap / 2, cardY + cardH - s(52), btnW, btnH, btnH / 2);
+    allElements.push(keepBg);
 
-    const keepText = this.add.text(width / 2 - btnW / 2 - gap / 2, cardY + cardH - s(32), 'Keep', {
+    const keepText = this.add.text(width / 2 - btnW / 2 - gap / 2, cardY + cardH - s(35), 'Keep', {
       fontSize: fs(12), color: TEXT.WHITE, fontFamily: FONT, fontStyle: '600',
     }).setOrigin(0.5).setDepth(4003);
+    allElements.push(keepText);
 
-    const keepZone = this.add.zone(width / 2 - btnW / 2 - gap / 2, cardY + cardH - s(32), btnW, btnH)
+    const keepZone = this.add.zone(width / 2 - btnW / 2 - gap / 2, cardY + cardH - s(35), btnW, btnH)
       .setInteractive().setDepth(4003);
+    allElements.push(keepZone);
 
-    // "Place" button (right)
     const placeBg = this.add.graphics().setDepth(4002);
-    placeBg.fillStyle(0xFF9CAD, 1);
-    placeBg.fillRoundedRect(width / 2 + gap / 2, cardY + cardH - s(48), btnW, btnH, btnH / 2);
+    placeBg.fillStyle(0xEC407A, 1);
+    placeBg.fillRoundedRect(width / 2 + gap / 2, cardY + cardH - s(52), btnW, btnH, btnH / 2);
+    allElements.push(placeBg);
 
-    const placeText = this.add.text(width / 2 + btnW / 2 + gap / 2, cardY + cardH - s(32), 'Place', {
-      fontSize: fs(12), color: TEXT.WHITE, fontFamily: FONT, fontStyle: '600',
+    const placeText = this.add.text(width / 2 + btnW / 2 + gap / 2, cardY + cardH - s(35), 'Place!', {
+      fontSize: fs(12), color: TEXT.WHITE, fontFamily: FONT, fontStyle: '700',
     }).setOrigin(0.5).setDepth(4003);
+    allElements.push(placeText);
 
-    const placeZone = this.add.zone(width / 2 + btnW / 2 + gap / 2, cardY + cardH - s(32), btnW, btnH)
+    const placeZone = this.add.zone(width / 2 + btnW / 2 + gap / 2, cardY + cardH - s(35), btnW, btnH)
       .setInteractive().setDepth(4003);
+    allElements.push(placeZone);
 
-    const cleanup = () => {
-      [overlay, card, emojiText, title, keepBg, keepText, keepZone, placeBg, placeText, placeZone].forEach(o => o.destroy());
-    };
+    const cleanup = () => { allElements.forEach(o => o.destroy()); };
 
     keepZone.on('pointerdown', () => cleanup());
 
     placeZone.on('pointerdown', () => {
-      // Remove the item from the board
       this.items.delete(item.data_.id);
       this.board.setOccupied(item.data_.col, item.data_.row, null);
       item.destroy();
 
-      // Place in garden
       this.gardenManager.place(chainId, tier, emoji, name);
 
       this.mascot.react('excited');
-      this.mascot.showSpeech('The garden looks even prettier now! 🌸', 3000);
+      const gardenCount = this.gardenManager.count;
+      const messages = [
+        `${name} looks beautiful there!`,
+        `Love it! ${gardenCount} decorations now!`,
+        'The garden is coming alive!',
+        'So pretty! Keep collecting!',
+      ];
+      this.mascot.showSpeech(messages[Phaser.Math.Between(0, messages.length - 1)], 3500);
 
       cleanup();
+      this.updateUI();
       this.saveGame();
     });
+  }
+
+  private onToggleGardenView(): void {
+    const isActive = this.gardenManager.toggleGardenView();
+    this.sound_.buttonPress();
+    if (isActive) {
+      if (this.gardenManager.count === 0) {
+        this.mascot.showSpeech('No decorations yet! Merge to max tier to unlock them.', 4000);
+      } else {
+        this.mascot.showSpeech(`Your garden has ${this.gardenManager.count} decorations!`, 3000);
+      }
+    }
+    this.updateUI();
   }
 
   private playDiscoveryAnimation(item: MergeItem): void {
@@ -1314,12 +1495,12 @@ export class GameScene extends Phaser.Scene {
       });
     }
 
-    // Mascot reacts
+    // Mascot reacts (2s for routine speech)
     const discoveryLines = [
-      'Ooh, what\'s this? ✨', 'A new discovery! 💕', 'So pretty! 🌸',
-      'I\'ve never seen this before! 🤩', 'How beautiful! 💖',
+      'Ooh, what\'s this?', 'A new discovery!', 'So pretty!',
+      'I\'ve never seen this before!', 'How beautiful!',
     ];
-    this.mascot.showSpeech(discoveryLines[Phaser.Math.Between(0, discoveryLines.length - 1)], 2500);
+    this.mascot.showSpeech(discoveryLines[Phaser.Math.Between(0, discoveryLines.length - 1)], 2000);
   }
 
   private onClaimOrder(orderIdx: number): void {
@@ -1336,9 +1517,19 @@ export class GameScene extends Phaser.Scene {
     if (xpGained > 0) this.addXP(xpGained);
     if (gemsGained > 0) this.gems = Math.min(this.gems + gemsGained, 999999);
 
-    // Celebration
+    // Queue the order complete celebration (priority 3)
+    const rewardsCopy = [...rewards];
+    this.queuePopup('order', 3, () => this.showOrderCompletePopup(rewardsCopy));
+    this.updateUI();
+    this.saveGame();
+    // Check story beats after order celebration settles
+    this.time.delayedCall(3500, () => this.checkStoryBeats());
+  }
+
+  private showOrderCompletePopup(rewards: { type: string; amount: number }[]): void {
     const { width, height } = this.scale;
     const coinReward = rewards.find(r => r.type === 'coins');
+
     if (coinReward) {
       const ct = this.add.text(width / 2, height / 2, `+${coinReward.amount} coins`, {
         fontSize: fs(24), color: TEXT.GOLD, fontFamily: FONT, fontStyle: '700',
@@ -1347,9 +1538,15 @@ export class GameScene extends Phaser.Scene {
       this.tweens.add({
         targets: ct, scaleX: 1, scaleY: 1, duration: 300, ease: 'Back.easeOut',
         onComplete: () => {
-          this.tweens.add({ targets: ct, y: `-=${s(50)}`, alpha: 0, delay: 1000, duration: 600, onComplete: () => ct.destroy() });
+          this.tweens.add({
+            targets: ct, y: `-=${s(50)}`, alpha: 0, delay: 1000, duration: 600,
+            onComplete: () => { ct.destroy(); this.onPopupDismissed(); },
+          });
         }
       });
+    } else {
+      // No coin reward -- dismiss popup state after a brief moment
+      this.time.delayedCall(1500, () => this.onPopupDismissed());
     }
 
     // Canvas-drawn heart particles
@@ -1370,15 +1567,11 @@ export class GameScene extends Phaser.Scene {
     }
 
     this.mascot.react('excited');
-    this.mascot.showSpeech('Order complete! 💕', 2500);
-    this.updateUI();
-    this.saveGame();
-    // Check story beats after order celebration settles
-    this.time.delayedCall(2000, () => this.checkStoryBeats());
+    this.mascot.showSpeech('Order complete!', 2000);
   }
 
   /**
-   * Handle tap on an order card in the UI — find the first matching board item,
+   * Handle tap on an order card in the UI -- find the first matching board item,
    * animate it flying to the order bar, fulfill one slot, and check completion.
    */
   private onClaimOrderItem(orderIdx: number): void {
@@ -1401,32 +1594,63 @@ export class GameScene extends Phaser.Scene {
 
       if (!matchItem) continue;
 
-      // Found a match — consume it from the board
+      // Found a match -- consume it from the board
       const mi = matchItem as MergeItem;
       this.items.delete(mi.data_.id);
       this.board.setOccupied(mi.data_.col, mi.data_.row, null);
       mi.disableInteractive();
 
-      // Animate item flying to order bar
+      // Calculate target Y for the order bar (top of screen)
+      const orderBarY = SIZES.TOP_BAR + SIZES.ORDER_BAR / 2;
+
+      // Animate item flying to order bar area
       this.tweens.add({
-        targets: mi, y: s(60), alpha: 0, scaleX: 0.3, scaleY: 0.3,
+        targets: mi, y: orderBarY, alpha: 0, scaleX: 0.3, scaleY: 0.3,
         duration: 400, ease: 'Power2',
         onComplete: () => mi.destroy(),
       });
 
       this.sound_.merge(req.tier);
+      haptic('light');
 
       const completed = this.orderSystem.fulfillItem(orderIdx, si);
       if (completed) {
-        this.time.delayedCall(450, () => this.onClaimOrder(orderIdx));
-      } else {
-        this.updateUI();
+        // Use order ID for the delayed claim (index-safe)
+        const orderId = order.def.id;
+        this.time.delayedCall(450, () => this.onClaimOrderById(orderId));
       }
+      // Always update UI after consuming an item (shows progress change)
+      this.updateUI();
       this.saveGame();
       return; // Only consume one item per tap
     }
 
-    // No matching item found on board — nothing happens
+    // No matching item found on board -- show feedback
+    this.mascot.showSpeech('No matching items on the board!', 2000);
+  }
+
+  /** Claim a completed order by its definition ID (index-safe for delayed calls) */
+  private onClaimOrderById(orderId: string): void {
+    const rewards = this.orderSystem.claimOrderById(orderId);
+    if (!rewards) return;
+    this.sound_.complete();
+
+    let xpGained = 0;
+    let gemsGained = 0;
+    for (const r of rewards) {
+      if (r.type === 'xp') xpGained += r.amount;
+      if (r.type === 'gems') gemsGained += r.amount;
+    }
+    if (xpGained > 0) this.addXP(xpGained);
+    if (gemsGained > 0) this.gems = Math.min(this.gems + gemsGained, 999999);
+
+    // Queue the order complete celebration (priority 3)
+    const rewardsCopy = [...rewards];
+    this.queuePopup('order', 3, () => this.showOrderCompletePopup(rewardsCopy));
+    this.updateUI();
+    this.saveGame();
+    // Check story beats after order celebration settles
+    this.time.delayedCall(3500, () => this.checkStoryBeats());
   }
 
   private checkAchievements(newChainId?: string, newTier?: number): void {
@@ -1437,7 +1661,8 @@ export class GameScene extends Phaser.Scene {
       newChainId, newTier,
     });
     for (const ach of newlyUnlocked) {
-      this.showAchievementToast(ach);
+      // Queue achievement toasts (priority 2 = quest-level)
+      this.queuePopup('quest', 2, () => this.showAchievementToast(ach));
     }
   }
 
@@ -1489,13 +1714,13 @@ export class GameScene extends Phaser.Scene {
         this.time.delayedCall(3000, () => {
           this.tweens.add({
             targets: container, y: -toastH - s(20), duration: 300, ease: 'Power2',
-            onComplete: () => container.destroy(),
+            onComplete: () => { container.destroy(); this.onPopupDismissed(); },
           });
         });
       }
     });
 
-    this.mascot.showSpeech('Badge earned! 🎀', 2000);
+    this.mascot.showSpeech('Badge earned!', 2000);
   }
 
   private updateUI(): void {
@@ -1512,6 +1737,9 @@ export class GameScene extends Phaser.Scene {
       quests: this.questSystem.getActiveQuests(),
       orders: this.orderSystem.getActiveOrders(),
       boardMatches,
+      gardenCount: this.gardenManager.count,
+      gardenAvailable: this.gardenManager.availableSlots,
+      gardenViewActive: this.gardenManager.isGardenViewActive,
     });
   }
 
@@ -1870,11 +2098,11 @@ export class GameScene extends Phaser.Scene {
       if (reward.special) {
         this.createConfetti();
         this.mascot.react('excited');
-        this.mascot.showSpeech('Perfect week! 🎊', 3000);
+        this.mascot.showSpeech('Perfect week!', 2000);
       } else {
         this.mascot.react('happy');
-        const lines = ['Welcome back! 💕', 'Nice streak! 🌸', 'Keep it up! ✨'];
-        this.mascot.showSpeech(lines[Phaser.Math.Between(0, lines.length - 1)], 2500);
+        const lines = ['Welcome back!', 'Nice streak!', 'Keep it up!'];
+        this.mascot.showSpeech(lines[Phaser.Math.Between(0, lines.length - 1)], 2000);
       }
 
       this.updateUI();
@@ -1899,8 +2127,6 @@ export class GameScene extends Phaser.Scene {
   // ─── FEATURE: Story / Narrative System ───
 
   private checkStoryBeats(): void {
-    if (this.storyPopupActive) return;
-
     const pending = getPendingBeats(this.completedStoryBeats, {
       level: this.playerLevel,
       totalOrders: this.orderSystem.totalCompleted,
@@ -1910,19 +2136,16 @@ export class GameScene extends Phaser.Scene {
 
     if (pending.length === 0) return;
 
-    // Queue all pending beats -- show one at a time
-    this.storyQueue.push(...pending);
-    this.showNextStoryBeat();
+    // Queue each pending beat through the global popup queue (priority 4 = story)
+    for (const beat of pending) {
+      // Mark as completed immediately to prevent re-triggers
+      if (this.completedStoryBeats.includes(beat.id)) continue;
+      this.completedStoryBeats.push(beat.id);
+      this.queuePopup('story', 4, () => this.showStoryBeatPopup(beat));
+    }
   }
 
-  private showNextStoryBeat(): void {
-    if (this.storyPopupActive || this.storyQueue.length === 0) return;
-
-    const beat = this.storyQueue.shift()!;
-    // Mark as completed immediately to prevent re-triggers
-    this.completedStoryBeats.push(beat.id);
-    this.storyPopupActive = true;
-
+  private showStoryBeatPopup(beat: StoryBeat): void {
     const char = CHARACTERS.find(c => c.id === beat.characterId);
     const charName = char?.name || '???';
     const charInitial = char?.name?.charAt(0) || '?';
@@ -1930,11 +2153,8 @@ export class GameScene extends Phaser.Scene {
     const { width, height } = this.scale;
     const storyContainer = this.add.container(0, 0).setDepth(5500);
 
-    // Semi-transparent backdrop (player can still see their garden)
-    const backdrop = this.add.graphics();
-    backdrop.fillStyle(0x6D3A5B, 0.25);
-    backdrop.fillRect(0, 0, width, height);
-    storyContainer.add(backdrop);
+    // NO full-screen backdrop -- story beats should not block game input
+    // Just the dialogue card floats on top
 
     // Dialogue card
     const cardW = width * 0.88;
@@ -2044,18 +2264,14 @@ export class GameScene extends Phaser.Scene {
         targets: storyContainer, alpha: 0, y: s(-10), duration: 200,
         onComplete: () => {
           storyContainer.destroy();
-          this.storyPopupActive = false;
           this.saveGame();
-          // Show next queued beat after a pause
-          if (this.storyQueue.length > 0) {
-            this.time.delayedCall(1200, () => this.showNextStoryBeat());
-          }
+          this.onPopupDismissed();
         },
       });
     };
 
-    // Tap-to-dismiss zone
-    const dismissZone = this.add.zone(width / 2, height / 2, width, height)
+    // Tap-to-dismiss zone (only covers the card, not the whole screen)
+    const dismissZone = this.add.zone(cardX + cardW / 2, cardY + cardH / 2, cardW, cardH)
       .setInteractive().setDepth(5501);
     dismissZone.on('pointerdown', () => {
       dismissZone.destroy();
@@ -2064,11 +2280,66 @@ export class GameScene extends Phaser.Scene {
     });
     storyContainer.add(dismissZone);
 
-    // Auto-dismiss after 4 seconds
+    // Auto-dismiss after 4 seconds (story beats are skippable by tapping)
     const autoDismissTimer = this.time.delayedCall(4000, () => {
       dismissZone.destroy();
       dismiss();
     });
+  }
+
+  // ─── POPUP QUEUE SYSTEM ───
+
+  /**
+   * Queue a popup to be shown. Only one popup shows at a time, with a minimum
+   * gap between them. If the queue is too long, the lowest-priority items are dropped.
+   */
+  private queuePopup(type: string, priority: number, show: () => void): void {
+    this.popupQueue.push({ type, priority, show });
+
+    // Sort by priority descending (highest priority first)
+    this.popupQueue.sort((a, b) => b.priority - a.priority);
+
+    // Drop lowest-priority items if queue is too long
+    if (this.popupQueue.length > GameScene.POPUP_MAX_QUEUED) {
+      this.popupQueue.length = GameScene.POPUP_MAX_QUEUED;
+    }
+
+    this.processPopupQueue();
+  }
+
+  /**
+   * Process the popup queue: show the next popup if no popup is active
+   * and enough time has passed since the last one dismissed.
+   */
+  private processPopupQueue(): void {
+    if (this.popupActive || this.popupQueue.length === 0) return;
+
+    const elapsed = Date.now() - this.lastPopupDismissTime;
+    const remaining = GameScene.POPUP_MIN_GAP - elapsed;
+
+    if (remaining > 0) {
+      // Wait for the gap, then try again
+      this.time.delayedCall(remaining, () => this.processPopupQueue());
+      return;
+    }
+
+    const next = this.popupQueue.shift();
+    if (!next) return;
+
+    this.popupActive = true;
+    next.show();
+  }
+
+  /**
+   * Mark the current popup as dismissed and schedule the next one.
+   */
+  private onPopupDismissed(): void {
+    this.popupActive = false;
+    this.lastPopupDismissTime = Date.now();
+    // Schedule next popup after the minimum gap
+    if (this.popupQueue.length > 0) {
+      this.time.delayedCall(GameScene.POPUP_MIN_GAP, () => this.processPopupQueue());
+    }
   }
 
   private processOfflineProduction(_data: SaveData): void {
@@ -2158,7 +2429,7 @@ export class GameScene extends Phaser.Scene {
       }
     });
     this.mascot.react('happy');
-    this.mascot.showSpeech('I kept working! 🌸', 3000);
+    this.mascot.showSpeech('I kept working!', 2000);
   }
 
   /** Draw a canvas sparkle shape for ambient/celebration effects */

@@ -15,6 +15,10 @@ export class UIScene extends Phaser.Scene {
   private xpBar!: Phaser.GameObjects.Graphics;
   private orderElements: Phaser.GameObjects.GameObject[] = [];
   private orderGlowTweens: Phaser.Tweens.Tween[] = [];
+  private gardenBadge: Phaser.GameObjects.Graphics | null = null;
+  private gardenBadgeText: Phaser.GameObjects.Text | null = null;
+  private gardenIconG: Phaser.GameObjects.Graphics | null = null;
+  private gardenLabel: Phaser.GameObjects.Text | null = null;
   private curGems = 0;
   private curCoins = 0;
   private curLevel = 1;
@@ -108,10 +112,11 @@ export class UIScene extends Phaser.Scene {
     bottomBg.fillRect(0, bottomY, width, s(1));
 
     const btnDefs = [
-      { icon: 'calendar', label: 'Daily', scene: 'DailyChallengeScene' },
-      { icon: 'bag', label: 'Shop', scene: 'ShopScene' },
-      { icon: 'book', label: 'Items', scene: 'CollectionScene' },
-      { icon: 'gear', label: 'More', scene: 'SettingsScene' },
+      { icon: 'calendar', label: 'Daily', scene: 'DailyChallengeScene', action: null as string | null },
+      { icon: 'bag', label: 'Shop', scene: 'ShopScene', action: null as string | null },
+      { icon: 'book', label: 'Items', scene: 'CollectionScene', action: null as string | null },
+      { icon: 'garden', label: 'Garden', scene: null as string | null, action: 'toggle-garden' },
+      { icon: 'gear', label: 'More', scene: 'SettingsScene', action: null as string | null },
     ];
     const btnWidth = width / btnDefs.length;
     btnDefs.forEach((def, i) => {
@@ -119,14 +124,33 @@ export class UIScene extends Phaser.Scene {
       const cy = bottomY + SIZES.BOTTOM_BAR / 2 - s(6); // Shift up above home indicator
       const iconG = this.add.graphics();
       this.drawBottomBarIcon(iconG, cx, cy - s(2), s(10), def.icon);
-      this.add.text(cx, cy + s(14), def.label, {
+      const label = this.add.text(cx, cy + s(14), def.label, {
         fontSize: fs(8), color: TEXT.SECONDARY, fontFamily: FONT,
       }).setOrigin(0.5);
+
+      // Store garden icon/label references for highlighting when active
+      if (def.icon === 'garden') {
+        this.gardenIconG = iconG;
+        this.gardenLabel = label;
+
+        // Badge for new decorations available (initially hidden)
+        this.gardenBadge = this.add.graphics().setDepth(10).setVisible(false);
+        this.gardenBadge.fillStyle(0xFF6B9D, 1);
+        this.gardenBadge.fillCircle(cx + s(8), cy - s(10), s(6));
+        this.gardenBadgeText = this.add.text(cx + s(8), cy - s(10), '', {
+          fontSize: fs(7), color: '#FFFFFF', fontFamily: FONT, fontStyle: '700',
+        }).setOrigin(0.5).setDepth(11).setVisible(false);
+      }
+
       const zone = this.add.zone(cx, cy, btnWidth, SIZES.BOTTOM_BAR).setInteractive();
       zone.on('pointerdown', () => {
         const gs = this.scene.get('GameScene') as { sound_?: SoundManager } | undefined;
         gs?.sound_?.buttonPress();
-        if (!this.scene.isActive(def.scene)) this.scene.launch(def.scene);
+        if (def.action === 'toggle-garden') {
+          this.scene.get('GameScene').events.emit('toggle-garden-view');
+        } else if (def.scene && !this.scene.isActive(def.scene)) {
+          this.scene.launch(def.scene);
+        }
       });
     });
 
@@ -326,6 +350,7 @@ export class UIScene extends Phaser.Scene {
   private onUpdate(data: {
     gems: number; coins: number; level: number; xp: number; xpToNext: number;
     quests: ActiveQuest[]; orders: ActiveOrder[]; boardMatches?: boolean[];
+    gardenCount?: number; gardenAvailable?: number; gardenViewActive?: boolean;
   }): void {
     if (data.gems !== this.curGems) {
       this.curGems = data.gems;
@@ -348,6 +373,23 @@ export class UIScene extends Phaser.Scene {
         this.lastOrderHash = hash;
         this.renderOrders(data.orders, data.boardMatches);
       }
+    }
+
+    // Update garden badge
+    if (data.gardenCount !== undefined && this.gardenBadge && this.gardenBadgeText) {
+      if (data.gardenCount > 0) {
+        this.gardenBadge.setVisible(true);
+        this.gardenBadgeText.setVisible(true);
+        this.gardenBadgeText.setText(`${data.gardenCount}`);
+      } else {
+        this.gardenBadge.setVisible(false);
+        this.gardenBadgeText.setVisible(false);
+      }
+    }
+
+    // Highlight garden icon when garden view is active
+    if (this.gardenLabel) {
+      this.gardenLabel.setColor(data.gardenViewActive ? '#EC407A' : TEXT.SECONDARY);
     }
   }
 
@@ -485,6 +527,35 @@ export class UIScene extends Phaser.Scene {
         g.moveTo(x + w * 0.3, y + h * 0.5); g.lineTo(x + w * 0.75, y + h * 0.5);
         g.moveTo(x + w * 0.3, y + h * 0.7); g.lineTo(x + w * 0.6, y + h * 0.7);
         g.strokePath();
+        break;
+      }
+      case 'garden': {
+        // Garden: flower with petals and stem
+        const petalR = size * 0.4;
+        const petalDist = size * 0.45;
+        // Stem
+        g.lineStyle(s(1.5), 0x81C784, 0.8);
+        g.beginPath();
+        g.moveTo(cx, cy + size * 0.1);
+        g.lineTo(cx, cy + size * 0.75);
+        g.strokePath();
+        // Small leaf on stem
+        g.fillStyle(0x81C784, 0.6);
+        g.fillEllipse(cx + size * 0.2, cy + size * 0.45, size * 0.4, size * 0.2);
+        // 5 petals
+        g.fillStyle(color, 0.85);
+        for (let i = 0; i < 5; i++) {
+          const angle = (i / 5) * Math.PI * 2 - Math.PI / 2;
+          const px = cx + Math.cos(angle) * petalDist;
+          const py = cy - size * 0.1 + Math.sin(angle) * petalDist;
+          g.fillCircle(px, py, petalR);
+        }
+        // Center
+        g.fillStyle(0xFFD93D, 0.9);
+        g.fillCircle(cx, cy - size * 0.1, size * 0.25);
+        // Highlight
+        g.fillStyle(0xFFFFFF, 0.35);
+        g.fillCircle(cx - size * 0.06, cy - size * 0.16, size * 0.1);
         break;
       }
       case 'gear': {

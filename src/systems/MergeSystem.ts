@@ -19,6 +19,22 @@ const CHAIN_PARTICLES: Record<string, number[]> = {
   cafe: [0xD7CCC8, 0xBCAAA4, 0xFFCC80, 0xFFF3E0],
 };
 
+// Chain-specific particle shape overrides
+const CHAIN_SHAPES: Record<string, string> = {
+  flower: 'petal',
+  crystal: 'diamond',
+  star: 'star',
+  love: 'heart',
+  butterfly: 'petal',
+  nature: 'leaf',
+  cosmic: 'star',
+  sweet: 'circle',
+  shell: 'circle',
+  fruit: 'circle',
+  tea: 'circle',
+  cafe: 'circle',
+};
+
 export interface MergeResult {
   success: boolean;
   newItem?: MergeItemData;
@@ -55,21 +71,48 @@ export class MergeSystem {
 
     const col = target.data_.col;
     const row = target.data_.row;
+    const tier = dropped.data_.tier;
+    const chainId = dropped.data_.chainId;
 
+    // Calculate merge midpoint
+    const midX = (dropped.x + target.x) / 2;
+    const midY = (dropped.y + target.y) / 2;
+
+    // Phase 1: Both items merge away
     await Promise.all([dropped.playMergeAway(), target.playMergeAway()]);
 
+    // Phase 2: White flash at merge point
+    this.createMergeFlash(midX, midY, tier);
+
     // Freeze frame for high-tier merges
-    const tier = dropped.data_.tier;
     if (tier >= 4) {
       await new Promise<void>(r => this.scene.time.delayedCall(50, r));
     }
 
-    this.createParticles(target.x, target.y, tier, dropped.data_.chainId);
+    // Phase 4 (300-500ms): Ring of particles + chain-specific shapes
+    this.createParticles(midX, midY, tier, chainId);
+
+    // Expanding ring at merge point
+    this.createMergeRing(midX, midY, tier, chainId);
+
+    // Camera zoom pulse (subtle 2% for 200ms)
+    const cam = this.scene.cameras.main;
+    const baseZoom = cam.zoom;
+    this.scene.tweens.add({
+      targets: cam, zoom: baseZoom * 1.02,
+      duration: 100, ease: 'Sine.easeOut',
+      onComplete: () => {
+        this.scene.tweens.add({
+          targets: cam, zoom: baseZoom,
+          duration: 100, ease: 'Sine.easeIn',
+        });
+      }
+    });
 
     // Screen shake for tier 4+
     if (tier >= 4) {
       const intensity = s(Math.min(tier - 3, 5));
-      this.scene.cameras.main.shake(100, intensity / 1000);
+      cam.shake(100, intensity / 1000);
     }
 
     return {
@@ -101,22 +144,140 @@ export class MergeSystem {
 
     // Generator merges always feel impactful (tier + 3 for particle count)
     this.createParticles(target.x, target.y, newTier + 3, target.genDef.chainId);
+    this.createMergeFlash(target.x, target.y, newTier + 3);
+    this.createMergeRing(target.x, target.y, newTier + 3, target.genDef.chainId);
+
+    // Camera zoom pulse
+    const cam = this.scene.cameras.main;
+    const baseZoom = cam.zoom;
+    this.scene.tweens.add({
+      targets: cam, zoom: baseZoom * 1.02,
+      duration: 100, ease: 'Sine.easeOut',
+      onComplete: () => {
+        this.scene.tweens.add({ targets: cam, zoom: baseZoom, duration: 100, ease: 'Sine.easeIn' });
+      }
+    });
 
     // Screen shake for tier 3+ generator merges
     if (newTier >= 3) {
       const intensity = s(Math.min(newTier, 5));
-      this.scene.cameras.main.shake(100, intensity / 1000);
+      cam.shake(100, intensity / 1000);
     }
 
     return { success: true, newGenTier: newTier, newTierDef: newTierDef, col, row };
+  }
+
+  /** Phase 2: Bright white flash circle that expands and fades */
+  private createMergeFlash(x: number, y: number, tier: number): void {
+    const flash = this.scene.add.graphics();
+    const radius = s(8 + tier * 2);
+    flash.fillStyle(0xFFFFFF, 0.9);
+    flash.fillCircle(0, 0, radius);
+    flash.setPosition(x, y).setDepth(2002);
+    flash.setScale(0.3);
+    flash.setAlpha(1);
+
+    this.scene.tweens.add({
+      targets: flash,
+      scaleX: 2.5, scaleY: 2.5, alpha: 0,
+      duration: 150, ease: 'Power2',
+      onComplete: () => flash.destroy(),
+    });
+  }
+
+  /** Phase 4: Clean expanding ring that fades */
+  private createMergeRing(x: number, y: number, tier: number, chainId: string): void {
+    const colors = CHAIN_PARTICLES[chainId] || [0xFF9CAD, 0xA8E6CF, 0xA8D8EA, 0xFFD700];
+    const ringColor = colors[0];
+    const ring = this.scene.add.graphics();
+    const radius = s(20 + tier * 3);
+    ring.lineStyle(s(2.5), ringColor, 0.8);
+    ring.strokeCircle(0, 0, radius);
+    ring.setPosition(x, y).setDepth(1999);
+    ring.setScale(0.2);
+
+    this.scene.tweens.add({
+      targets: ring,
+      scaleX: 2, scaleY: 2, alpha: 0,
+      duration: 350, ease: 'Power2',
+      onComplete: () => ring.destroy(),
+    });
+  }
+
+  /** Draw a chain-specific particle shape */
+  private drawParticleShape(p: Phaser.GameObjects.Graphics, shape: string, size: number, color: number, alpha: number): void {
+    p.fillStyle(color, alpha);
+    switch (shape) {
+      case 'petal': {
+        // 5-petal flower shape
+        for (let i = 0; i < 5; i++) {
+          const a = (i / 5) * Math.PI * 2 - Math.PI / 2;
+          p.fillEllipse(Math.cos(a) * size * 0.4, Math.sin(a) * size * 0.4, size * 0.5, size * 0.3);
+        }
+        p.fillStyle(0xFFFFFF, 0.5);
+        p.fillCircle(0, 0, size * 0.15);
+        break;
+      }
+      case 'diamond': {
+        p.beginPath();
+        p.moveTo(0, -size * 1.2);
+        p.lineTo(size * 0.6, 0);
+        p.lineTo(0, size * 1.2);
+        p.lineTo(-size * 0.6, 0);
+        p.closePath();
+        p.fillPath();
+        // Inner highlight
+        p.fillStyle(0xFFFFFF, 0.3);
+        p.beginPath();
+        p.moveTo(0, -size * 0.6);
+        p.lineTo(size * 0.2, 0);
+        p.lineTo(0, size * 0.3);
+        p.lineTo(-size * 0.2, 0);
+        p.closePath();
+        p.fillPath();
+        break;
+      }
+      case 'star': {
+        const sr = size;
+        p.beginPath();
+        for (let i = 0; i < 5; i++) {
+          const outerAngle = (i / 5) * Math.PI * 2 - Math.PI / 2;
+          const innerAngle = ((i + 0.5) / 5) * Math.PI * 2 - Math.PI / 2;
+          if (i === 0) p.moveTo(Math.cos(outerAngle) * sr * 1.3, Math.sin(outerAngle) * sr * 1.3);
+          else p.lineTo(Math.cos(outerAngle) * sr * 1.3, Math.sin(outerAngle) * sr * 1.3);
+          p.lineTo(Math.cos(innerAngle) * sr * 0.5, Math.sin(innerAngle) * sr * 0.5);
+        }
+        p.closePath();
+        p.fillPath();
+        break;
+      }
+      case 'heart': {
+        const hr = size;
+        p.fillCircle(-hr * 0.3, -hr * 0.15, hr * 0.45);
+        p.fillCircle(hr * 0.3, -hr * 0.15, hr * 0.45);
+        p.fillTriangle(-hr * 0.65, 0, hr * 0.65, 0, 0, hr * 0.7);
+        break;
+      }
+      case 'leaf': {
+        // Leaf shape using ellipse (Phaser-compatible)
+        p.fillEllipse(0, 0, size * 1.2, size * 1.8);
+        break;
+      }
+      default: {
+        // Circle fallback
+        p.fillCircle(0, 0, size);
+        break;
+      }
+    }
   }
 
   private createParticles(x: number, y: number, tier: number, chainId: string): void {
     const colors = CHAIN_PARTICLES[chainId] || [0xFF9CAD, 0xA8E6CF, 0xA8D8EA, 0xFFD700];
     const holoColors = [0xFF6B9D, 0xFFD93D, 0x6BCB77, 0x4D96FF, 0xD4A5FF];
     const count = 10 + tier * 3;
+    const chainShape = CHAIN_SHAPES[chainId] || 'circle';
 
-    // Mix of circles, hearts-like shapes
+    // Ring of particles exploding outward in a clean circle
     for (let i = 0; i < count; i++) {
       const p = this.scene.add.graphics();
       // For T7+ merges: mix in holographic rainbow-colored particles
@@ -124,25 +285,14 @@ export class MergeSystem {
       const color = useHolo
         ? holoColors[Phaser.Math.Between(0, holoColors.length - 1)]
         : colors[Phaser.Math.Between(0, colors.length - 1)];
-      const size = s(Phaser.Math.Between(3, 6 + tier)); // Slightly larger particles
+      const size = s(Phaser.Math.Between(3, 6 + tier));
       const alpha = useHolo ? 1 : 0.9;
 
-      // For T5+ merges: mix in small star-shaped particles
-      if (tier >= 5 && i % 4 === 0) {
-        // Draw a 4-point star particle
-        const sr = size;
-        p.fillStyle(color, alpha);
-        p.beginPath();
-        p.moveTo(0, -sr * 1.5);
-        p.lineTo(sr * 0.4, -sr * 0.4);
-        p.lineTo(sr * 1.5, 0);
-        p.lineTo(sr * 0.4, sr * 0.4);
-        p.lineTo(0, sr * 1.5);
-        p.lineTo(-sr * 0.4, sr * 0.4);
-        p.lineTo(-sr * 1.5, 0);
-        p.lineTo(-sr * 0.4, -sr * 0.4);
-        p.closePath();
-        p.fillPath();
+      // Use chain-specific shapes for every 3rd particle, stars for T5+, circles for rest
+      if (i % 3 === 0) {
+        this.drawParticleShape(p, chainShape, size, color, alpha);
+      } else if (tier >= 5 && i % 4 === 0) {
+        this.drawParticleShape(p, 'star', size, color, alpha);
       } else {
         p.fillStyle(color, alpha);
         p.fillCircle(0, 0, size);
@@ -152,12 +302,15 @@ export class MergeSystem {
       const angle = (i / count) * Math.PI * 2;
       const dist = s(30 + tier * 10 + Phaser.Math.Between(0, 20));
 
+      // Stagger start slightly for wave effect
       this.scene.tweens.add({
         targets: p,
         x: x + Math.cos(angle) * dist,
         y: y + Math.sin(angle) * dist - s(20),
         alpha: 0, scaleX: 0, scaleY: 0,
-        duration: 450 + Phaser.Math.Between(0, 200),
+        rotation: Phaser.Math.FloatBetween(-1, 1),
+        duration: 400 + Phaser.Math.Between(0, 150),
+        delay: Phaser.Math.Between(0, 50),
         ease: 'Power2',
         onComplete: () => p.destroy(),
       });

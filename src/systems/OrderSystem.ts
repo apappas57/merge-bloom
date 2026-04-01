@@ -128,6 +128,15 @@ export class OrderSystem {
   }
 
   /**
+   * Claim a completed order by its definition ID (index-safe for delayed calls).
+   */
+  claimOrderById(orderId: string): OrderReward[] | null {
+    const idx = this.activeOrders.findIndex(o => o.def.id === orderId);
+    if (idx === -1) return null;
+    return this.claimOrder(idx);
+  }
+
+  /**
    * Check which active orders can be fulfilled by items currently on the board.
    * Returns an array of booleans (one per active order) indicating whether
    * at least one unfulfilled slot has a matching item on the board.

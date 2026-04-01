@@ -1,17 +1,17 @@
-/** Chain color themes (pastel gradients) */
+/** Chain color themes -- warm, saturated tones */
 const CHAIN_COLORS: Record<string, { from: string; to: string; fromHex: number; toHex: number }> = {
-  flower:    { from: '#F8BBD0', to: '#F48FB1', fromHex: 0xF8BBD0, toHex: 0xF48FB1 },
-  butterfly: { from: '#B3E5FC', to: '#81D4FA', fromHex: 0xB3E5FC, toHex: 0x81D4FA },
-  fruit:     { from: '#FFCCBC', to: '#FF8A65', fromHex: 0xFFCCBC, toHex: 0xFF8A65 },
-  crystal:   { from: '#D1C4E9', to: '#B39DDB', fromHex: 0xD1C4E9, toHex: 0xB39DDB },
-  nature:    { from: '#C8E6C9', to: '#81C784', fromHex: 0xC8E6C9, toHex: 0x81C784 },
-  star:      { from: '#FFF9C4', to: '#FFD54F', fromHex: 0xFFF9C4, toHex: 0xFFD54F },
-  tea:       { from: '#D7CCC8', to: '#BCAAA4', fromHex: 0xD7CCC8, toHex: 0xBCAAA4 },
-  shell:     { from: '#B2EBF2', to: '#80DEEA', fromHex: 0xB2EBF2, toHex: 0x80DEEA },
-  sweet:     { from: '#F8BBD0', to: '#F06292', fromHex: 0xF8BBD0, toHex: 0xF06292 },
-  love:      { from: '#FFB3C6', to: '#FF6B8A', fromHex: 0xFFB3C6, toHex: 0xFF6B8A },
-  cosmic:    { from: '#D1C4E9', to: '#7C4DFF', fromHex: 0xD1C4E9, toHex: 0x7C4DFF },
-  cafe:      { from: '#EFEBE9', to: '#BCAAA4', fromHex: 0xEFEBE9, toHex: 0xBCAAA4 },
+  flower:    { from: '#FFB8D0', to: '#F06292', fromHex: 0xFFB8D0, toHex: 0xF06292 },
+  butterfly: { from: '#A0D8F0', to: '#4FC3F7', fromHex: 0xA0D8F0, toHex: 0x4FC3F7 },
+  fruit:     { from: '#FFCBA4', to: '#FF7043', fromHex: 0xFFCBA4, toHex: 0xFF7043 },
+  crystal:   { from: '#D1B8F0', to: '#A470E0', fromHex: 0xD1B8F0, toHex: 0xA470E0 },
+  nature:    { from: '#B8E6A0', to: '#66BB6A', fromHex: 0xB8E6A0, toHex: 0x66BB6A },
+  star:      { from: '#FFF4A0', to: '#FFC107', fromHex: 0xFFF4A0, toHex: 0xFFC107 },
+  tea:       { from: '#E0CFC0', to: '#A1887F', fromHex: 0xE0CFC0, toHex: 0xA1887F },
+  shell:     { from: '#A0E8F0', to: '#4DD0E1', fromHex: 0xA0E8F0, toHex: 0x4DD0E1 },
+  sweet:     { from: '#FFB0D0', to: '#EC407A', fromHex: 0xFFB0D0, toHex: 0xEC407A },
+  love:      { from: '#FFA0B8', to: '#FF4570', fromHex: 0xFFA0B8, toHex: 0xFF4570 },
+  cosmic:    { from: '#C8B0F0', to: '#6A3DE8', fromHex: 0xC8B0F0, toHex: 0x6A3DE8 },
+  cafe:      { from: '#F0E0D0', to: '#A1887F', fromHex: 0xF0E0D0, toHex: 0xA1887F },
 };
 
 const DEFAULT_COLORS = { from: '#E0E0E0', to: '#BDBDBD', fromHex: 0xE0E0E0, toHex: 0xBDBDBD };
@@ -118,36 +118,93 @@ function addTierSparkles(ctx: CanvasRenderingContext2D, cx: number, cy: number, 
 function drawLeafIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, tier: number, color: string, accent: string): void {
   const r = size * 0.4;
   const leafCount = Math.min(1 + Math.floor(tier / 2), 4);
+
+  // Stem (drawn first, behind leaves)
+  ctx.strokeStyle = darkenColor(color, 0.15);
+  ctx.lineWidth = size * 0.04;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(cx, cy + r * 0.15);
+  ctx.quadraticCurveTo(cx + r * 0.05, cy + r * 0.45, cx, cy + r * 0.7);
+  ctx.stroke();
+
+  // Soil mound at base
+  const soilGrad = ctx.createRadialGradient(cx, cy + r * 0.75, 0, cx, cy + r * 0.75, r * 0.35);
+  soilGrad.addColorStop(0, '#8D6E63');
+  soilGrad.addColorStop(1, '#5D4037');
+  ctx.fillStyle = soilGrad;
+  ctx.beginPath();
+  ctx.ellipse(cx, cy + r * 0.75, r * 0.35, r * 0.12, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // Soil texture dots
+  ctx.fillStyle = 'rgba(0,0,0,0.1)';
+  for (let i = 0; i < 4; i++) {
+    ctx.beginPath();
+    ctx.arc(cx + (i - 1.5) * r * 0.12, cy + r * 0.74 + (i % 2) * r * 0.03, r * 0.025, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Leaves
   for (let i = 0; i < leafCount; i++) {
     ctx.save();
     ctx.translate(cx, cy);
     ctx.rotate((i - (leafCount - 1) / 2) * 0.4);
     const grad = ctx.createLinearGradient(-r * 0.3, -r, r * 0.3, r * 0.4);
     grad.addColorStop(0, accent);
-    grad.addColorStop(1, color);
+    grad.addColorStop(0.6, color);
+    grad.addColorStop(1, darkenColor(color, 0.1));
     ctx.fillStyle = grad;
     ctx.beginPath();
     ctx.moveTo(0, -r * 0.8);
     ctx.bezierCurveTo(r * 0.6, -r * 0.6, r * 0.5, r * 0.3, 0, r * 0.5);
     ctx.bezierCurveTo(-r * 0.5, r * 0.3, -r * 0.6, -r * 0.6, 0, -r * 0.8);
     ctx.fill();
-    // Leaf vein
+    // Central vein
     ctx.strokeStyle = 'rgba(255,255,255,0.4)';
     ctx.lineWidth = size * 0.02;
     ctx.beginPath();
-    ctx.moveTo(0, -r * 0.6);
-    ctx.lineTo(0, r * 0.3);
+    ctx.moveTo(0, -r * 0.65);
+    ctx.lineTo(0, r * 0.35);
+    ctx.stroke();
+    // Branching veins (thin lines from center to edges)
+    ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+    ctx.lineWidth = size * 0.012;
+    for (let v = 0; v < 3; v++) {
+      const vy = -r * 0.4 + v * r * 0.3;
+      ctx.beginPath();
+      ctx.moveTo(0, vy);
+      ctx.quadraticCurveTo(r * 0.25, vy - r * 0.08, r * 0.35, vy - r * 0.15);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(0, vy);
+      ctx.quadraticCurveTo(-r * 0.25, vy - r * 0.08, -r * 0.35, vy - r * 0.15);
+      ctx.stroke();
+    }
+    // Leaf edge shadow (darker rim on the right side)
+    ctx.strokeStyle = 'rgba(0,0,0,0.08)';
+    ctx.lineWidth = size * 0.015;
+    ctx.beginPath();
+    ctx.moveTo(0, -r * 0.8);
+    ctx.bezierCurveTo(r * 0.6, -r * 0.6, r * 0.5, r * 0.3, 0, r * 0.5);
     ctx.stroke();
     ctx.restore();
   }
-  // Stem
-  ctx.strokeStyle = color;
-  ctx.lineWidth = size * 0.04;
-  ctx.lineCap = 'round';
+
+  // Dewdrop on leaf tip
+  const dewGrad = ctx.createRadialGradient(cx - r * 0.08, cy - r * 0.55, 0, cx - r * 0.05, cy - r * 0.5, r * 0.08);
+  dewGrad.addColorStop(0, 'rgba(255,255,255,0.9)');
+  dewGrad.addColorStop(0.5, 'rgba(200,230,255,0.6)');
+  dewGrad.addColorStop(1, 'rgba(180,220,255,0.2)');
+  ctx.fillStyle = dewGrad;
   ctx.beginPath();
-  ctx.moveTo(cx, cy + r * 0.3);
-  ctx.lineTo(cx, cy + r * 0.7);
-  ctx.stroke();
+  ctx.arc(cx - r * 0.05, cy - r * 0.5, r * 0.07, 0, Math.PI * 2);
+  ctx.fill();
+  // Dewdrop highlight pinpoint
+  ctx.fillStyle = 'rgba(255,255,255,0.95)';
+  ctx.beginPath();
+  ctx.arc(cx - r * 0.08, cy - r * 0.54, r * 0.025, 0, Math.PI * 2);
+  ctx.fill();
+
   addHighlight(ctx, cx, cy - r * 0.2, r);
   addTierSparkles(ctx, cx, cy, r, tier);
 }
@@ -156,29 +213,93 @@ function drawLeafIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, siz
 function drawFlowerIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, tier: number, color: string, accent: string): void {
   const r = size * 0.4;
   const petalCount = 4 + Math.min(tier, 4);
-  // Petals
+
+  // Green stem behind the flower
+  ctx.strokeStyle = '#4CAF50';
+  ctx.lineWidth = size * 0.035;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(cx, cy + r * 0.15);
+  ctx.quadraticCurveTo(cx + r * 0.08, cy + r * 0.5, cx - r * 0.02, cy + r * 0.8);
+  ctx.stroke();
+
+  // Two small leaves on stem
+  ctx.fillStyle = '#66BB6A';
+  ctx.beginPath();
+  ctx.ellipse(cx + r * 0.05, cy + r * 0.4, r * 0.15, r * 0.06, 0.5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#4CAF50';
+  ctx.beginPath();
+  ctx.ellipse(cx - r * 0.08, cy + r * 0.55, r * 0.12, r * 0.05, -0.4, 0, Math.PI * 2);
+  ctx.fill();
+  // Leaf veins
+  ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+  ctx.lineWidth = size * 0.008;
+  ctx.beginPath();
+  ctx.moveTo(cx - r * 0.02, cy + r * 0.4);
+  ctx.lineTo(cx + r * 0.15, cy + r * 0.38);
+  ctx.stroke();
+
+  // Petals -- each with its own gradient (lighter at tip, darker at base)
   for (let i = 0; i < petalCount; i++) {
     const angle = (i / petalCount) * Math.PI * 2;
     ctx.save();
     ctx.translate(cx, cy);
     ctx.rotate(angle);
-    const grad = ctx.createRadialGradient(0, -r * 0.4, 0, 0, -r * 0.4, r * 0.35);
-    grad.addColorStop(0, accent);
-    grad.addColorStop(1, color);
+    // Petal gradient: lighter at tip, darker at base
+    const grad = ctx.createLinearGradient(0, -r * 0.7, 0, -r * 0.1);
+    grad.addColorStop(0, accent);      // lighter tip
+    grad.addColorStop(0.6, color);     // mid
+    grad.addColorStop(1, darkenColor(color, 0.12)); // darker base
     ctx.fillStyle = grad;
     ctx.beginPath();
     ctx.ellipse(0, -r * 0.45, r * 0.22, r * 0.35, 0, 0, Math.PI * 2);
     ctx.fill();
+    // Petal overlap shadow (right edge of each petal)
+    ctx.strokeStyle = 'rgba(0,0,0,0.08)';
+    ctx.lineWidth = size * 0.012;
+    ctx.beginPath();
+    ctx.ellipse(r * 0.02, -r * 0.44, r * 0.22, r * 0.35, 0, -0.3, Math.PI * 0.8);
+    ctx.stroke();
+    // Petal inner vein (subtle line along center)
+    ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+    ctx.lineWidth = size * 0.008;
+    ctx.beginPath();
+    ctx.moveTo(0, -r * 0.15);
+    ctx.lineTo(0, -r * 0.7);
+    ctx.stroke();
     ctx.restore();
   }
-  // Center
+
+  // Center with gradient
   const centerGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, r * 0.22);
-  centerGrad.addColorStop(0, '#FFE082');
+  centerGrad.addColorStop(0, '#FFF176');
+  centerGrad.addColorStop(0.5, '#FFE082');
   centerGrad.addColorStop(1, '#FFB300');
   ctx.fillStyle = centerGrad;
   ctx.beginPath();
   ctx.arc(cx, cy, r * 0.2, 0, Math.PI * 2);
   ctx.fill();
+
+  // Yellow pollen dots in center
+  ctx.fillStyle = '#FDD835';
+  for (let i = 0; i < 6; i++) {
+    const pa = (i / 6) * Math.PI * 2;
+    const pd = r * 0.1;
+    ctx.beginPath();
+    ctx.arc(cx + Math.cos(pa) * pd, cy + Math.sin(pa) * pd, r * 0.025, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  // Brighter pollen highlights
+  ctx.fillStyle = 'rgba(255,255,255,0.5)';
+  for (let i = 0; i < 3; i++) {
+    const pa = (i / 3) * Math.PI * 2 + 0.3;
+    const pd = r * 0.06;
+    ctx.beginPath();
+    ctx.arc(cx + Math.cos(pa) * pd, cy + Math.sin(pa) * pd, r * 0.015, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
   addHighlight(ctx, cx, cy - r * 0.05, r * 0.2);
   addTierSparkles(ctx, cx, cy, r, tier);
 }
@@ -245,28 +366,74 @@ function drawButterflyIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number
 // --- Fruit Icon (round with highlight and leaf) ---
 function drawFruitIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, tier: number, color: string, accent: string): void {
   const r = size * 0.38;
-  // Main fruit body
-  const grad = ctx.createRadialGradient(cx - r * 0.2, cy - r * 0.2, 0, cx, cy, r);
+
+  // Main fruit body with color variation (sun side lighter, shadow side darker)
+  const grad = ctx.createRadialGradient(cx - r * 0.3, cy - r * 0.3, 0, cx + r * 0.2, cy + r * 0.2, r * 1.1);
   grad.addColorStop(0, accent);
-  grad.addColorStop(0.7, color);
-  grad.addColorStop(1, darkenColor(color, 0.15));
+  grad.addColorStop(0.4, color);
+  grad.addColorStop(0.8, darkenColor(color, 0.1));
+  grad.addColorStop(1, darkenColor(color, 0.2));
   ctx.fillStyle = grad;
   ctx.beginPath();
   ctx.arc(cx, cy + r * 0.05, r, 0, Math.PI * 2);
   ctx.fill();
-  // Leaf on top
-  ctx.fillStyle = '#66BB6A';
+
+  // Subtle color variation overlay (redder on sun side for apples/warm, greener on shadow)
+  ctx.save();
+  ctx.globalAlpha = 0.12;
+  const sunGrad = ctx.createRadialGradient(cx - r * 0.4, cy - r * 0.3, 0, cx, cy, r);
+  sunGrad.addColorStop(0, '#FFE0B2');
+  sunGrad.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = sunGrad;
   ctx.beginPath();
-  ctx.ellipse(cx + r * 0.15, cy - r * 0.8, r * 0.2, r * 0.1, 0.4, 0, Math.PI * 2);
+  ctx.arc(cx, cy + r * 0.05, r, 0, Math.PI * 2);
   ctx.fill();
+  ctx.restore();
+
+  // Texture dots (for oranges, peaches -- subtle surface bumps)
+  ctx.fillStyle = 'rgba(255,255,255,0.06)';
+  for (let i = 0; i < 12; i++) {
+    const ta = (i / 12) * Math.PI * 2 + 0.2;
+    const td = r * (0.3 + (i % 3) * 0.15);
+    ctx.beginPath();
+    ctx.arc(cx + Math.cos(ta) * td, cy + r * 0.05 + Math.sin(ta) * td, r * 0.03, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
   // Stem
   ctx.strokeStyle = '#5D4037';
   ctx.lineWidth = size * 0.03;
   ctx.lineCap = 'round';
   ctx.beginPath();
   ctx.moveTo(cx, cy - r * 0.7);
-  ctx.lineTo(cx, cy - r * 0.95);
+  ctx.quadraticCurveTo(cx + r * 0.05, cy - r * 0.85, cx - r * 0.02, cy - r * 0.95);
   ctx.stroke();
+
+  // Leaf on top (with vein)
+  const leafGrad = ctx.createLinearGradient(cx, cy - r * 0.9, cx + r * 0.3, cy - r * 0.7);
+  leafGrad.addColorStop(0, '#4CAF50');
+  leafGrad.addColorStop(1, '#81C784');
+  ctx.fillStyle = leafGrad;
+  ctx.beginPath();
+  ctx.ellipse(cx + r * 0.15, cy - r * 0.82, r * 0.22, r * 0.1, 0.4, 0, Math.PI * 2);
+  ctx.fill();
+  // Leaf vein
+  ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+  ctx.lineWidth = size * 0.008;
+  ctx.beginPath();
+  ctx.moveTo(cx + r * 0.03, cy - r * 0.82);
+  ctx.lineTo(cx + r * 0.28, cy - r * 0.8);
+  ctx.stroke();
+
+  // Highlight shine spot (oval white at 30% opacity)
+  ctx.save();
+  ctx.globalAlpha = 0.3;
+  ctx.fillStyle = '#FFFFFF';
+  ctx.beginPath();
+  ctx.ellipse(cx - r * 0.25, cy - r * 0.2, r * 0.28, r * 0.18, -0.4, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
   // For multi-fruit tiers, add smaller fruit behind
   if (tier >= 4) {
     ctx.save();
@@ -281,6 +448,7 @@ function drawFruitIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, si
     ctx.fill();
     ctx.restore();
   }
+
   addHighlight(ctx, cx - r * 0.15, cy - r * 0.1, r);
   addTierSparkles(ctx, cx, cy, r, tier);
 }
@@ -289,6 +457,17 @@ function drawFruitIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, si
 function drawCrystalIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, tier: number, color: string, accent: string): void {
   const r = size * 0.38;
   const facets = 3 + Math.min(tier, 5);
+
+  // Inner glow behind crystal (radial gradient from bright center)
+  const innerGlow = ctx.createRadialGradient(cx, cy, 0, cx, cy, r * 1.1);
+  innerGlow.addColorStop(0, accent + '40');
+  innerGlow.addColorStop(0.6, accent + '15');
+  innerGlow.addColorStop(1, accent + '00');
+  ctx.fillStyle = innerGlow;
+  ctx.beginPath();
+  ctx.arc(cx, cy, r * 1.1, 0, Math.PI * 2);
+  ctx.fill();
+
   // Main gem body
   ctx.beginPath();
   ctx.moveTo(cx, cy - r * 0.9);
@@ -299,17 +478,42 @@ function drawCrystalIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, 
   ctx.closePath();
   const grad = ctx.createLinearGradient(cx - r, cy - r, cx + r, cy + r);
   grad.addColorStop(0, accent);
-  grad.addColorStop(0.5, color);
-  grad.addColorStop(1, darkenColor(color, 0.2));
+  grad.addColorStop(0.3, color);
+  grad.addColorStop(0.7, darkenColor(color, 0.1));
+  grad.addColorStop(1, darkenColor(color, 0.25));
   ctx.fillStyle = grad;
   ctx.fill();
-  // Facet lines
+
+  // Inner radial glow within crystal body
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(cx, cy - r * 0.9);
+  ctx.lineTo(cx + r * 0.6, cy - r * 0.2);
+  ctx.lineTo(cx + r * 0.45, cy + r * 0.8);
+  ctx.lineTo(cx - r * 0.45, cy + r * 0.8);
+  ctx.lineTo(cx - r * 0.6, cy - r * 0.2);
+  ctx.closePath();
+  ctx.clip();
+  const coreGlow = ctx.createRadialGradient(cx, cy - r * 0.1, 0, cx, cy, r * 0.7);
+  coreGlow.addColorStop(0, 'rgba(255,255,255,0.25)');
+  coreGlow.addColorStop(0.5, 'rgba(255,255,255,0.08)');
+  coreGlow.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = coreGlow;
+  ctx.fillRect(cx - r, cy - r, r * 2, r * 2);
+  ctx.restore();
+
+  // Facet lines (light lines showing crystal faces)
   ctx.strokeStyle = 'rgba(255,255,255,0.3)';
   ctx.lineWidth = size * 0.015;
   // Central facet
   ctx.beginPath();
   ctx.moveTo(cx, cy - r * 0.9);
   ctx.lineTo(cx, cy + r * 0.8);
+  ctx.stroke();
+  // Horizontal facet belt
+  ctx.beginPath();
+  ctx.moveTo(cx - r * 0.6, cy - r * 0.2);
+  ctx.lineTo(cx + r * 0.6, cy - r * 0.2);
   ctx.stroke();
   // Diagonal facets
   if (facets >= 4) {
@@ -332,7 +536,8 @@ function drawCrystalIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, 
     ctx.lineTo(cx + r * 0.45, cy + r * 0.8);
     ctx.stroke();
   }
-  // Bright facet highlight
+
+  // Bright facet highlight (upper left face)
   ctx.fillStyle = 'rgba(255,255,255,0.4)';
   ctx.beginPath();
   ctx.moveTo(cx, cy - r * 0.9);
@@ -340,6 +545,26 @@ function drawCrystalIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, 
   ctx.lineTo(cx + r * 0.15, cy - r * 0.15);
   ctx.closePath();
   ctx.fill();
+
+  // Small sparkle highlights at facet intersections
+  const sparklePoints = [
+    { x: cx, y: cy - r * 0.9 },       // top
+    { x: cx + r * 0.6, y: cy - r * 0.2 },  // upper right
+    { x: cx - r * 0.6, y: cy - r * 0.2 },  // upper left
+    { x: cx, y: cy + r * 0.1 },        // center intersection
+  ];
+  ctx.fillStyle = 'rgba(255,255,255,0.8)';
+  for (const sp of sparklePoints) {
+    const sr = r * 0.04;
+    ctx.beginPath();
+    ctx.moveTo(sp.x, sp.y - sr * 2.5);
+    ctx.quadraticCurveTo(sp.x + sr * 0.3, sp.y - sr * 0.3, sp.x + sr * 2.5, sp.y);
+    ctx.quadraticCurveTo(sp.x + sr * 0.3, sp.y + sr * 0.3, sp.x, sp.y + sr * 2.5);
+    ctx.quadraticCurveTo(sp.x - sr * 0.3, sp.y + sr * 0.3, sp.x - sr * 2.5, sp.y);
+    ctx.quadraticCurveTo(sp.x - sr * 0.3, sp.y - sr * 0.3, sp.x, sp.y - sr * 2.5);
+    ctx.fill();
+  }
+
   addHighlight(ctx, cx - r * 0.15, cy - r * 0.4, r * 0.5);
   addTierSparkles(ctx, cx, cy, r, tier);
 }
@@ -348,33 +573,63 @@ function drawCrystalIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, 
 function drawStarIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, tier: number, color: string, accent: string): void {
   const r = size * 0.4;
   const points = 4 + Math.min(Math.floor(tier / 2), 2);
-  // Outer glow for high tiers
-  if (tier >= 4) {
-    const glowGrad = ctx.createRadialGradient(cx, cy, r * 0.3, cx, cy, r * 1.1);
-    glowGrad.addColorStop(0, accent + '60');
-    glowGrad.addColorStop(1, accent + '00');
-    ctx.fillStyle = glowGrad;
-    ctx.beginPath();
-    ctx.arc(cx, cy, r * 1.1, 0, Math.PI * 2);
-    ctx.fill();
-  }
+
+  // Surrounding glow halo (large radial gradient behind star) -- always present
+  const haloGrad = ctx.createRadialGradient(cx, cy, r * 0.2, cx, cy, r * 1.3);
+  haloGrad.addColorStop(0, accent + (tier >= 4 ? '70' : '40'));
+  haloGrad.addColorStop(0.5, accent + '20');
+  haloGrad.addColorStop(1, accent + '00');
+  ctx.fillStyle = haloGrad;
+  ctx.beginPath();
+  ctx.arc(cx, cy, r * 1.3, 0, Math.PI * 2);
+  ctx.fill();
+
   // Star path
+  const starPath: { x: number; y: number }[] = [];
   ctx.beginPath();
   for (let i = 0; i < points * 2; i++) {
     const angle = -Math.PI / 2 + (i * Math.PI) / points;
     const rad = i % 2 === 0 ? r : r * 0.4;
     const x = cx + Math.cos(angle) * rad;
     const y = cy + Math.sin(angle) * rad;
+    starPath.push({ x, y });
     if (i === 0) ctx.moveTo(x, y);
     else ctx.lineTo(x, y);
   }
   ctx.closePath();
+
+  // Inner radial gradient for depth
   const grad = ctx.createRadialGradient(cx - r * 0.15, cy - r * 0.15, 0, cx, cy, r);
   grad.addColorStop(0, '#FFFFFF');
-  grad.addColorStop(0.3, accent);
-  grad.addColorStop(1, color);
+  grad.addColorStop(0.2, accent);
+  grad.addColorStop(0.6, color);
+  grad.addColorStop(1, darkenColor(color, 0.1));
   ctx.fillStyle = grad;
   ctx.fill();
+
+  // Edge highlights on each star point tip
+  ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+  ctx.lineWidth = size * 0.012;
+  for (let i = 0; i < points * 2; i += 2) {
+    const tipIdx = i;
+    const prevIdx = (tipIdx - 1 + starPath.length) % starPath.length;
+    const nextIdx = (tipIdx + 1) % starPath.length;
+    // Left edge of point
+    ctx.beginPath();
+    ctx.moveTo(starPath[prevIdx].x, starPath[prevIdx].y);
+    ctx.lineTo(starPath[tipIdx].x, starPath[tipIdx].y);
+    ctx.stroke();
+  }
+
+  // Bright center glow
+  const centerGlow = ctx.createRadialGradient(cx, cy, 0, cx, cy, r * 0.35);
+  centerGlow.addColorStop(0, 'rgba(255,255,255,0.3)');
+  centerGlow.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = centerGlow;
+  ctx.beginPath();
+  ctx.arc(cx, cy, r * 0.35, 0, Math.PI * 2);
+  ctx.fill();
+
   addHighlight(ctx, cx - r * 0.1, cy - r * 0.2, r * 0.5);
   addTierSparkles(ctx, cx, cy, r, tier);
 }
@@ -382,6 +637,7 @@ function drawStarIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, siz
 // --- Heart Icon ---
 function drawHeartIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, tier: number, color: string, accent: string): void {
   const r = size * 0.38;
+
   // Heart path
   ctx.beginPath();
   ctx.moveTo(cx, cy + r * 0.7);
@@ -392,13 +648,49 @@ function drawHeartIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, si
   ctx.closePath();
   const grad = ctx.createRadialGradient(cx - r * 0.2, cy - r * 0.2, 0, cx, cy, r);
   grad.addColorStop(0, accent);
-  grad.addColorStop(1, color);
+  grad.addColorStop(0.7, color);
+  grad.addColorStop(1, darkenColor(color, 0.15));
   ctx.fillStyle = grad;
   ctx.fill();
+
+  // Subtle inner shadow at bottom
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(cx, cy + r * 0.7);
+  ctx.bezierCurveTo(cx - r * 0.15, cy + r * 0.35, cx - r * 0.95, cy + r * 0.1, cx - r * 0.8, cy - r * 0.3);
+  ctx.bezierCurveTo(cx - r * 0.65, cy - r * 0.75, cx - r * 0.1, cy - r * 0.8, cx, cy - r * 0.4);
+  ctx.bezierCurveTo(cx + r * 0.1, cy - r * 0.8, cx + r * 0.65, cy - r * 0.75, cx + r * 0.8, cy - r * 0.3);
+  ctx.bezierCurveTo(cx + r * 0.95, cy + r * 0.1, cx + r * 0.15, cy + r * 0.35, cx, cy + r * 0.7);
+  ctx.closePath();
+  ctx.clip();
+  const shadowGrad = ctx.createLinearGradient(cx, cy + r * 0.3, cx, cy + r * 0.75);
+  shadowGrad.addColorStop(0, 'rgba(0,0,0,0)');
+  shadowGrad.addColorStop(1, 'rgba(0,0,0,0.12)');
+  ctx.fillStyle = shadowGrad;
+  ctx.fillRect(cx - r, cy + r * 0.2, r * 2, r * 0.6);
+  ctx.restore();
+
+  // Glossy highlight (white oval in upper-left)
+  ctx.save();
+  ctx.globalAlpha = 0.45;
+  ctx.fillStyle = '#FFFFFF';
+  ctx.beginPath();
+  ctx.ellipse(cx - r * 0.3, cy - r * 0.35, r * 0.22, r * 0.15, -0.5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+  // Secondary smaller highlight
+  ctx.save();
+  ctx.globalAlpha = 0.6;
+  ctx.fillStyle = '#FFFFFF';
+  ctx.beginPath();
+  ctx.ellipse(cx - r * 0.25, cy - r * 0.3, r * 0.08, r * 0.06, -0.4, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
   // Inner detail for higher tiers
   if (tier >= 3) {
     ctx.save();
-    ctx.globalAlpha = 0.25;
+    ctx.globalAlpha = 0.2;
     ctx.beginPath();
     ctx.moveTo(cx, cy + r * 0.35);
     ctx.bezierCurveTo(cx - r * 0.08, cy + r * 0.2, cx - r * 0.5, cy + r * 0.05, cx - r * 0.42, cy - r * 0.15);
@@ -409,47 +701,123 @@ function drawHeartIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, si
     ctx.fill();
     ctx.restore();
   }
-  addHighlight(ctx, cx - r * 0.2, cy - r * 0.25, r * 0.5);
+
+  // Bow/ribbon detail for gift hearts (tier 4+)
+  if (tier >= 4) {
+    // Ribbon vertical + horizontal cross
+    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+    ctx.lineWidth = size * 0.02;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - r * 0.4);
+    ctx.lineTo(cx, cy + r * 0.5);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(cx - r * 0.55, cy + r * 0.05);
+    ctx.lineTo(cx + r * 0.55, cy + r * 0.05);
+    ctx.stroke();
+    // Small bow at top center
+    ctx.fillStyle = 'rgba(255,255,255,0.35)';
+    ctx.beginPath();
+    ctx.ellipse(cx - r * 0.1, cy - r * 0.42, r * 0.1, r * 0.06, -0.4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(cx + r * 0.1, cy - r * 0.42, r * 0.1, r * 0.06, 0.4, 0, Math.PI * 2);
+    ctx.fill();
+    // Bow center knot
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    ctx.beginPath();
+    ctx.arc(cx, cy - r * 0.42, r * 0.035, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
   addTierSparkles(ctx, cx, cy, r, tier);
 }
 
 // --- Cup / Mug Icon ---
 function drawCupIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, tier: number, color: string, accent: string): void {
   const r = size * 0.35;
-  // Cup body
   const cupW = r * 0.7;
   const cupH = r * 0.9;
+
+  // Saucer beneath the cup
+  const saucerGrad = ctx.createLinearGradient(cx - cupW * 1.4, cy + cupH * 0.75, cx + cupW * 1.4, cy + cupH * 0.85);
+  saucerGrad.addColorStop(0, darkenColor(color, 0.05));
+  saucerGrad.addColorStop(0.5, accent);
+  saucerGrad.addColorStop(1, darkenColor(color, 0.05));
+  ctx.fillStyle = saucerGrad;
+  ctx.beginPath();
+  ctx.ellipse(cx, cy + cupH * 0.82, cupW * 1.35, r * 0.12, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // Saucer rim highlight
+  ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+  ctx.lineWidth = size * 0.008;
+  ctx.beginPath();
+  ctx.ellipse(cx, cy + cupH * 0.8, cupW * 1.3, r * 0.08, 0, Math.PI + 0.3, -0.3);
+  ctx.stroke();
+
+  // Cup body
   const grad = ctx.createLinearGradient(cx - cupW, cy - cupH * 0.4, cx + cupW, cy + cupH * 0.6);
   grad.addColorStop(0, accent);
-  grad.addColorStop(1, color);
+  grad.addColorStop(0.6, color);
+  grad.addColorStop(1, darkenColor(color, 0.08));
   ctx.fillStyle = grad;
   roundRect(ctx, cx - cupW, cy - cupH * 0.3, cupW * 2, cupH * 1.1, r * 0.15);
   ctx.fill();
+
+  // Liquid level visible inside (darker line near top)
+  const liqGrad = ctx.createLinearGradient(cx, cy - cupH * 0.2, cx, cy - cupH * 0.05);
+  liqGrad.addColorStop(0, darkenColor(color, 0.2));
+  liqGrad.addColorStop(1, darkenColor(color, 0.1));
+  ctx.fillStyle = liqGrad;
+  ctx.beginPath();
+  ctx.ellipse(cx, cy - cupH * 0.15, cupW * 0.85, r * 0.07, 0, 0, Math.PI * 2);
+  ctx.fill();
+
   // Cup rim
   ctx.fillStyle = darkenColor(color, 0.1);
   ctx.beginPath();
   ctx.ellipse(cx, cy - cupH * 0.3, cupW, r * 0.1, 0, 0, Math.PI * 2);
   ctx.fill();
-  // Handle
+  // Rim highlight
+  ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+  ctx.lineWidth = size * 0.008;
+  ctx.beginPath();
+  ctx.ellipse(cx, cy - cupH * 0.31, cupW * 0.9, r * 0.06, 0, Math.PI + 0.5, -0.5);
+  ctx.stroke();
+
+  // Handle on right side (small arc)
   ctx.strokeStyle = color;
   ctx.lineWidth = size * 0.04;
   ctx.lineCap = 'round';
   ctx.beginPath();
   ctx.arc(cx + cupW + r * 0.15, cy + cupH * 0.1, r * 0.22, -Math.PI * 0.4, Math.PI * 0.4);
   ctx.stroke();
-  // Steam wisps
-  if (tier >= 2) {
-    ctx.strokeStyle = 'rgba(255,255,255,0.5)';
-    ctx.lineWidth = size * 0.02;
-    const steamCount = Math.min(tier - 1, 3);
-    for (let i = 0; i < steamCount; i++) {
-      const sx = cx + (i - (steamCount - 1) / 2) * r * 0.3;
-      ctx.beginPath();
-      ctx.moveTo(sx, cy - cupH * 0.4);
-      ctx.quadraticCurveTo(sx + r * 0.12, cy - cupH * 0.7, sx - r * 0.08, cy - cupH * 0.95);
-      ctx.stroke();
-    }
+  // Handle inner highlight
+  ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+  ctx.lineWidth = size * 0.015;
+  ctx.beginPath();
+  ctx.arc(cx + cupW + r * 0.15, cy + cupH * 0.1, r * 0.18, -Math.PI * 0.3, Math.PI * 0.2);
+  ctx.stroke();
+
+  // Steam wisps (curvy S-shaped lines) -- always show at least 2
+  const steamCount = Math.max(2, Math.min(tier, 3));
+  for (let i = 0; i < steamCount; i++) {
+    const sx = cx + (i - (steamCount - 1) / 2) * r * 0.3;
+    const steamAlpha = 0.3 + (tier >= 2 ? 0.2 : 0);
+    ctx.strokeStyle = `rgba(255,255,255,${steamAlpha})`;
+    ctx.lineWidth = size * 0.018;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(sx, cy - cupH * 0.38);
+    // S-curve steam wisp
+    ctx.bezierCurveTo(
+      sx + r * 0.12, cy - cupH * 0.55,
+      sx - r * 0.12, cy - cupH * 0.7,
+      sx + r * 0.06, cy - cupH * 0.95
+    );
+    ctx.stroke();
   }
+
   addHighlight(ctx, cx - cupW * 0.3, cy - cupH * 0.1, r * 0.5);
   addTierSparkles(ctx, cx, cy, r, tier);
 }
@@ -457,10 +825,27 @@ function drawCupIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size
 // --- Shell / Spiral Icon ---
 function drawShellIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, tier: number, color: string, accent: string): void {
   const r = size * 0.38;
-  // Main shell body
-  const grad = ctx.createRadialGradient(cx - r * 0.15, cy - r * 0.15, 0, cx, cy, r);
+
+  // Sandy dots at base
+  const sandColors = ['#F5DEB3', '#DEB887', '#D2B48C', '#E8D5B7'];
+  for (let i = 0; i < 8; i++) {
+    ctx.fillStyle = sandColors[i % sandColors.length];
+    ctx.beginPath();
+    ctx.arc(
+      cx + (i - 3.5) * r * 0.14,
+      cy + r * 0.78 + (i % 2) * r * 0.04,
+      r * (0.03 + (i % 3) * 0.01),
+      0, Math.PI * 2
+    );
+    ctx.fill();
+  }
+
+  // Main shell body with pearlescent color shift (mix pink and blue)
+  const grad = ctx.createRadialGradient(cx - r * 0.15, cy - r * 0.15, 0, cx + r * 0.2, cy + r * 0.2, r);
   grad.addColorStop(0, '#FFFFFF');
-  grad.addColorStop(0.3, accent);
+  grad.addColorStop(0.2, '#F8BBD0');  // pink pearl
+  grad.addColorStop(0.5, accent);
+  grad.addColorStop(0.7, '#B3E5FC');  // blue pearl
   grad.addColorStop(1, color);
   ctx.fillStyle = grad;
   ctx.beginPath();
@@ -471,7 +856,25 @@ function drawShellIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, si
   ctx.bezierCurveTo(cx + r * 0.9, cy + r * 0.2, cx + r * 0.6, cy + r * 0.65, cx + r * 0.1, cy + r * 0.7);
   ctx.closePath();
   ctx.fill();
-  // Spiral ridges
+
+  // Pearlescent sheen overlay
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(cx - r * 0.1, cy + r * 0.7);
+  ctx.bezierCurveTo(cx - r * 0.8, cy + r * 0.5, cx - r * 0.9, cy - r * 0.3, cx - r * 0.4, cy - r * 0.7);
+  ctx.bezierCurveTo(cx, cy - r * 0.9, cx + r * 0.5, cy - r * 0.7, cx + r * 0.7, cy - r * 0.2);
+  ctx.bezierCurveTo(cx + r * 0.9, cy + r * 0.2, cx + r * 0.6, cy + r * 0.65, cx + r * 0.1, cy + r * 0.7);
+  ctx.closePath();
+  ctx.clip();
+  const pearlGrad = ctx.createLinearGradient(cx - r, cy - r, cx + r, cy + r);
+  pearlGrad.addColorStop(0, 'rgba(248,187,208,0.15)');
+  pearlGrad.addColorStop(0.5, 'rgba(179,229,252,0.12)');
+  pearlGrad.addColorStop(1, 'rgba(248,187,208,0.1)');
+  ctx.fillStyle = pearlGrad;
+  ctx.fillRect(cx - r, cy - r, r * 2, r * 2);
+  ctx.restore();
+
+  // Spiral ridges (concentric arc lines)
   ctx.strokeStyle = 'rgba(255,255,255,0.35)';
   ctx.lineWidth = size * 0.015;
   const ridgeCount = 2 + Math.min(tier, 4);
@@ -484,7 +887,26 @@ function drawShellIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, si
       cx + r * (0.1 + t * 0.4), cy - r * (0.1 + t * 0.4)
     );
     ctx.stroke();
+    // Shadow side of each ridge
+    ctx.strokeStyle = 'rgba(0,0,0,0.06)';
+    ctx.beginPath();
+    ctx.moveTo(cx - r * 0.08, cy + r * 0.68);
+    ctx.quadraticCurveTo(
+      cx + (t - 0.5) * r * 0.5 + r * 0.02, cy + r * (0.32 - t * 0.8),
+      cx + r * (0.12 + t * 0.4), cy - r * (0.08 + t * 0.4)
+    );
+    ctx.stroke();
+    ctx.strokeStyle = 'rgba(255,255,255,0.35)';
   }
+
+  // Shell edge rim
+  ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+  ctx.lineWidth = size * 0.01;
+  ctx.beginPath();
+  ctx.moveTo(cx - r * 0.1, cy + r * 0.7);
+  ctx.bezierCurveTo(cx - r * 0.8, cy + r * 0.5, cx - r * 0.9, cy - r * 0.3, cx - r * 0.4, cy - r * 0.7);
+  ctx.stroke();
+
   addHighlight(ctx, cx - r * 0.1, cy - r * 0.2, r * 0.5);
   addTierSparkles(ctx, cx, cy, r, tier);
 }
@@ -493,63 +915,149 @@ function drawShellIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, si
 function drawCakeIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, tier: number, color: string, accent: string): void {
   const r = size * 0.38;
   const layers = Math.min(1 + Math.floor(tier / 2), 3);
-  const layerH = (r * 1.4) / layers;
-  const baseY = cy + r * 0.55;
+  const layerH = (r * 1.3) / layers;
+  const baseY = cy + r * 0.5;
+
+  // Plate beneath cake
+  const plateGrad = ctx.createLinearGradient(cx - r * 0.9, baseY + r * 0.1, cx + r * 0.9, baseY + r * 0.15);
+  plateGrad.addColorStop(0, '#E0E0E0');
+  plateGrad.addColorStop(0.5, '#FFFFFF');
+  plateGrad.addColorStop(1, '#E0E0E0');
+  ctx.fillStyle = plateGrad;
+  ctx.beginPath();
+  ctx.ellipse(cx, baseY + r * 0.12, r * 0.9, r * 0.1, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // Plate rim
+  ctx.strokeStyle = 'rgba(0,0,0,0.06)';
+  ctx.lineWidth = size * 0.006;
+  ctx.beginPath();
+  ctx.ellipse(cx, baseY + r * 0.12, r * 0.88, r * 0.09, 0, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // Cake layers
   for (let i = 0; i < layers; i++) {
     const y = baseY - i * layerH;
     const w = r * (0.8 - i * 0.12);
     const h = layerH * 0.9;
-    // Layer body
+    // Layer body with gradient
     const grad = ctx.createLinearGradient(cx - w, y - h, cx + w, y);
     grad.addColorStop(0, accent);
-    grad.addColorStop(1, color);
+    grad.addColorStop(0.5, color);
+    grad.addColorStop(1, darkenColor(color, 0.08));
     ctx.fillStyle = grad;
     roundRect(ctx, cx - w, y - h, w * 2, h, r * 0.08);
     ctx.fill();
-    // Frosting drip on top
+
+    // Visible layer line (horizontal filling line between layers)
+    if (i > 0) {
+      ctx.fillStyle = darkenColor(color, 0.12);
+      ctx.beginPath();
+      ctx.ellipse(cx, y, w * 0.95, h * 0.06, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Frosting drip on top of each layer
     ctx.fillStyle = 'rgba(255,255,255,0.6)';
     ctx.beginPath();
     ctx.ellipse(cx, y - h, w * 0.95, h * 0.15, 0, 0, Math.PI * 2);
     ctx.fill();
+
+    // Frosting drips down the side (2-3 per layer)
+    ctx.fillStyle = 'rgba(255,255,255,0.45)';
+    for (let d = 0; d < 3; d++) {
+      const dx = cx + (d - 1) * w * 0.5;
+      const dripH = h * (0.2 + d * 0.1);
+      ctx.beginPath();
+      ctx.moveTo(dx - r * 0.04, y - h);
+      ctx.quadraticCurveTo(dx - r * 0.05, y - h + dripH, dx, y - h + dripH + r * 0.03);
+      ctx.quadraticCurveTo(dx + r * 0.05, y - h + dripH, dx + r * 0.04, y - h);
+      ctx.closePath();
+      ctx.fill();
+    }
   }
-  // Cherry on top for higher tiers
-  if (tier >= 3) {
-    const topY = baseY - layers * layerH;
-    ctx.fillStyle = '#E53935';
-    ctx.beginPath();
-    ctx.arc(cx, topY - r * 0.1, r * 0.12, 0, Math.PI * 2);
-    ctx.fill();
-    // Cherry highlight
-    ctx.fillStyle = 'rgba(255,255,255,0.6)';
-    ctx.beginPath();
-    ctx.arc(cx - r * 0.03, topY - r * 0.13, r * 0.04, 0, Math.PI * 2);
-    ctx.fill();
-    // Stem
-    ctx.strokeStyle = '#4CAF50';
-    ctx.lineWidth = size * 0.02;
-    ctx.beginPath();
-    ctx.moveTo(cx, topY - r * 0.22);
-    ctx.quadraticCurveTo(cx + r * 0.1, topY - r * 0.35, cx + r * 0.05, topY - r * 0.4);
-    ctx.stroke();
+
+  // Sprinkles (tiny colored dots on the frosting)
+  const sprinkleColors = ['#E53935', '#FFEB3B', '#4CAF50', '#2196F3', '#FF9800', '#9C27B0'];
+  for (let i = 0; i < 10; i++) {
+    const topLayerY = baseY - (layers - 1) * layerH - layerH * 0.9;
+    const sprW = r * (0.75 - (layers - 1) * 0.1);
+    const sx = cx + (Math.cos(i * 2.3) * sprW * 0.8);
+    const sy = topLayerY + (Math.sin(i * 1.7) * layerH * 0.3);
+    ctx.fillStyle = sprinkleColors[i % sprinkleColors.length];
+    ctx.save();
+    ctx.translate(sx, sy);
+    ctx.rotate(i * 0.8);
+    ctx.fillRect(-size * 0.012, -size * 0.004, size * 0.024, size * 0.008);
+    ctx.restore();
   }
+
+  // Cherry on top (always present, bigger for higher tiers)
+  const topY = baseY - layers * layerH;
+  const cherryR = tier >= 3 ? r * 0.13 : r * 0.1;
+  // Cherry body
+  const cherryGrad = ctx.createRadialGradient(cx - cherryR * 0.3, topY - r * 0.12, 0, cx, topY - r * 0.08, cherryR);
+  cherryGrad.addColorStop(0, '#FF5252');
+  cherryGrad.addColorStop(1, '#C62828');
+  ctx.fillStyle = cherryGrad;
+  ctx.beginPath();
+  ctx.arc(cx, topY - r * 0.08, cherryR, 0, Math.PI * 2);
+  ctx.fill();
+  // Cherry highlight
+  ctx.fillStyle = 'rgba(255,255,255,0.6)';
+  ctx.beginPath();
+  ctx.arc(cx - cherryR * 0.3, topY - r * 0.12, cherryR * 0.3, 0, Math.PI * 2);
+  ctx.fill();
+  // Cherry stem
+  ctx.strokeStyle = '#4CAF50';
+  ctx.lineWidth = size * 0.02;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(cx, topY - r * 0.08 - cherryR);
+  ctx.quadraticCurveTo(cx + r * 0.1, topY - r * 0.35, cx + r * 0.05, topY - r * 0.4);
+  ctx.stroke();
+
   addTierSparkles(ctx, cx, cy, r, tier);
 }
 
 // --- Cosmic Icon (planet, comet, rocket shapes) ---
 function drawCosmicIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, tier: number, color: string, accent: string): void {
   const r = size * 0.35;
+
+  // Tiny star dots around all cosmic objects
+  ctx.fillStyle = 'rgba(255,255,255,0.5)';
+  for (let i = 0; i < 6; i++) {
+    const sa = (i / 6) * Math.PI * 2 + 0.5;
+    const sd = r * (0.9 + (i % 3) * 0.15);
+    const starR = r * (0.015 + (i % 2) * 0.01);
+    ctx.beginPath();
+    ctx.arc(cx + Math.cos(sa) * sd, cy + Math.sin(sa) * sd, starR, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
   if (tier <= 2) {
     // Rock / Comet
     const grad = ctx.createRadialGradient(cx - r * 0.15, cy - r * 0.15, 0, cx, cy, r);
     grad.addColorStop(0, accent);
-    grad.addColorStop(1, color);
+    grad.addColorStop(0.7, color);
+    grad.addColorStop(1, darkenColor(color, 0.15));
     ctx.fillStyle = grad;
     ctx.beginPath();
     ctx.arc(cx, cy, r * 0.6, 0, Math.PI * 2);
     ctx.fill();
+    // Surface craters
+    ctx.fillStyle = 'rgba(0,0,0,0.08)';
+    ctx.beginPath();
+    ctx.arc(cx - r * 0.15, cy + r * 0.1, r * 0.1, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(cx + r * 0.2, cy - r * 0.1, r * 0.07, 0, Math.PI * 2);
+    ctx.fill();
     if (tier >= 2) {
-      // Comet tail
-      ctx.fillStyle = accent + '60';
+      // Comet tail with gradient
+      const tailGrad = ctx.createLinearGradient(cx + r * 0.4, cy, cx + r * 1.2, cy - r * 0.3);
+      tailGrad.addColorStop(0, accent + '80');
+      tailGrad.addColorStop(1, accent + '00');
+      ctx.fillStyle = tailGrad;
       ctx.beginPath();
       ctx.moveTo(cx + r * 0.4, cy - r * 0.1);
       ctx.quadraticCurveTo(cx + r * 1.0, cy + r * 0.3, cx + r * 1.2, cy - r * 0.5);
@@ -561,22 +1069,47 @@ function drawCosmicIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, s
     // Planet with ring
     const grad = ctx.createRadialGradient(cx - r * 0.2, cy - r * 0.2, 0, cx, cy, r * 0.65);
     grad.addColorStop(0, accent);
-    grad.addColorStop(1, color);
+    grad.addColorStop(0.6, color);
+    grad.addColorStop(1, darkenColor(color, 0.15));
     ctx.fillStyle = grad;
     ctx.beginPath();
     ctx.arc(cx, cy, r * 0.55, 0, Math.PI * 2);
     ctx.fill();
-    // Ring
-    ctx.strokeStyle = accent + 'AA';
-    ctx.lineWidth = size * 0.03;
+
+    // Surface bands (horizontal curved lines)
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(cx, cy, r * 0.55, 0, Math.PI * 2);
+    ctx.clip();
+    ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+    ctx.lineWidth = size * 0.015;
+    for (let b = -2; b <= 2; b++) {
+      ctx.beginPath();
+      ctx.ellipse(cx, cy + b * r * 0.15, r * 0.5, r * 0.06, 0.05, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    // Darker band
+    ctx.strokeStyle = 'rgba(0,0,0,0.06)';
+    ctx.lineWidth = size * 0.025;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy + r * 0.1, r * 0.48, r * 0.08, 0.1, 0, Math.PI);
+    ctx.stroke();
+    ctx.restore();
+
+    // Ring with transparency (semi-transparent fill instead of just stroke)
+    ctx.save();
+    ctx.globalAlpha = 0.6;
+    ctx.strokeStyle = accent;
+    ctx.lineWidth = size * 0.035;
     ctx.beginPath();
     ctx.ellipse(cx, cy, r * 0.9, r * 0.2, -0.3, 0, Math.PI * 2);
     ctx.stroke();
-    // Surface band
+    ctx.restore();
+    // Ring inner edge
     ctx.strokeStyle = 'rgba(255,255,255,0.2)';
-    ctx.lineWidth = size * 0.02;
+    ctx.lineWidth = size * 0.01;
     ctx.beginPath();
-    ctx.ellipse(cx, cy + r * 0.1, r * 0.45, r * 0.08, 0.1, 0, Math.PI);
+    ctx.ellipse(cx, cy, r * 0.82, r * 0.17, -0.3, 0, Math.PI * 2);
     ctx.stroke();
   } else {
     // Rocket
@@ -584,9 +1117,11 @@ function drawCosmicIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, s
     const bodyH = r * 0.9;
     // Body
     const grad = ctx.createLinearGradient(cx - bodyW, cy, cx + bodyW, cy);
-    grad.addColorStop(0, darkenColor(color, 0.1));
+    grad.addColorStop(0, darkenColor(color, 0.12));
+    grad.addColorStop(0.3, color);
     grad.addColorStop(0.5, accent);
-    grad.addColorStop(1, darkenColor(color, 0.1));
+    grad.addColorStop(0.7, color);
+    grad.addColorStop(1, darkenColor(color, 0.12));
     ctx.fillStyle = grad;
     ctx.beginPath();
     ctx.moveTo(cx, cy - bodyH);
@@ -616,27 +1151,65 @@ function drawCosmicIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, s
       ctx.lineTo(cx + dir * bodyW, cy + bodyH * 0.45);
       ctx.closePath();
       ctx.fill();
+      // Fin highlight
+      ctx.fillStyle = 'rgba(255,255,255,0.15)';
+      ctx.beginPath();
+      ctx.moveTo(cx + dir * bodyW, cy + bodyH * 0.25);
+      ctx.lineTo(cx + dir * bodyW * 1.4, cy + bodyH * 0.45);
+      ctx.lineTo(cx + dir * bodyW, cy + bodyH * 0.4);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = color;
     });
-    // Flame
-    ctx.fillStyle = '#FF9800';
+    // Flame exhaust (orange-yellow triangle with glow)
+    const flameGrad = ctx.createLinearGradient(cx, cy + bodyH * 0.4, cx, cy + bodyH * 1.0);
+    flameGrad.addColorStop(0, '#FF9800');
+    flameGrad.addColorStop(0.5, '#FF5722');
+    flameGrad.addColorStop(1, '#FF572200');
+    ctx.fillStyle = flameGrad;
     ctx.beginPath();
-    ctx.moveTo(cx - bodyW * 0.5, cy + bodyH * 0.4);
-    ctx.quadraticCurveTo(cx, cy + bodyH * 0.95, cx + bodyW * 0.5, cy + bodyH * 0.4);
+    ctx.moveTo(cx - bodyW * 0.55, cy + bodyH * 0.4);
+    ctx.quadraticCurveTo(cx, cy + bodyH * 1.05, cx + bodyW * 0.55, cy + bodyH * 0.4);
     ctx.fill();
+    // Inner flame (brighter)
     ctx.fillStyle = '#FFEB3B';
     ctx.beginPath();
     ctx.moveTo(cx - bodyW * 0.25, cy + bodyH * 0.4);
-    ctx.quadraticCurveTo(cx, cy + bodyH * 0.7, cx + bodyW * 0.25, cy + bodyH * 0.4);
+    ctx.quadraticCurveTo(cx, cy + bodyH * 0.75, cx + bodyW * 0.25, cy + bodyH * 0.4);
     ctx.fill();
-    // Window
-    ctx.fillStyle = '#E3F2FD';
+    // White-hot core
+    ctx.fillStyle = 'rgba(255,255,255,0.6)';
+    ctx.beginPath();
+    ctx.moveTo(cx - bodyW * 0.1, cy + bodyH * 0.4);
+    ctx.quadraticCurveTo(cx, cy + bodyH * 0.55, cx + bodyW * 0.1, cy + bodyH * 0.4);
+    ctx.fill();
+    // Window (small circle) with reflective detail
+    const winGrad = ctx.createRadialGradient(cx - bodyW * 0.1, cy - bodyH * 0.15, 0, cx, cy - bodyH * 0.1, bodyW * 0.35);
+    winGrad.addColorStop(0, '#E3F2FD');
+    winGrad.addColorStop(0.5, '#90CAF9');
+    winGrad.addColorStop(1, '#42A5F5');
+    ctx.fillStyle = winGrad;
     ctx.beginPath();
     ctx.arc(cx, cy - bodyH * 0.1, bodyW * 0.35, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    // Window frame
+    ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+    ctx.lineWidth = size * 0.01;
     ctx.beginPath();
-    ctx.arc(cx - bodyW * 0.1, cy - bodyH * 0.15, bodyW * 0.12, 0, Math.PI * 2);
+    ctx.arc(cx, cy - bodyH * 0.1, bodyW * 0.35, 0, Math.PI * 2);
+    ctx.stroke();
+    // Window highlight
+    ctx.fillStyle = 'rgba(255,255,255,0.6)';
+    ctx.beginPath();
+    ctx.arc(cx - bodyW * 0.12, cy - bodyH * 0.16, bodyW * 0.12, 0, Math.PI * 2);
     ctx.fill();
+    // Body panel line
+    ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+    ctx.lineWidth = size * 0.008;
+    ctx.beginPath();
+    ctx.moveTo(cx - bodyW * 0.8, cy + bodyH * 0.2);
+    ctx.lineTo(cx + bodyW * 0.8, cy + bodyH * 0.2);
+    ctx.stroke();
   }
   addHighlight(ctx, cx - r * 0.15, cy - r * 0.25, r * 0.5);
   addTierSparkles(ctx, cx, cy, r, tier);
@@ -646,57 +1219,98 @@ function drawCosmicIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, s
 function drawCoffeeIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, tier: number, color: string, accent: string): void {
   const r = size * 0.38;
   if (tier <= 1) {
-    // Coffee bean
-    const grad = ctx.createRadialGradient(cx - r * 0.1, cy - r * 0.1, 0, cx, cy, r * 0.5);
+    // Coffee bean with warm brown gradient
+    const grad = ctx.createRadialGradient(cx - r * 0.12, cy - r * 0.15, 0, cx + r * 0.1, cy + r * 0.1, r * 0.55);
     grad.addColorStop(0, accent);
-    grad.addColorStop(1, color);
+    grad.addColorStop(0.5, color);
+    grad.addColorStop(1, darkenColor(color, 0.2));
     ctx.fillStyle = grad;
     ctx.beginPath();
     ctx.ellipse(cx, cy, r * 0.35, r * 0.5, 0, 0, Math.PI * 2);
     ctx.fill();
-    // Center crease
-    ctx.strokeStyle = darkenColor(color, 0.2);
-    ctx.lineWidth = size * 0.02;
+    // Center crease line (deeper, more defined)
+    ctx.strokeStyle = darkenColor(color, 0.25);
+    ctx.lineWidth = size * 0.025;
+    ctx.lineCap = 'round';
     ctx.beginPath();
-    ctx.moveTo(cx, cy - r * 0.35);
-    ctx.quadraticCurveTo(cx + r * 0.08, cy, cx, cy + r * 0.35);
+    ctx.moveTo(cx, cy - r * 0.38);
+    ctx.bezierCurveTo(cx + r * 0.1, cy - r * 0.1, cx - r * 0.1, cy + r * 0.1, cx, cy + r * 0.38);
     ctx.stroke();
+    // Crease shadow (subtle darker line offset)
+    ctx.strokeStyle = 'rgba(0,0,0,0.08)';
+    ctx.lineWidth = size * 0.015;
+    ctx.beginPath();
+    ctx.moveTo(cx + r * 0.02, cy - r * 0.35);
+    ctx.bezierCurveTo(cx + r * 0.12, cy - r * 0.08, cx - r * 0.08, cy + r * 0.12, cx + r * 0.02, cy + r * 0.35);
+    ctx.stroke();
+    // Surface texture (subtle bumps)
+    ctx.fillStyle = 'rgba(255,255,255,0.06)';
+    for (let i = 0; i < 5; i++) {
+      const ta = (i / 5) * Math.PI * 2 + 1;
+      ctx.beginPath();
+      ctx.arc(cx + Math.cos(ta) * r * 0.2, cy + Math.sin(ta) * r * 0.3, r * 0.03, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    // Warm highlight
+    addHighlight(ctx, cx - r * 0.1, cy - r * 0.2, r * 0.35);
   } else if (tier <= 3) {
-    // Coffee cup
+    // Coffee cup (delegate to enhanced cup)
     drawCupIcon(ctx, cx, cy, size, tier, color, accent);
     return;
   } else if (tier <= 5) {
-    // Pastry / pancake stack
+    // Pastry / pancake stack with layered curves
     const layers = tier - 2;
     const layerH = r * 0.25;
     const baseY = cy + r * 0.3;
+
+    // Plate beneath
+    ctx.fillStyle = '#EEEEEE';
+    ctx.beginPath();
+    ctx.ellipse(cx, baseY + r * 0.12, r * 0.72, r * 0.08, 0, 0, Math.PI * 2);
+    ctx.fill();
+
     for (let i = 0; i < layers; i++) {
       const y = baseY - i * layerH;
       const w = r * (0.65 - i * 0.04);
-      const grad2 = ctx.createLinearGradient(cx - w, y, cx + w, y + layerH);
+      // Warm brown gradient for each layer
+      const grad2 = ctx.createRadialGradient(cx - w * 0.3, y - layerH * 0.2, 0, cx, y, w);
       grad2.addColorStop(0, accent);
-      grad2.addColorStop(1, color);
+      grad2.addColorStop(0.6, color);
+      grad2.addColorStop(1, darkenColor(color, 0.1));
       ctx.fillStyle = grad2;
       ctx.beginPath();
       ctx.ellipse(cx, y, w, layerH * 0.55, 0, 0, Math.PI * 2);
       ctx.fill();
-      // Drizzle
-      ctx.fillStyle = '#FFE082';
+      // Layer edge detail
+      ctx.strokeStyle = 'rgba(0,0,0,0.06)';
+      ctx.lineWidth = size * 0.006;
+      ctx.beginPath();
+      ctx.ellipse(cx, y + layerH * 0.05, w * 0.98, layerH * 0.5, 0, 0.3, Math.PI - 0.3);
+      ctx.stroke();
+      // Syrup/drizzle with warmth
+      const drizGrad = ctx.createLinearGradient(cx - w * 0.85, y, cx + w * 0.85, y);
+      drizGrad.addColorStop(0, '#F5D280');
+      drizGrad.addColorStop(0.5, '#FFE082');
+      drizGrad.addColorStop(1, '#F5D280');
+      ctx.fillStyle = drizGrad;
       ctx.beginPath();
       ctx.ellipse(cx, y - layerH * 0.15, w * 0.85, layerH * 0.15, 0, 0, Math.PI * 2);
       ctx.fill();
     }
-    // Butter pat on top
-    ctx.fillStyle = '#FFF9C4';
+    // Butter pat on top with highlight
+    const butterGrad = ctx.createRadialGradient(cx - r * 0.04, baseY - layers * layerH - r * 0.07, 0, cx, baseY - layers * layerH - r * 0.04, r * 0.15);
+    butterGrad.addColorStop(0, '#FFFDE7');
+    butterGrad.addColorStop(1, '#FFF9C4');
+    ctx.fillStyle = butterGrad;
     ctx.beginPath();
     ctx.ellipse(cx, baseY - layers * layerH - r * 0.05, r * 0.15, r * 0.08, 0, 0, Math.PI * 2);
     ctx.fill();
+    addHighlight(ctx, cx - r * 0.15, cy - r * 0.15, r * 0.4);
   } else {
     // Bakery building
     drawHouseIcon(ctx, cx, cy, size, tier, color, accent);
     return;
   }
-  addHighlight(ctx, cx - r * 0.15, cy - r * 0.15, r * 0.4);
   addTierSparkles(ctx, cx, cy, r, tier);
 }
 
@@ -2336,9 +2950,9 @@ export class EmojiRenderer {
     ctx.fill();
     ctx.restore();
 
-    // Subtle chain-color tint on card
+    // Subtle chain-color tint on card (12% opacity -- white-dominant)
     roundRect(ctx, pad, pad, size - pad * 2, size - pad * 2, cr);
-    ctx.fillStyle = colors.from + '4D'; // 30% opacity
+    ctx.fillStyle = colors.from + '1F'; // 12% opacity
     ctx.fill();
 
     // Very soft inner shine (barely visible)
@@ -2392,7 +3006,7 @@ export class EmojiRenderer {
     }
 
     // === LARGE ITEM ILLUSTRATION (the dominant visual) ===
-    const iconSize = size * 0.75; // 75% of the card
+    const iconSize = size * 0.80; // 80% of the card
     const iconY = cy + size * 0.02; // slightly below center for visual weight
 
     // Drop shadow beneath the item illustration

@@ -63,46 +63,75 @@ export class Board {
     const bh = this.rows * (this.cellSize + this.gap) - this.gap + pad * 2;
     const bx = this.offsetX - pad;
     const by = this.offsetY - pad;
-    const r = SIZES.CORNER_RADIUS + s(6); // More rounded board corners
+    const r = SIZES.CORNER_RADIUS + s(10); // Generously rounded board corners
 
-    // Board outer shadow (deeper, softer)
-    this.graphics.fillStyle(0xD4A0B8, 0.25);
-    this.graphics.fillRoundedRect(bx + s(2), by + s(4), bw, bh, r);
+    // ── Outer shadow (board floats above background) ──
+    // Soft wide shadow
+    this.graphics.fillStyle(COLORS.BOARD_SHADOW, 0.12);
+    this.graphics.fillRoundedRect(bx - s(3), by + s(6), bw + s(6), bh + s(4), r + s(4));
+    // Closer tighter shadow
+    this.graphics.fillStyle(COLORS.BOARD_SHADOW, 0.18);
+    this.graphics.fillRoundedRect(bx + s(1), by + s(3), bw + s(2), bh + s(2), r + s(2));
 
-    // Board background
-    this.graphics.fillStyle(COLORS.BOARD_BG, 0.88);
+    // ── Board base fill — warm ivory with subtle gradient feel ──
+    this.graphics.fillStyle(COLORS.BOARD_BG, 0.92);
     this.graphics.fillRoundedRect(bx, by, bw, bh, r);
+    // Warm gradient overlay: lighter at top, slightly deeper at bottom
+    this.graphics.fillStyle(0xFFFFFF, 0.12);
+    this.graphics.fillRoundedRect(bx, by, bw, bh * 0.35, { tl: r, tr: r, bl: 0, br: 0 });
+    this.graphics.fillStyle(COLORS.WOOD_BROWN, 0.06);
+    this.graphics.fillRoundedRect(bx, by + bh * 0.65, bw, bh * 0.35, { tl: 0, tr: 0, bl: r, br: r });
 
-    // Soft dot pattern on board background
-    const dotSpacing = s(12);
-    const dotR = s(0.8);
-    for (let dx = bx + dotSpacing; dx < bx + bw - dotSpacing / 2; dx += dotSpacing) {
-      for (let dy = by + dotSpacing; dy < by + bh - dotSpacing / 2; dy += dotSpacing) {
-        this.graphics.fillStyle(0xE8B4CC, 0.15);
-        this.graphics.fillCircle(dx, dy, dotR);
-      }
+    // ── Subtle wood-grain / linen texture (horizontal lines at 3% opacity) ──
+    this.graphics.lineStyle(s(0.3), COLORS.WOOD_BROWN, 0.03);
+    const lineSpacing = s(4);
+    for (let ly = by + s(8); ly < by + bh - s(8); ly += lineSpacing) {
+      // Slight wobble for organic feel
+      const wobble = Math.sin(ly * 0.05) * s(0.5);
+      this.graphics.beginPath();
+      this.graphics.moveTo(bx + s(10) + wobble, ly);
+      this.graphics.lineTo(bx + bw - s(10) + wobble, ly);
+      this.graphics.strokePath();
     }
 
-    // Subtle holographic shimmer overlay on board background (barely visible, adds depth)
-    const holoAlpha = 0.04;
-    this.graphics.fillStyle(0xD4A5FF, holoAlpha);
-    this.graphics.fillRoundedRect(bx + bw * 0.1, by, bw * 0.15, bh, r);
-    this.graphics.fillStyle(0x87CEEB, holoAlpha);
-    this.graphics.fillRoundedRect(bx + bw * 0.35, by, bw * 0.15, bh, r);
-    this.graphics.fillStyle(0xE8A4C8, holoAlpha);
-    this.graphics.fillRoundedRect(bx + bw * 0.6, by, bw * 0.15, bh, r);
-    this.graphics.fillStyle(0xFFD93D, holoAlpha * 0.7);
-    this.graphics.fillRoundedRect(bx + bw * 0.8, by, bw * 0.12, bh, r);
-
-    // Soft border
-    this.graphics.lineStyle(s(1.5), COLORS.CELL_BORDER, 0.35);
-    this.graphics.strokeRoundedRect(bx, by, bw, bh, r);
-
-    // Inner highlight along top edge
-    this.graphics.lineStyle(s(1), 0xFFFFFF, 0.2);
+    // ── Warm golden inner border glow (10% opacity) ──
+    this.graphics.lineStyle(s(2.5), COLORS.BOARD_INNER_GLOW, 0.10);
+    this.graphics.strokeRoundedRect(bx + s(3), by + s(3), bw - s(6), bh - s(6), r - s(2));
+    // Brighter inner highlight along top edge
+    this.graphics.lineStyle(s(1), 0xFFFFFF, 0.18);
     this.graphics.strokeRoundedRect(bx + s(1), by + s(1), bw - s(2), bh - s(2), r - s(1));
 
-    const cr = s(12); // Slightly more rounded cell corners
+    // ── Outer border ──
+    this.graphics.lineStyle(s(1.5), COLORS.CELL_BORDER, 0.30);
+    this.graphics.strokeRoundedRect(bx, by, bw, bh, r);
+
+    // ── Decorative corner flowers (small kawaii 5-petal flowers) ──
+    const cornerInset = s(14);
+    const flowerR = s(5);
+    const corners = [
+      { fx: bx + cornerInset, fy: by + cornerInset },         // top-left
+      { fx: bx + bw - cornerInset, fy: by + cornerInset },    // top-right
+      { fx: bx + cornerInset, fy: by + bh - cornerInset },    // bottom-left
+      { fx: bx + bw - cornerInset, fy: by + bh - cornerInset }, // bottom-right
+    ];
+    for (const { fx, fy } of corners) {
+      // Petals
+      for (let p = 0; p < 5; p++) {
+        const a = (p / 5) * Math.PI * 2 - Math.PI / 2;
+        this.graphics.fillStyle(0xF8BBD0, 0.20);
+        this.graphics.fillEllipse(
+          fx + Math.cos(a) * flowerR * 0.6,
+          fy + Math.sin(a) * flowerR * 0.6,
+          flowerR * 0.5, flowerR * 0.35
+        );
+      }
+      // Center dot
+      this.graphics.fillStyle(COLORS.WARM_GOLD, 0.30);
+      this.graphics.fillCircle(fx, fy, flowerR * 0.2);
+    }
+
+    // ── Draw cells ──
+    const cr = s(12);
     for (let row = 0; row < this.rows; row++) {
       for (let col = 0; col < this.cols; col++) {
         const cell = this.cells[row][col];
@@ -110,10 +139,9 @@ export class Board {
         const cy = cell.y - this.cellSize / 2;
 
         if (cell.locked) {
-          this.graphics.fillStyle(0xE0D8E8, 0.5);
+          this.graphics.fillStyle(0xE8E0D8, 0.5);
           this.graphics.fillRoundedRect(cx, cy, this.cellSize, this.cellSize, cr);
-          // Locked pattern: diagonal lines
-          this.graphics.lineStyle(s(0.5), 0xD0C4D8, 0.3);
+          this.graphics.lineStyle(s(0.5), 0xD8CCBF, 0.3);
           for (let d = -this.cellSize; d < this.cellSize * 2; d += s(6)) {
             this.graphics.lineBetween(
               Math.max(cx, cx + d), Math.max(cy, cy - d + this.cellSize),
@@ -123,28 +151,37 @@ export class Board {
           continue;
         }
 
-        // Cell outer shadow (more pronounced)
-        this.graphics.fillStyle(COLORS.CELL_SHADOW, 0.2);
+        // Inset shadow (top edge darker — recessed slot look)
+        this.graphics.fillStyle(COLORS.CELL_SHADOW, 0.18);
+        this.graphics.fillRoundedRect(cx, cy, this.cellSize, s(4), { tl: cr, tr: cr, bl: 0, br: 0 });
+
+        // Cell outer drop shadow
+        this.graphics.fillStyle(COLORS.CELL_SHADOW, 0.12);
         this.graphics.fillRoundedRect(cx + s(1), cy + s(2), this.cellSize, this.cellSize, cr);
 
-        // Cell fill
-        this.graphics.fillStyle(COLORS.CELL_BG, 0.85);
+        // Cell fill — creamy warm white
+        this.graphics.fillStyle(COLORS.CELL_BG, 0.90);
         this.graphics.fillRoundedRect(cx, cy, this.cellSize, this.cellSize, cr);
 
-        // Inner highlight (top half, lighter) -- more pronounced
-        this.graphics.fillStyle(0xFFFFFF, 0.22);
-        this.graphics.fillRoundedRect(cx + s(1), cy + s(1), this.cellSize - s(2), this.cellSize * 0.45, { tl: cr, tr: cr, bl: 0, br: 0 });
+        // Inner gradient: white highlight at top (jewelry box slot)
+        this.graphics.fillStyle(0xFFFFFF, 0.28);
+        this.graphics.fillRoundedRect(cx + s(2), cy + s(2), this.cellSize - s(4), this.cellSize * 0.35, { tl: cr - s(1), tr: cr - s(1), bl: 0, br: 0 });
 
-        // Inner shadow along bottom edge
-        this.graphics.fillStyle(COLORS.CELL_SHADOW, 0.08);
-        this.graphics.fillRoundedRect(cx + s(1), cy + this.cellSize * 0.6, this.cellSize - s(2), this.cellSize * 0.4 - s(1), { tl: 0, tr: 0, bl: cr, br: cr });
+        // Inner shadow at bottom edge (recessed inset)
+        this.graphics.fillStyle(COLORS.CELL_SHADOW, 0.10);
+        this.graphics.fillRoundedRect(cx + s(2), cy + this.cellSize * 0.68, this.cellSize - s(4), this.cellSize * 0.32 - s(2), { tl: 0, tr: 0, bl: cr - s(1), br: cr - s(1) });
 
-        // Border
-        this.graphics.lineStyle(s(1), COLORS.CELL_BORDER, 0.4);
+        // Left/right edge darkening for inset depth
+        this.graphics.fillStyle(COLORS.CELL_SHADOW, 0.05);
+        this.graphics.fillRect(cx, cy + cr, s(2), this.cellSize - cr * 2);
+        this.graphics.fillRect(cx + this.cellSize - s(2), cy + cr, s(2), this.cellSize - cr * 2);
+
+        // Border — warm tone
+        this.graphics.lineStyle(s(1), COLORS.CELL_BORDER, 0.35);
         this.graphics.strokeRoundedRect(cx, cy, this.cellSize, this.cellSize, cr);
 
-        // Subtle inner border highlight (top-left)
-        this.graphics.lineStyle(s(0.5), 0xFFFFFF, 0.15);
+        // Top-left inner highlight for glossy feel
+        this.graphics.lineStyle(s(0.5), 0xFFFFFF, 0.18);
         this.graphics.strokeRoundedRect(cx + s(1), cy + s(1), this.cellSize - s(2), this.cellSize - s(2), cr - s(1));
       }
     }
@@ -158,20 +195,28 @@ export class Board {
     const cy = cell.y - this.cellSize / 2;
     const cr = s(12);
 
-    // Outer glow halo
-    this.highlightGfx.fillStyle(color, 0.15);
+    // Wide soft warm glow halo (golden hour feel)
+    this.highlightGfx.fillStyle(COLORS.WARM_GOLD, 0.10);
+    this.highlightGfx.fillRoundedRect(cx - s(6), cy - s(6), this.cellSize + s(12), this.cellSize + s(12), cr + s(4));
+
+    // Closer glow ring
+    this.highlightGfx.fillStyle(color, 0.18);
     this.highlightGfx.fillRoundedRect(cx - s(3), cy - s(3), this.cellSize + s(6), this.cellSize + s(6), cr + s(2));
 
-    // Main highlight fill
-    this.highlightGfx.fillStyle(color, 0.4);
+    // Main warm highlight fill
+    this.highlightGfx.fillStyle(color, 0.35);
     this.highlightGfx.fillRoundedRect(cx, cy, this.cellSize, this.cellSize, cr);
 
-    // Brighter border stroke
-    this.highlightGfx.lineStyle(s(2.5), color, 0.7);
+    // Warm golden border stroke
+    this.highlightGfx.lineStyle(s(2.5), COLORS.WARM_GOLD, 0.6);
     this.highlightGfx.strokeRoundedRect(cx, cy, this.cellSize, this.cellSize, cr);
 
-    // Inner white highlight for jelly/glass depth
-    this.highlightGfx.lineStyle(s(1), 0xFFFFFF, 0.25);
+    // Inner white glow for depth
+    this.highlightGfx.fillStyle(0xFFFFFF, 0.15);
+    this.highlightGfx.fillRoundedRect(cx + s(2), cy + s(2), this.cellSize - s(4), this.cellSize * 0.35, { tl: cr - s(1), tr: cr - s(1), bl: 0, br: 0 });
+
+    // Inner highlight ring
+    this.highlightGfx.lineStyle(s(1), 0xFFFFFF, 0.22);
     this.highlightGfx.strokeRoundedRect(cx + s(2), cy + s(2), this.cellSize - s(4), this.cellSize - s(4), cr - s(1));
   }
 

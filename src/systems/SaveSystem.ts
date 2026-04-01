@@ -22,7 +22,7 @@ export interface SaveData {
     cols: number;
     rows: number;
     items: MergeItemData[];
-    generators: { genId: string; genTier: number; col: number; row: number; itemId: string }[];
+    generators: { genId: string; genTier: number; col: number; row: number; itemId: string; lastAutoProduceTime?: number }[];
   };
   quests: {
     active: ActiveQuest[];
@@ -39,10 +39,11 @@ export interface SaveData {
     totalCompleted: number;
   };
   login?: LoginData;
+  completedStoryBeats?: string[];
 }
 
 const SAVE_KEY = 'm3rg3r_save';
-const SAVE_VERSION = 6;
+const SAVE_VERSION = 8;
 
 /** v4 -> v5: character ID renames */
 const CHAR_ID_MIGRATION: Record<string, string> = {
@@ -103,6 +104,24 @@ export class SaveSystem {
         data.version = 6;
       }
 
+      // v6 -> v7 migration: add story beat tracking
+      if (data.version < 7) {
+        if (!data.completedStoryBeats) {
+          data.completedStoryBeats = [];
+        }
+        data.version = 7;
+      }
+
+      // v7 -> v8 migration: add lastAutoProduceTime to generators
+      if (data.version < 8) {
+        const now = Date.now();
+        data.board.generators = data.board.generators.map(g => ({
+          ...g,
+          lastAutoProduceTime: (g as Record<string, unknown>).lastAutoProduceTime as number ?? now,
+        }));
+        data.version = 8;
+      }
+
       return data;
     } catch {
       return null;
@@ -120,6 +139,7 @@ export class SaveSystem {
       storage: [null, null, null, null],
       achievements: [],
       login: { lastLoginDate: '', loginStreak: 0, lastClaimedDate: '' },
+      completedStoryBeats: [],
     };
   }
 

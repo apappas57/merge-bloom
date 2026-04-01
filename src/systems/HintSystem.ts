@@ -23,9 +23,9 @@ export class HintSystem {
     this.items = items;
 
     // Reset timer on any interaction
-    scene.input.on('pointerdown', () => this.resetTimer());
-    scene.events.on('item-dropped', () => this.resetTimer());
-    scene.events.on('generator-tapped', () => this.resetTimer());
+    scene.input.on('pointerdown', this.resetTimer, this);
+    scene.events.on('item-dropped', this.resetTimer, this);
+    scene.events.on('generator-tapped', this.resetTimer, this);
 
     // Check periodically
     this.checkTimer = scene.time.addEvent({
@@ -105,5 +105,9 @@ export class HintSystem {
   destroy(): void {
     this.clearHints();
     this.checkTimer.destroy();
+    // Clean up scene-level event listeners to prevent leaks
+    this.scene.input.off('pointerdown', this.resetTimer, this);
+    this.scene.events.off('item-dropped', this.resetTimer, this);
+    this.scene.events.off('generator-tapped', this.resetTimer, this);
   }
 }

@@ -13,13 +13,18 @@ export class Generator extends Phaser.GameObjects.Container {
   private cooldownGfx: Phaser.GameObjects.Graphics;
   private readyGlow: Phaser.GameObjects.Graphics;
   private shimmerGfx: Phaser.GameObjects.Graphics;
+  private autoProduceGfx: Phaser.GameObjects.Graphics;
   private tierBadge: Phaser.GameObjects.Text | null = null;
   private isReady = true;
   private cooldownEvent: Phaser.Time.TimerEvent | null = null;
   private shimmerEvent: Phaser.Time.TimerEvent | null = null;
+  private autoProduceEvent: Phaser.Time.TimerEvent | null = null;
   public col: number;
   public row: number;
   public itemId: string;
+
+  /** Timestamp of last auto-produce (for save/load offline calculation) */
+  public lastAutoProduceTime: number = Date.now();
 
   // Drag state
   private isDragging = false;
@@ -115,6 +120,10 @@ export class Generator extends Phaser.GameObjects.Container {
     this.cooldownGfx = scene.add.graphics();
     this.add(this.cooldownGfx);
 
+    // Auto-produce progress ring (drawn outside the cell glow)
+    this.autoProduceGfx = scene.add.graphics();
+    this.add(this.autoProduceGfx);
+
     // Tier badge (II, III, IV, V) - T1 has no badge
     if (genTier >= 2) {
       const romanNumerals = ['', '', 'II', 'III', 'IV', 'V'];
@@ -138,6 +147,9 @@ export class Generator extends Phaser.GameObjects.Container {
 
     board.setOccupied(col, row, itemId);
     scene.add.existing(this);
+
+    // Start the auto-produce timer
+    this.startAutoProduceTimer();
   }
 
   /** Check if two generators can merge */
@@ -168,6 +180,11 @@ export class Generator extends Phaser.GameObjects.Container {
   /** Get the current cooldown duration based on tier */
   getCooldownMs(): number {
     return this.currentTierDef.cooldown;
+  }
+
+  /** Get the auto-produce interval for this generator's tier */
+  getAutoProduceIntervalMs(): number {
+    return TIMING.AUTO_PRODUCE[this.genTier] ?? TIMING.AUTO_PRODUCE[1];
   }
 
   private drawReadyGlow(): void {
@@ -234,6 +251,100 @@ export class Generator extends Phaser.GameObjects.Container {
       this.shimmerEvent = null;
     }
     this.shimmerGfx.clear();
+  }
+
+  // ─── Auto-produce Timer ───
+
+  /** Start the auto-produce timer with a visible progress ring */
+  private startAutoProduceTimer(): void {
+    this.stopAutoProduceTimer();
+
+    const interval = this.getAutoProduceIntervalMs();
+    let elapsed = 0;
+    const half = this.board.cellDimension / 2;
+    const ringRadius = half + s(7);
+    const ringWidth = s(2);
+
+    this.autoProduceEvent = this.scene.time.addEvent({
+      delay: 100,
+      loop: true,
+      callback: () => {
+        elapsed += 100;
+        const pct = Math.min(elapsed / interval, 1);
+
+        // Draw progress ring
+        this.autoProduceGfx.clear();
+
+        if (pct < 1) {
+          // Background ring track (subtle)
+          this.autoProduceGfx.lineStyle(ringWidth, 0x25C486, 0.1);
+          this.autoProduceGfx.beginPath();
+          this.autoProduceGfx.arc(0, 0, ringRadius, 0, Math.PI * 2, false);
+          this.autoProduceGfx.strokePath();
+
+          // Filled progress arc (soft green/teal)
+          if (pct > 0.001) {
+            this.autoProduceGfx.lineStyle(ringWidth, 0x25C486, 0.35);
+            this.autoProduceGfx.beginPath();
+            const startAngle = -Math.PI / 2;
+            const endAngle = startAngle + Math.PI * 2 * pct;
+            this.autoProduceGfx.arc(0, 0, ringRadius, startAngle, endAngle, false);
+            this.autoProduceGfx.strokePath();
+          }
+        }
+
+        if (pct >= 1) {
+          // Timer complete: attempt auto-spawn
+          elapsed = 0;
+          this.autoProduceGfx.clear();
+          this.attemptAutoProduce();
+        }
+      }
+    });
+  }
+
+  private stopAutoProduceTimer(): void {
+    if (this.autoProduceEvent) {
+      this.autoProduceEvent.destroy();
+      this.autoProduceEvent = null;
+    }
+    this.autoProduceGfx.clear();
+  }
+
+  /** Attempt to auto-produce an item. Only succeeds if board has space (<90% full). */
+  private attemptAutoProduce(): void {
+    // Check board fullness: pause if 90%+ full
+    const totalCells = this.board.totalCols * this.board.totalRows;
+    const emptyCount = this.board.getEmptyCount();
+    const fullPct = 1 - (emptyCount / totalCells);
+    if (fullPct >= TIMING.AUTO_PRODUCE_BOARD_FULL_PCT) return;
+
+    const emptyCell = this.board.findEmptyCellNear(this.col, this.row);
+    if (!emptyCell) return;
+
+    const spawnTier = this.rollSpawnTier();
+    // NO multi-spawn on auto-produce
+    this.scene.events.emit('auto-produce', this, emptyCell, spawnTier);
+    this.lastAutoProduceTime = Date.now();
+
+    // Brief pulse on the progress ring to indicate spawn
+    this.playAutoProducePulse();
+  }
+
+  /** Visual pulse when auto-produce fires */
+  private playAutoProducePulse(): void {
+    const half = this.board.cellDimension / 2;
+    const pulseGfx = this.scene.add.graphics();
+    pulseGfx.lineStyle(s(2.5), 0x25C486, 0.6);
+    pulseGfx.strokeCircle(0, 0, half + s(7));
+    this.add(pulseGfx);
+
+    this.scene.tweens.add({
+      targets: pulseGfx,
+      alpha: 0, scaleX: 1.3, scaleY: 1.3,
+      duration: 400, ease: 'Power2',
+      onComplete: () => { pulseGfx.destroy(); }
+    });
   }
 
   private setupInput(): void {
@@ -431,6 +542,7 @@ export class Generator extends Phaser.GameObjects.Container {
     if (this.cooldownEvent) this.cooldownEvent.destroy();
     if (this.holdTimer) this.holdTimer.destroy();
     this.stopShimmer();
+    this.stopAutoProduceTimer();
     super.destroy(fromScene);
   }
 }

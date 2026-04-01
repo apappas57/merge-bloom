@@ -14,6 +14,7 @@ export class Board {
   private scene: Phaser.Scene;
   private cells: CellData[][] = [];
   private graphics: Phaser.GameObjects.Graphics;
+  private highlightGfx: Phaser.GameObjects.Graphics;
   private cols: number;
   private rows: number;
   private offsetX: number;
@@ -50,6 +51,8 @@ export class Board {
     }
 
     this.graphics = scene.add.graphics();
+    this.highlightGfx = scene.add.graphics();
+    this.highlightGfx.setDepth(3);
     this.drawBoard();
   }
 
@@ -150,29 +153,29 @@ export class Board {
   highlightCell(col: number, row: number, color: number): void {
     if (!this.isValid(col, row)) return;
     const cell = this.cells[row][col];
-    this.drawBoard();
+    this.highlightGfx.clear();
     const cx = cell.x - this.cellSize / 2;
     const cy = cell.y - this.cellSize / 2;
     const cr = s(12);
 
-    // Outer glow halo (enhanced Y2K glow effect)
-    this.graphics.fillStyle(color, 0.15);
-    this.graphics.fillRoundedRect(cx - s(3), cy - s(3), this.cellSize + s(6), this.cellSize + s(6), cr + s(2));
+    // Outer glow halo
+    this.highlightGfx.fillStyle(color, 0.15);
+    this.highlightGfx.fillRoundedRect(cx - s(3), cy - s(3), this.cellSize + s(6), this.cellSize + s(6), cr + s(2));
 
     // Main highlight fill
-    this.graphics.fillStyle(color, 0.4);
-    this.graphics.fillRoundedRect(cx, cy, this.cellSize, this.cellSize, cr);
+    this.highlightGfx.fillStyle(color, 0.4);
+    this.highlightGfx.fillRoundedRect(cx, cy, this.cellSize, this.cellSize, cr);
 
     // Brighter border stroke
-    this.graphics.lineStyle(s(2.5), color, 0.7);
-    this.graphics.strokeRoundedRect(cx, cy, this.cellSize, this.cellSize, cr);
+    this.highlightGfx.lineStyle(s(2.5), color, 0.7);
+    this.highlightGfx.strokeRoundedRect(cx, cy, this.cellSize, this.cellSize, cr);
 
     // Inner white highlight for jelly/glass depth
-    this.graphics.lineStyle(s(1), 0xFFFFFF, 0.25);
-    this.graphics.strokeRoundedRect(cx + s(2), cy + s(2), this.cellSize - s(4), this.cellSize - s(4), cr - s(1));
+    this.highlightGfx.lineStyle(s(1), 0xFFFFFF, 0.25);
+    this.highlightGfx.strokeRoundedRect(cx + s(2), cy + s(2), this.cellSize - s(4), this.cellSize - s(4), cr - s(1));
   }
 
-  clearHighlights(): void { this.drawBoard(); }
+  clearHighlights(): void { this.highlightGfx.clear(); }
 
   getCellAt(worldX: number, worldY: number): CellData | null {
     const half = this.cellSize / 2;
@@ -248,6 +251,10 @@ export class Board {
   get totalCols() { return this.cols; }
   get totalRows() { return this.rows; }
   get cellDimension() { return this.cellSize; }
+  get boardOffsetX() { return this.offsetX; }
+  get boardOffsetY() { return this.offsetY; }
+  get boardWidth() { return this.cols * (this.cellSize + this.gap) - this.gap + SIZES.BOARD_PADDING * 2; }
+  get boardHeight() { return this.rows * (this.cellSize + this.gap) - this.gap + SIZES.BOARD_PADDING * 2; }
 
   getEmptyCount(): number {
     let n = 0;
@@ -257,5 +264,5 @@ export class Board {
     return n;
   }
 
-  destroy(): void { this.graphics.destroy(); }
+  destroy(): void { this.graphics.destroy(); this.highlightGfx.destroy(); }
 }

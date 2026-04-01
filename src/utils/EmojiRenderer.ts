@@ -132,15 +132,17 @@ function drawSparkles(ctx: CanvasRenderingContext2D, cx: number, cy: number, siz
 
 type IconDrawFn = (ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, tier: number, color: string, accent: string) => void;
 
-/** Add a glossy white highlight spot to any icon */
+/** Add a two-part volumetric specular highlight to any icon (upper-left light) */
 function addHighlight(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number): void {
-  ctx.fillStyle = 'rgba(255,255,255,0.7)';
+  // Primary highlight: larger, softer, elliptical for realism
+  ctx.fillStyle = 'rgba(255,255,255,0.5)';
   ctx.beginPath();
-  ctx.ellipse(cx - r * 0.25, cy - r * 0.3, r * 0.25, r * 0.18, -0.3, 0, Math.PI * 2);
+  ctx.ellipse(cx - r * 0.25, cy - r * 0.30, r * 0.22, r * 0.15, -0.4, 0, Math.PI * 2);
   ctx.fill();
-  ctx.fillStyle = 'rgba(255,255,255,0.35)';
+  // Secondary highlight: smaller, brighter, sharper pinpoint
+  ctx.fillStyle = 'rgba(255,255,255,0.75)';
   ctx.beginPath();
-  ctx.arc(cx - r * 0.1, cy - r * 0.15, r * 0.1, 0, Math.PI * 2);
+  ctx.ellipse(cx - r * 0.18, cy - r * 0.22, r * 0.09, r * 0.06, -0.3, 0, Math.PI * 2);
   ctx.fill();
 }
 
@@ -1537,29 +1539,50 @@ function getItemIconConfig(chainId: string, tier: number): IconConfig {
 
 function drawUIGem(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number): void {
   const r = size * 0.32;
-  // Glow
-  const glowGrad = ctx.createRadialGradient(cx, cy, r * 0.3, cx, cy, r * 1.2);
-  glowGrad.addColorStop(0, 'rgba(156,39,176,0.2)');
+  // Contact shadow beneath gem
+  drawContactShadow(ctx, cx, cy, r, cy + r * 0.7);
+
+  // Glow (directional, offset upper-left)
+  const glowGrad = ctx.createRadialGradient(cx - r * 0.2, cy - r * 0.2, r * 0.2, cx, cy, r * 1.2);
+  glowGrad.addColorStop(0, 'rgba(156,39,176,0.25)');
   glowGrad.addColorStop(1, 'rgba(156,39,176,0)');
   ctx.fillStyle = glowGrad;
   ctx.beginPath();
   ctx.arc(cx, cy, r * 1.2, 0, Math.PI * 2);
   ctx.fill();
-  // Gem shape
-  ctx.beginPath();
-  ctx.moveTo(cx, cy - r * 0.95);
-  ctx.lineTo(cx + r * 0.65, cy - r * 0.2);
-  ctx.lineTo(cx + r * 0.5, cy + r * 0.85);
-  ctx.lineTo(cx - r * 0.5, cy + r * 0.85);
-  ctx.lineTo(cx - r * 0.65, cy - r * 0.2);
-  ctx.closePath();
-  const grad = ctx.createLinearGradient(cx - r, cy - r, cx + r, cy + r);
-  grad.addColorStop(0, '#CE93D8');
-  grad.addColorStop(0.3, '#AB47BC');
-  grad.addColorStop(0.6, '#7B1FA2');
+
+  // Gem shape path (reused for clipping)
+  const drawGemPath = () => {
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - r * 0.95);
+    ctx.lineTo(cx + r * 0.65, cy - r * 0.2);
+    ctx.lineTo(cx + r * 0.5, cy + r * 0.85);
+    ctx.lineTo(cx - r * 0.5, cy + r * 0.85);
+    ctx.lineTo(cx - r * 0.65, cy - r * 0.2);
+    ctx.closePath();
+  };
+
+  // Gem fill with directional gradient (light from upper-left)
+  drawGemPath();
+  const grad = ctx.createRadialGradient(
+    cx - r * 0.35, cy - r * 0.35, r * 0.05,
+    cx, cy, r * 1.1
+  );
+  grad.addColorStop(0, '#E1BEE7');
+  grad.addColorStop(0.25, '#CE93D8');
+  grad.addColorStop(0.5, '#AB47BC');
+  grad.addColorStop(0.8, '#7B1FA2');
   grad.addColorStop(1, '#4A148C');
   ctx.fillStyle = grad;
   ctx.fill();
+
+  // Warm ambient overlay (clipped to gem)
+  ctx.save();
+  drawGemPath();
+  ctx.clip();
+  drawWarmAmbient(ctx, cx, cy, r);
+  ctx.restore();
+
   // Facet lines
   ctx.strokeStyle = 'rgba(255,255,255,0.25)';
   ctx.lineWidth = size * 0.012;
@@ -1575,7 +1598,8 @@ function drawUIGem(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: 
   ctx.moveTo(cx + r * 0.65, cy - r * 0.2);
   ctx.lineTo(cx - r * 0.5, cy + r * 0.85);
   ctx.stroke();
-  // Top facet highlight
+
+  // Top facet highlight (directional)
   ctx.fillStyle = 'rgba(255,255,255,0.35)';
   ctx.beginPath();
   ctx.moveTo(cx, cy - r * 0.95);
@@ -1583,63 +1607,98 @@ function drawUIGem(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: 
   ctx.lineTo(cx + r * 0.2, cy - r * 0.15);
   ctx.closePath();
   ctx.fill();
-  // Glossy spot
-  ctx.fillStyle = 'rgba(255,255,255,0.6)';
+
+  // Rim light on shadow side (lower-right edge)
+  ctx.save();
+  ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+  ctx.lineWidth = r * 0.05;
+  ctx.lineCap = 'round';
   ctx.beginPath();
-  ctx.ellipse(cx - r * 0.2, cy - r * 0.45, r * 0.12, r * 0.08, -0.4, 0, Math.PI * 2);
-  ctx.fill();
+  ctx.moveTo(cx + r * 0.5, cy + r * 0.85);
+  ctx.lineTo(cx + r * 0.65, cy - r * 0.2);
+  ctx.stroke();
+  ctx.restore();
+
+  // Two-part specular highlight
+  drawSpecularHighlight(ctx, cx, cy, r, 0.8);
 }
 
 function drawUIStar(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number): void {
   const r = size * 0.3;
-  // Glow
-  const glowGrad = ctx.createRadialGradient(cx, cy, r * 0.3, cx, cy, r * 1.3);
-  glowGrad.addColorStop(0, 'rgba(255,215,0,0.25)');
+  // Contact shadow
+  drawContactShadow(ctx, cx, cy, r, cy + r * 0.8);
+
+  // Glow (directional, offset upper-left)
+  const glowGrad = ctx.createRadialGradient(cx - r * 0.2, cy - r * 0.2, r * 0.2, cx, cy, r * 1.3);
+  glowGrad.addColorStop(0, 'rgba(255,215,0,0.3)');
   glowGrad.addColorStop(1, 'rgba(255,215,0,0)');
   ctx.fillStyle = glowGrad;
   ctx.beginPath();
   ctx.arc(cx, cy, r * 1.3, 0, Math.PI * 2);
   ctx.fill();
-  // Star path
-  ctx.beginPath();
-  for (let i = 0; i < 10; i++) {
-    const angle = -Math.PI / 2 + (i * Math.PI) / 5;
-    const rad = i % 2 === 0 ? r : r * 0.4;
-    const x = cx + Math.cos(angle) * rad;
-    const y = cy + Math.sin(angle) * rad;
-    if (i === 0) ctx.moveTo(x, y);
-    else ctx.lineTo(x, y);
-  }
-  ctx.closePath();
-  const grad = ctx.createRadialGradient(cx - r * 0.15, cy - r * 0.15, 0, cx, cy, r);
+
+  // Star path helper
+  const drawStarPath = () => {
+    ctx.beginPath();
+    for (let i = 0; i < 10; i++) {
+      const angle = -Math.PI / 2 + (i * Math.PI) / 5;
+      const rad = i % 2 === 0 ? r : r * 0.4;
+      const x = cx + Math.cos(angle) * rad;
+      const y = cy + Math.sin(angle) * rad;
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+  };
+
+  // Star fill with directional gradient (upper-left light)
+  drawStarPath();
+  const grad = ctx.createRadialGradient(
+    cx - r * 0.35, cy - r * 0.35, r * 0.05,
+    cx, cy, r
+  );
   grad.addColorStop(0, '#FFFFFF');
-  grad.addColorStop(0.25, '#FFF9C4');
-  grad.addColorStop(0.6, '#FFD700');
-  grad.addColorStop(1, '#FFA000');
+  grad.addColorStop(0.2, '#FFF9C4');
+  grad.addColorStop(0.5, '#FFD700');
+  grad.addColorStop(0.85, '#FFA000');
+  grad.addColorStop(1.0, darkenColor('#FFA000', 0.12));
   ctx.fillStyle = grad;
   ctx.fill();
-  // Glossy highlight
-  ctx.fillStyle = 'rgba(255,255,255,0.5)';
-  ctx.beginPath();
-  ctx.ellipse(cx - r * 0.1, cy - r * 0.25, r * 0.18, r * 0.1, -0.3, 0, Math.PI * 2);
-  ctx.fill();
+
+  // Warm ambient overlay (clipped to star)
+  ctx.save();
+  drawStarPath();
+  ctx.clip();
+  drawWarmAmbient(ctx, cx, cy, r);
+  ctx.restore();
+
+  // Rim light on lower-right
+  drawGradientRimLight(ctx, cx, cy, r);
+
+  // Two-part specular highlight
+  drawSpecularHighlight(ctx, cx, cy, r, 0.75);
 }
 
 function drawUISparkle(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number): void {
   const r = size * 0.3;
-  // Glow
-  const glowGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, r * 1.3);
-  glowGrad.addColorStop(0, 'rgba(255,235,59,0.3)');
+  // Glow (directional, offset upper-left)
+  const glowGrad = ctx.createRadialGradient(cx - r * 0.2, cy - r * 0.2, 0, cx, cy, r * 1.3);
+  glowGrad.addColorStop(0, 'rgba(255,235,59,0.35)');
   glowGrad.addColorStop(1, 'rgba(255,235,59,0)');
   ctx.fillStyle = glowGrad;
   ctx.beginPath();
   ctx.arc(cx, cy, r * 1.3, 0, Math.PI * 2);
   ctx.fill();
-  // Main 4-point star
-  const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+
+  // Main 4-point star with directional gradient
+  const grad = ctx.createRadialGradient(
+    cx - r * 0.3, cy - r * 0.3, r * 0.05,
+    cx, cy, r
+  );
   grad.addColorStop(0, '#FFFFFF');
-  grad.addColorStop(0.4, '#FFF9C4');
-  grad.addColorStop(1, '#FFD700');
+  grad.addColorStop(0.3, '#FFF9C4');
+  grad.addColorStop(0.7, '#FFD700');
+  grad.addColorStop(1, darkenColor('#FFD700', 0.1));
   ctx.fillStyle = grad;
   ctx.beginPath();
   ctx.moveTo(cx, cy - r * 1.0);
@@ -1648,6 +1707,19 @@ function drawUISparkle(ctx: CanvasRenderingContext2D, cx: number, cy: number, si
   ctx.quadraticCurveTo(cx - r * 0.15, cy + r * 0.15, cx - r * 1.0, cy);
   ctx.quadraticCurveTo(cx - r * 0.15, cy - r * 0.15, cx, cy - r * 1.0);
   ctx.fill();
+
+  // Warm ambient overlay (clipped to sparkle shape)
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(cx, cy - r * 1.0);
+  ctx.quadraticCurveTo(cx + r * 0.15, cy - r * 0.15, cx + r * 1.0, cy);
+  ctx.quadraticCurveTo(cx + r * 0.15, cy + r * 0.15, cx, cy + r * 1.0);
+  ctx.quadraticCurveTo(cx - r * 0.15, cy + r * 0.15, cx - r * 1.0, cy);
+  ctx.quadraticCurveTo(cx - r * 0.15, cy - r * 0.15, cx, cy - r * 1.0);
+  ctx.clip();
+  drawWarmAmbient(ctx, cx, cy, r);
+  ctx.restore();
+
   // Smaller rotated star overlay
   ctx.save();
   ctx.translate(cx, cy);
@@ -1661,6 +1733,9 @@ function drawUISparkle(ctx: CanvasRenderingContext2D, cx: number, cy: number, si
   ctx.quadraticCurveTo(-r * 0.08, -r * 0.08, 0, -r * 0.6);
   ctx.fill();
   ctx.restore();
+
+  // Two-part specular highlight
+  drawSpecularHighlight(ctx, cx, cy, r * 0.7, 0.7);
 }
 
 // ============================================================
@@ -1673,6 +1748,259 @@ function darkenColor(hex: string, amount: number): string {
   const g = Math.max(0, parseInt(c.substring(2, 4), 16) - Math.round(255 * amount));
   const b = Math.max(0, parseInt(c.substring(4, 6), 16) - Math.round(255 * amount));
   return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+}
+
+// ============================================================
+// VOLUMETRIC 3D RENDERING HELPERS
+// All techniques use upper-left (~10 o'clock) light direction.
+// Generated once at preload, not per-frame.
+// ============================================================
+
+/** Gradient contact shadow beneath an object (replaces flat fill) */
+function drawContactShadow(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  objectRadius: number,
+  surfaceY: number
+): void {
+  const shadowW = objectRadius * 1.1;
+  const shadowH = objectRadius * 0.18;
+  const shadowY = surfaceY + objectRadius * 0.05;
+
+  const grad = ctx.createRadialGradient(cx, shadowY, 0, cx, shadowY, shadowW);
+  grad.addColorStop(0, 'rgba(0,0,0,0.12)');
+  grad.addColorStop(0.5, 'rgba(0,0,0,0.06)');
+  grad.addColorStop(1, 'rgba(0,0,0,0)');
+
+  ctx.save();
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.ellipse(cx, shadowY, shadowW, shadowH, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
+/** Gradient rim light on shadow side (lower-right) for volumetric pop */
+function drawGradientRimLight(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  radius: number
+): void {
+  ctx.save();
+  const rimGrad = ctx.createLinearGradient(
+    cx + radius * 0.5, cy + radius * 0.3,
+    cx - radius * 0.3, cy + radius * 0.8
+  );
+  rimGrad.addColorStop(0, 'rgba(255,255,255,0)');
+  rimGrad.addColorStop(0.3, 'rgba(255,255,255,0.4)');
+  rimGrad.addColorStop(0.7, 'rgba(255,255,255,0.3)');
+  rimGrad.addColorStop(1, 'rgba(255,255,255,0)');
+
+  ctx.strokeStyle = rimGrad;
+  ctx.lineWidth = radius * 0.06;
+  ctx.lineCap = 'round';
+
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius * 0.92, Math.PI * 0.1, Math.PI * 0.9);
+  ctx.stroke();
+  ctx.restore();
+}
+
+/** Two-part specular highlight: large diffuse + small sharp (upper-left) */
+function drawSpecularHighlight(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  radius: number,
+  intensity: number = 0.7
+): void {
+  ctx.save();
+  // Primary highlight: larger, softer
+  ctx.fillStyle = `rgba(255,255,255,${intensity * 0.6})`;
+  ctx.beginPath();
+  ctx.ellipse(
+    cx - radius * 0.25,
+    cy - radius * 0.30,
+    radius * 0.22,
+    radius * 0.15,
+    -0.4,
+    0, Math.PI * 2
+  );
+  ctx.fill();
+
+  // Secondary highlight: smaller, brighter, sharper
+  ctx.fillStyle = `rgba(255,255,255,${intensity * 0.9})`;
+  ctx.beginPath();
+  ctx.ellipse(
+    cx - radius * 0.18,
+    cy - radius * 0.22,
+    radius * 0.08,
+    radius * 0.06,
+    -0.3,
+    0, Math.PI * 2
+  );
+  ctx.fill();
+  ctx.restore();
+}
+
+/** Stitching seam detail using setLineDash along the plush body path */
+function drawStitching(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  radius: number,
+  bodyPathFn: (ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number, chainId: string) => void,
+  chainId: string,
+  chainColor: string,
+  size: number
+): void {
+  ctx.save();
+  const stitchLen = size * 0.035;
+  const gapLen = size * 0.025;
+  ctx.setLineDash([stitchLen, gapLen]);
+  ctx.lineDashOffset = 0;
+
+  const insetR = radius * 0.88;
+  bodyPathFn(ctx, cx, cy, insetR, chainId);
+
+  ctx.strokeStyle = darkenColor(chainColor, 0.2) + 'A0';
+  ctx.lineWidth = size * 0.012;
+  ctx.lineCap = 'round';
+  ctx.stroke();
+
+  ctx.setLineDash([]);
+  ctx.restore();
+}
+
+/** Cached fabric texture pattern for plush material suggestion */
+let _fabricPattern: CanvasPattern | null = null;
+
+function generateFabricTexture(size: number = 64): HTMLCanvasElement {
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const tCtx = canvas.getContext('2d')!;
+  const dotCount = Math.floor(size * size * 0.08);
+  for (let i = 0; i < dotCount; i++) {
+    const hash = (i * 2654435761) >>> 0;
+    const x = (hash % size);
+    const y = ((hash >>> 16) % size);
+    const brightness = ((hash >>> 8) & 0xFF) > 128;
+    tCtx.fillStyle = brightness
+      ? 'rgba(255,255,255,0.04)'
+      : 'rgba(0,0,0,0.03)';
+    tCtx.beginPath();
+    tCtx.arc(x, y, 0.6, 0, Math.PI * 2);
+    tCtx.fill();
+  }
+  return canvas;
+}
+
+/** Apply fabric texture to the current clipped region */
+function applyFabricTexture(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  radius: number
+): void {
+  if (!_fabricPattern) {
+    const texCanvas = generateFabricTexture(64);
+    _fabricPattern = ctx.createPattern(texCanvas, 'repeat');
+  }
+  if (!_fabricPattern) return;
+
+  ctx.save();
+  ctx.globalAlpha = 0.5;
+  ctx.fillStyle = _fabricPattern;
+  ctx.fillRect(cx - radius * 1.5, cy - radius * 1.5, radius * 3, radius * 3);
+  ctx.restore();
+}
+
+/** Warm ambient light overlay (Gossip Harbor golden-hour trick) */
+function drawWarmAmbient(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  radius: number
+): void {
+  ctx.save();
+  const warmGrad = ctx.createRadialGradient(
+    cx - radius * 0.4, cy - radius * 0.4, 0,
+    cx, cy, radius * 1.2
+  );
+  warmGrad.addColorStop(0, 'rgba(255,220,150,0.08)');
+  warmGrad.addColorStop(0.5, 'rgba(255,200,120,0.04)');
+  warmGrad.addColorStop(1, 'rgba(180,160,200,0.03)');
+
+  ctx.fillStyle = warmGrad;
+  ctx.fillRect(cx - radius * 1.5, cy - radius * 1.5, radius * 3, radius * 3);
+  ctx.restore();
+}
+
+/** Sub-surface scattering simulation: warm inner glow on light-facing edge */
+function drawSubSurfaceScatter(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  radius: number
+): void {
+  ctx.save();
+  const sssGrad = ctx.createRadialGradient(
+    cx - radius * 0.6, cy - radius * 0.6, radius * 0.3,
+    cx, cy, radius
+  );
+  sssGrad.addColorStop(0, 'rgba(255,200,180,0)');
+  sssGrad.addColorStop(0.7, 'rgba(255,200,180,0)');
+  sssGrad.addColorStop(0.88, 'rgba(255,220,200,0.12)');
+  sssGrad.addColorStop(1.0, 'rgba(255,180,160,0.08)');
+
+  ctx.fillStyle = sssGrad;
+  ctx.fillRect(cx - radius * 1.5, cy - radius * 1.5, radius * 3, radius * 3);
+  ctx.restore();
+}
+
+/** Ambient occlusion: dark gradient at base where body meets card surface */
+function drawAmbientOcclusion(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  radius: number
+): void {
+  ctx.save();
+  const aoGrad = ctx.createLinearGradient(cx, cy + radius, cx, cy + radius * 0.3);
+  aoGrad.addColorStop(0, 'rgba(0,0,0,0.15)');
+  aoGrad.addColorStop(0.4, 'rgba(0,0,0,0.05)');
+  aoGrad.addColorStop(1, 'rgba(0,0,0,0)');
+
+  ctx.fillStyle = aoGrad;
+  ctx.fillRect(cx - radius * 1.5, cy, radius * 3, radius * 1.5);
+  ctx.restore();
+}
+
+/** Curved surface overlay on belly icon (makes it look printed on a sphere) */
+function drawCurvedSurfaceOverlay(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  iconRadius: number
+): void {
+  ctx.save();
+  const curveGrad = ctx.createRadialGradient(
+    cx - iconRadius * 0.15, cy - iconRadius * 0.15, 0,
+    cx, cy, iconRadius
+  );
+  curveGrad.addColorStop(0, 'rgba(0,0,0,0)');
+  curveGrad.addColorStop(0.6, 'rgba(0,0,0,0)');
+  curveGrad.addColorStop(0.85, 'rgba(0,0,0,0.06)');
+  curveGrad.addColorStop(1.0, 'rgba(0,0,0,0.12)');
+
+  ctx.fillStyle = curveGrad;
+  ctx.beginPath();
+  ctx.arc(cx, cy, iconRadius, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
 }
 
 
@@ -1794,30 +2122,70 @@ export class EmojiRenderer {
       ctx.globalAlpha = 1;
     }
 
-    // === Plush body (unique shape per chain) ===
+    // === Plush body (unique shape per chain) -- VOLUMETRIC RENDERING ===
     const plushR = bodyR * 0.55;
     const plushY = cy + size * 0.02;
 
-    // Plush shadow
-    ctx.fillStyle = 'rgba(0,0,0,0.06)';
-    ctx.beginPath();
-    ctx.ellipse(cx, plushY + plushR * 0.15, plushR * 0.9, plushR * 0.3, 0, 0, Math.PI * 2);
-    ctx.fill();
+    // LAYER 1: Gradient contact shadow (replaces flat fill)
+    drawContactShadow(ctx, cx, plushY, plushR, plushY + plushR * 0.12);
 
-    // Plush body gradient
-    const plushGrad = ctx.createRadialGradient(cx - plushR * 0.25, plushY - plushR * 0.25, 0, cx, plushY, plushR);
+    // LAYER 2: Ambient occlusion at base (clipped to plush body)
+    ctx.save();
+    EmojiRenderer.drawPlushBody(ctx, cx, plushY, plushR, chainId);
+    ctx.clip();
+    drawAmbientOcclusion(ctx, cx, plushY, plushR);
+    ctx.restore();
+
+    // LAYER 3: Main body gradient (upgraded with stronger directional lighting)
+    const darkShadow = darkenColor(colors.to, 0.15);
+    const plushGrad = ctx.createRadialGradient(
+      cx - plushR * 0.35, plushY - plushR * 0.35, plushR * 0.05,
+      cx, plushY, plushR
+    );
     plushGrad.addColorStop(0, '#FFFFFF');
-    plushGrad.addColorStop(0.4, colors.from);
-    plushGrad.addColorStop(1, colors.to);
+    plushGrad.addColorStop(0.3, colors.from);
+    plushGrad.addColorStop(0.7, colors.to);
+    plushGrad.addColorStop(1.0, darkShadow);
     ctx.fillStyle = plushGrad;
 
     // Draw chain-specific plush body shape
     EmojiRenderer.drawPlushBody(ctx, cx, plushY, plushR, chainId);
     ctx.fill();
 
-    // Plush border
-    ctx.strokeStyle = colors.to + '80';
-    ctx.lineWidth = size * 0.01;
+    // LAYER 4: Fabric texture overlay (clipped to body)
+    ctx.save();
+    EmojiRenderer.drawPlushBody(ctx, cx, plushY, plushR, chainId);
+    ctx.clip();
+    applyFabricTexture(ctx, cx, plushY, plushR);
+    ctx.restore();
+
+    // LAYER 5: Warm ambient light overlay (clipped to body)
+    ctx.save();
+    EmojiRenderer.drawPlushBody(ctx, cx, plushY, plushR, chainId);
+    ctx.clip();
+    drawWarmAmbient(ctx, cx, plushY, plushR);
+    ctx.restore();
+
+    // LAYER 5b: Sub-surface scattering (clipped to body)
+    ctx.save();
+    EmojiRenderer.drawPlushBody(ctx, cx, plushY, plushR, chainId);
+    ctx.clip();
+    drawSubSurfaceScatter(ctx, cx, plushY, plushR);
+    ctx.restore();
+
+    // LAYER 6: Stitching detail
+    drawStitching(
+      ctx, cx, plushY, plushR,
+      (c, x, y, r, cId) => EmojiRenderer.drawPlushBody(c, x, y, r, cId),
+      chainId, colors.to, size
+    );
+
+    // LAYER 6b: Rim light on shadow edge (lower-right)
+    drawGradientRimLight(ctx, cx, plushY, plushR);
+
+    // LAYER 6c: Body outline (softer/thinner than before)
+    ctx.strokeStyle = colors.to + '60';
+    ctx.lineWidth = size * 0.008;
     EmojiRenderer.drawPlushBody(ctx, cx, plushY, plushR, chainId);
     ctx.stroke();
 
@@ -1829,12 +2197,12 @@ export class EmojiRenderer {
     drawSmile(ctx, cx, faceY, size);
 
     // === Programmatic icon on the plush belly (replaces emoji) ===
-    const iconSize = size * 0.30; // 30% of size for better visibility
+    const iconSize = size * 0.30;
     const iconY = plushY + plushR * 0.45;
 
-    // Subtle circular background behind the icon for contrast
+    // Subtle circular background behind the icon
     ctx.save();
-    ctx.fillStyle = 'rgba(255,255,255,0.25)';
+    ctx.fillStyle = 'rgba(255,255,255,0.20)';
     ctx.beginPath();
     ctx.arc(cx, iconY, iconSize * 0.55, 0, Math.PI * 2);
     ctx.fill();
@@ -1845,6 +2213,12 @@ export class EmojiRenderer {
     ctx.save();
     iconConfig.draw(ctx, cx, iconY, iconSize, tier, iconConfig.color, iconConfig.accent);
     ctx.restore();
+
+    // LAYER 7: Curved surface overlay on belly icon
+    drawCurvedSurfaceOverlay(ctx, cx, iconY, iconSize * 0.55);
+
+    // LAYER 7b: Specular highlight (two-part, upper-left)
+    drawSpecularHighlight(ctx, cx, plushY, plushR, 0.7);
   }
 
   /** Draw the plush body path for a specific chain shape */
@@ -2203,22 +2577,73 @@ export class EmojiRenderer {
       ctx.stroke();
     }
 
-    // Draw chain plush body shape as the generator icon
+    // Draw chain plush body shape as the generator icon -- VOLUMETRIC
     const plushR = size * 0.22;
     const plushY = cy + size * 0.02;
-    const plushGrad = ctx.createRadialGradient(cx - plushR * 0.3, plushY - plushR * 0.3, 0, cx, plushY, plushR);
+
+    // Contact shadow beneath generator plush
+    drawContactShadow(ctx, cx, plushY, plushR, plushY + plushR * 0.12);
+
+    // AO at base (clipped)
+    ctx.save();
+    EmojiRenderer.drawPlushBody(ctx, cx, plushY, plushR, chainId);
+    ctx.clip();
+    drawAmbientOcclusion(ctx, cx, plushY, plushR);
+    ctx.restore();
+
+    // Directional body gradient
+    const genDarkShadow = darkenColor(colors.to, 0.15);
+    const plushGrad = ctx.createRadialGradient(
+      cx - plushR * 0.35, plushY - plushR * 0.35, plushR * 0.05,
+      cx, plushY, plushR
+    );
     plushGrad.addColorStop(0, '#FFFFFF');
-    plushGrad.addColorStop(0.5, colors.from);
-    plushGrad.addColorStop(1, colors.to);
+    plushGrad.addColorStop(0.3, colors.from);
+    plushGrad.addColorStop(0.7, colors.to);
+    plushGrad.addColorStop(1.0, genDarkShadow);
     ctx.fillStyle = plushGrad;
     EmojiRenderer.drawPlushBody(ctx, cx, plushY, plushR, chainId);
     ctx.fill();
 
-    // Plush border
-    ctx.strokeStyle = colors.to + '80';
-    ctx.lineWidth = size * 0.01;
+    // Fabric texture (clipped)
+    ctx.save();
+    EmojiRenderer.drawPlushBody(ctx, cx, plushY, plushR, chainId);
+    ctx.clip();
+    applyFabricTexture(ctx, cx, plushY, plushR);
+    ctx.restore();
+
+    // Warm ambient (clipped)
+    ctx.save();
+    EmojiRenderer.drawPlushBody(ctx, cx, plushY, plushR, chainId);
+    ctx.clip();
+    drawWarmAmbient(ctx, cx, plushY, plushR);
+    ctx.restore();
+
+    // SSS (clipped)
+    ctx.save();
+    EmojiRenderer.drawPlushBody(ctx, cx, plushY, plushR, chainId);
+    ctx.clip();
+    drawSubSurfaceScatter(ctx, cx, plushY, plushR);
+    ctx.restore();
+
+    // Stitching
+    drawStitching(
+      ctx, cx, plushY, plushR,
+      (c, x, y, r, cId) => EmojiRenderer.drawPlushBody(c, x, y, r, cId),
+      chainId, colors.to, size
+    );
+
+    // Rim light
+    drawGradientRimLight(ctx, cx, plushY, plushR);
+
+    // Body outline (softer)
+    ctx.strokeStyle = colors.to + '60';
+    ctx.lineWidth = size * 0.008;
     EmojiRenderer.drawPlushBody(ctx, cx, plushY, plushR, chainId);
     ctx.stroke();
+
+    // Specular highlight
+    drawSpecularHighlight(ctx, cx, plushY, plushR, 0.6);
 
     // Cute face on the plush - higher tiers get happy eyes
     const isHappy = genTier >= 4;

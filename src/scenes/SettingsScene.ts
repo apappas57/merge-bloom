@@ -1,6 +1,7 @@
 import { COLORS, FONT, FONT_BODY, TEXT, fs, s } from '../utils/constants';
 import { SaveSystem } from '../systems/SaveSystem';
 import { SoundManager } from '../utils/SoundManager';
+import { GameScene } from './GameScene';
 
 export class SettingsScene extends Phaser.Scene {
   constructor() { super('SettingsScene'); }
@@ -187,6 +188,23 @@ export class SettingsScene extends Phaser.Scene {
       this.showConfirmReset();
     });
 
+    y += btnH + s(14);
+
+    // Share Garden Card button
+    const shareBg = this.add.graphics();
+    shareBg.fillStyle(0xF48FB1, 1);
+    shareBg.fillRoundedRect(s(20), y, btnW, btnH, btnH / 2);
+
+    this.add.text(s(20) + btnW / 2, y + btnH / 2, '\uD83D\uDCF8 Share Garden Card', {
+      fontSize: fs(14), color: TEXT.WHITE, fontFamily: FONT, fontStyle: '600',
+    }).setOrigin(0.5);
+
+    const shareZone = this.add.zone(s(20) + btnW / 2, y + btnH / 2, btnW, btnH).setInteractive();
+    shareZone.on('pointerdown', () => {
+      if (soundMgr) soundMgr.buttonPress();
+      this.shareGardenCard();
+    });
+
     // Version
     this.add.text(width / 2, panelY + panelH - s(25), 'm3rg3r v1.0 -- Made with love', {
       fontSize: fs(10), color: TEXT.SECONDARY, fontFamily: FONT_BODY,
@@ -254,6 +272,65 @@ export class SettingsScene extends Phaser.Scene {
       this.scene.stop('UIScene');
       this.scene.stop('GameScene');
       this.scene.start('MenuScene');
+    });
+  }
+
+  private async shareGardenCard(): Promise<void> {
+    const { width, height } = this.scale;
+    const gameScene = this.scene.get('GameScene') as GameScene;
+
+    // Show "Generating..." toast
+    const toastBg = this.add.graphics().setDepth(200);
+    toastBg.fillStyle(0xFFF0F5, 0.95);
+    toastBg.fillRoundedRect(width / 2 - s(80), height / 2 - s(20), s(160), s(40), s(20));
+    toastBg.lineStyle(s(1), 0xF48FB1, 0.4);
+    toastBg.strokeRoundedRect(width / 2 - s(80), height / 2 - s(20), s(160), s(40), s(20));
+    const toastText = this.add.text(width / 2, height / 2, 'Creating card...', {
+      fontSize: fs(12), color: TEXT.PRIMARY, fontFamily: FONT, fontStyle: '600',
+    }).setOrigin(0.5).setDepth(201);
+
+    try {
+      const blob = await gameScene.generateGardenCard();
+      toastBg.destroy(); toastText.destroy();
+
+      // Try Web Share API with file support first
+      if (navigator.share && navigator.canShare) {
+        const file = new File([blob], 'my-garden.png', { type: 'image/png' });
+        const shareData = { files: [file], title: 'm3rg3r Garden Card', text: 'Check out my garden in m3rg3r!' };
+        if (navigator.canShare(shareData)) {
+          try { await navigator.share(shareData); this.showShareToast('Shared!'); return; } catch { /* user cancelled or error, fall through to download */ }
+        }
+      }
+
+      // Fallback: download the image
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'my-garden.png'; document.body.appendChild(a); a.click();
+      document.body.removeChild(a); URL.revokeObjectURL(url);
+      this.showShareToast('Garden card saved!');
+    } catch {
+      toastBg.destroy(); toastText.destroy();
+      this.showShareToast('Could not create card');
+    }
+  }
+
+  private showShareToast(message: string): void {
+    const { width, height } = this.scale;
+    const gameSc = this.scene.get('GameScene') as unknown as { mascot?: { showSpeech: (t: string, d: number) => void } };
+    if (gameSc?.mascot) gameSc.mascot.showSpeech('Garden card saved! Show your friends!', 3000);
+
+    const bg = this.add.graphics().setDepth(200);
+    const tw = s(180), th = s(36);
+    bg.fillStyle(0xFFF0F5, 0.95);
+    bg.fillRoundedRect(width / 2 - tw / 2, height / 2 - th / 2, tw, th, th / 2);
+    bg.lineStyle(s(1), 0xF48FB1, 0.4);
+    bg.strokeRoundedRect(width / 2 - tw / 2, height / 2 - th / 2, tw, th, th / 2);
+    const txt = this.add.text(width / 2, height / 2, message, {
+      fontSize: fs(12), color: TEXT.PRIMARY, fontFamily: FONT, fontStyle: '600',
+    }).setOrigin(0.5).setDepth(201);
+
+    this.time.delayedCall(2000, () => {
+      this.tweens.add({ targets: [bg, txt], alpha: 0, duration: 300, onComplete: () => { bg.destroy(); txt.destroy(); } });
     });
   }
 

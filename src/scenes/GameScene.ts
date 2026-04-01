@@ -10,10 +10,24 @@ import { AchievementSystem } from '../systems/AchievementSystem';
 import { AchievementDef } from '../data/achievements';
 import { OrderSystem } from '../systems/OrderSystem';
 import { SaveSystem, SaveData, LoginData, DAILY_REWARDS } from '../systems/SaveSystem';
-import { GENERATORS, getNextInChain, getChainItem, isMaxTier, getChain } from '../data/chains';
+import { GENERATORS, MERGE_CHAINS, getNextInChain, getChainItem, isMaxTier, getChain } from '../data/chains';
 import { GardenDecorationManager, GardenDecoData } from '../objects/GardenDecoration';
 import { SIZES, COLORS, TIMING, FONT, FONT_BODY, TEXT, fs, s } from '../utils/constants';
-import { SoundManager } from '../utils/SoundManager';
+import { SoundManager, haptic } from '../utils/SoundManager';
+import { StoryBeat, getPendingBeats } from '../data/story';
+import { CHARACTERS } from '../data/orders';
+
+/** Undo record for the most recent non-merge move */
+interface UndoRecord {
+  itemId: string;
+  fromCol: number;
+  fromRow: number;
+  toCol: number;
+  toRow: number;
+  /** If a swap occurred, the other item's id */
+  swappedItemId?: string;
+  timestamp: number;
+}
 
 /** Chain colors for preview tooltip backgrounds */
 const PREVIEW_CHAIN_COLORS: Record<string, number> = {
@@ -40,12 +54,29 @@ export class GameScene extends Phaser.Scene {
   private previewContainer: Phaser.GameObjects.Container | null = null;
   private loginData: LoginData = { lastLoginDate: '', loginStreak: 0, lastClaimedDate: '' };
 
+  // ─── Undo system ───
+  private lastMove: UndoRecord | null = null;
+  private undoButton: Phaser.GameObjects.Container | null = null;
+
+  // ─── Merge preview on drag ───
+  private mergePreviewContainer: Phaser.GameObjects.Container | null = null;
+
+  // ─── Tutorial state ───
+  private tutorialActive = false;
+
   public playerLevel = 1;
   private playerXP = 0;
   private xpToNext = 100;
   public gems = 99999;
   private totalMerges = 0;
   private collection: Map<string, number> = new Map();
+
+  // ─── Story system ───
+  private completedStoryBeats: string[] = [];
+  private storyQueue: StoryBeat[] = [];
+  private storyPopupActive = false;
+  private hasEverMergedMaxTier = false;
+  private hasEverMergedGen = false;
 
   constructor() { super('GameScene'); }
 
@@ -90,6 +121,7 @@ export class GameScene extends Phaser.Scene {
     this.events.on('item-dropped', this.handleDrop, this);
     this.events.on('generator-tapped', this.handleGenTap, this);
     this.events.on('generator-dropped', this.handleGenDrop, this);
+    this.events.on('auto-produce', this.handleAutoProduce, this);
     this.events.on('board-full', this.handleBoardFull, this);
     this.events.on('shop-buy-generator', this.onBuyGenerator, this);
     this.events.on('storage-retrieve', this.onStorageRetrieve, this);
@@ -144,6 +176,13 @@ export class GameScene extends Phaser.Scene {
     // Trash zone — drag items to bottom-right to delete
     this.createTrashZone(width, height);
 
+    // Undo button — near trash zone, bottom-left area
+    this.createUndoButton(width, height);
+
+    // Listen for merge-preview events from MergeItem drag
+    this.events.on('show-merge-preview', this.showMergePreview, this);
+    this.events.on('hide-merge-preview', this.hideMergePreview, this);
+
     // First-play tutorial
     if (!save) this.showTutorial(width, height);
 
@@ -172,49 +211,347 @@ export class GameScene extends Phaser.Scene {
     });
   }
 
+  // ─── UNDO BUTTON ───
+
+  private createUndoButton(_width: number, height: number): void {
+    const btnX = s(32);
+    const btnY = height - SIZES.BOTTOM_BAR - s(38);
+    const container = this.add.container(btnX, btnY).setDepth(4);
+    this.undoButton = container;
+
+    // Circle background
+    const bg = this.add.graphics();
+    bg.fillStyle(0xFFF0F5, 1);
+    bg.fillCircle(0, 0, s(18));
+    bg.lineStyle(s(1.5), 0xF8BBD0, 0.6);
+    bg.strokeCircle(0, 0, s(18));
+    container.add(bg);
+
+    // Arrow icon (curved left arrow)
+    const icon = this.add.text(0, 0, '\u21A9', {
+      fontSize: fs(14), color: TEXT.SECONDARY, fontFamily: FONT,
+    }).setOrigin(0.5);
+    container.add(icon);
+
+    // Label
+    const label = this.add.text(0, s(14), 'Undo', {
+      fontSize: fs(7), color: TEXT.SECONDARY, fontFamily: FONT_BODY,
+    }).setOrigin(0.5).setAlpha(0.7);
+    container.add(label);
+
+    // Start greyed out
+    container.setAlpha(0.3);
+
+    // Tap zone
+    const zone = this.add.zone(0, 0, s(40), s(40)).setInteractive();
+    container.add(zone);
+    zone.on('pointerdown', () => this.executeUndo());
+  }
+
+  private updateUndoButton(): void {
+    if (!this.undoButton) return;
+    const hasUndo = this.lastMove !== null && (Date.now() - this.lastMove.timestamp < 30000);
+    this.undoButton.setAlpha(hasUndo ? 1 : 0.3);
+  }
+
+  private recordMove(itemId: string, fromCol: number, fromRow: number, toCol: number, toRow: number, swappedItemId?: string): void {
+    this.lastMove = { itemId, fromCol, fromRow, toCol, toRow, swappedItemId, timestamp: Date.now() };
+    this.updateUndoButton();
+  }
+
+  private executeUndo(): void {
+    if (!this.lastMove) return;
+    if (Date.now() - this.lastMove.timestamp > 30000) {
+      this.lastMove = null;
+      this.updateUndoButton();
+      return;
+    }
+
+    const move = this.lastMove;
+    this.lastMove = null;
+    this.updateUndoButton();
+
+    const item = this.items.get(move.itemId);
+    if (!item) return;
+
+    // Play undo sound (descending chime)
+    this.sound_.undo();
+    haptic('light');
+
+    if (move.swappedItemId) {
+      // Reverse the swap: move both items back with arc animation
+      const swapped = this.items.get(move.swappedItemId);
+      if (swapped) {
+        const fromCell = this.board.getCell(move.fromCol, move.fromRow);
+        const toCell = this.board.getCell(move.toCol, move.toRow);
+        if (fromCell && toCell) {
+          // Clear both current positions
+          this.board.setOccupied(item.data_.col, item.data_.row, null);
+          this.board.setOccupied(swapped.data_.col, swapped.data_.row, null);
+
+          // Animate item back with arc
+          this.animateArcMove(item, fromCell.x, fromCell.y, 300);
+          item.data_.col = move.fromCol;
+          item.data_.row = move.fromRow;
+          item.origCol_ = move.fromCol;
+          item.origRow_ = move.fromRow;
+          this.board.setOccupied(move.fromCol, move.fromRow, move.itemId);
+
+          // Animate swapped item back with arc
+          this.animateArcMove(swapped, toCell.x, toCell.y, 300);
+          swapped.data_.col = move.toCol;
+          swapped.data_.row = move.toRow;
+          swapped.origCol_ = move.toCol;
+          swapped.origRow_ = move.toRow;
+          this.board.setOccupied(move.toCol, move.toRow, move.swappedItemId!);
+        }
+      }
+    } else {
+      // Simple move: animate item back to original cell
+      const origCell = this.board.getCell(move.fromCol, move.fromRow);
+      if (origCell && !origCell.occupied) {
+        this.board.setOccupied(item.data_.col, item.data_.row, null);
+        this.animateArcMove(item, origCell.x, origCell.y, 300);
+        item.data_.col = move.fromCol;
+        item.data_.row = move.fromRow;
+        item.origCol_ = move.fromCol;
+        item.origRow_ = move.fromRow;
+        this.board.setOccupied(move.fromCol, move.fromRow, move.itemId);
+      }
+    }
+
+    this.mascot.showSpeech('Oops! Let\'s try again!', 2000);
+    this.saveGame();
+  }
+
+  /** Animate a game object along a curved arc path */
+  private animateArcMove(obj: Phaser.GameObjects.Container, targetX: number, targetY: number, duration: number): void {
+    const startX = obj.x;
+    const startY = obj.y;
+    const midX = (startX + targetX) / 2;
+    const midY = Math.min(startY, targetY) - s(30); // arc peak above both points
+
+    // Use a custom tween with onUpdate to follow a quadratic bezier curve
+    this.tweens.add({
+      targets: obj,
+      t: { from: 0, to: 1 },
+      duration,
+      ease: 'Sine.easeInOut',
+      onUpdate: (_tween: Phaser.Tweens.Tween, _target: unknown, _key: string, value: number) => {
+        const t = value;
+        // Quadratic bezier: P = (1-t)^2*P0 + 2*(1-t)*t*P1 + t^2*P2
+        const oneMinusT = 1 - t;
+        obj.x = oneMinusT * oneMinusT * startX + 2 * oneMinusT * t * midX + t * t * targetX;
+        obj.y = oneMinusT * oneMinusT * startY + 2 * oneMinusT * t * midY + t * t * targetY;
+      },
+    });
+  }
+
+  // ─── MERGE PREVIEW ON DRAG ───
+
+  public showMergePreview(chainId: string, nextTier: number, x: number, y: number, sourceItemId: string, targetItemId: string): void {
+    // Validate the target is actually a compatible merge target
+    const targetItem = this.items.get(targetItemId);
+    if (!targetItem) { this.hideMergePreview(); return; }
+    if (targetItem.data_.chainId !== chainId || targetItem.data_.tier !== nextTier - 1) {
+      this.hideMergePreview();
+      return;
+    }
+
+    // Don't recreate if already showing
+    if (this.mergePreviewContainer) {
+      this.hideMergePreview();
+    }
+
+    const nextItem = getChainItem(chainId, nextTier);
+    if (!nextItem) return;
+
+    const textureKey = `${chainId}_${nextTier}`;
+    const container = this.add.container(x, y - SIZES.CELL * 0.7).setDepth(2000);
+    this.mergePreviewContainer = container;
+
+    // Semi-transparent preview sprite
+    const hasTexture = this.textures.exists(textureKey);
+    if (hasTexture) {
+      const preview = this.add.image(0, 0, textureKey);
+      preview.setDisplaySize(SIZES.ITEM_SIZE * 0.5, SIZES.ITEM_SIZE * 0.5);
+      preview.setAlpha(0.6);
+      container.add(preview);
+    } else {
+      // Fallback to emoji text
+      const emoji = this.add.text(0, 0, nextItem.emoji, {
+        fontSize: fs(14),
+      }).setOrigin(0.5).setAlpha(0.6);
+      container.add(emoji);
+    }
+
+    // Small "+" indicator
+    const plus = this.add.text(0, SIZES.ITEM_SIZE * 0.3, '+', {
+      fontSize: fs(10), color: TEXT.ACCENT, fontFamily: FONT, fontStyle: '700',
+    }).setOrigin(0.5).setAlpha(0.7);
+    container.add(plus);
+
+    // Item name label
+    const nameLabel = this.add.text(0, -SIZES.ITEM_SIZE * 0.35, nextItem.name, {
+      fontSize: fs(8), color: TEXT.PRIMARY, fontFamily: FONT_BODY, fontStyle: '600',
+      backgroundColor: 'rgba(255,240,245,0.85)', padding: { x: s(4), y: s(2) },
+    }).setOrigin(0.5).setAlpha(0.8);
+    container.add(nameLabel);
+
+    // Entry animation: scale from 0 + gentle bob
+    container.setScale(0);
+    this.tweens.add({
+      targets: container, scaleX: 1, scaleY: 1, duration: 150, ease: 'Back.easeOut',
+      onComplete: () => {
+        // Gentle bob animation
+        this.tweens.add({
+          targets: container, y: container.y - s(3), duration: 600,
+          yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
+        });
+      }
+    });
+  }
+
+  public hideMergePreview(): void {
+    if (this.mergePreviewContainer) {
+      const c = this.mergePreviewContainer;
+      this.mergePreviewContainer = null;
+      this.tweens.killTweensOf(c);
+      c.destroy();
+    }
+  }
+
   private showTutorial(_width: number, _height: number): void {
     const { width, height } = this.scale;
+    this.tutorialActive = true;
 
-    // Semi-transparent overlay
+    // All tutorial objects tracked for cleanup
+    const tutorialObjs: Phaser.GameObjects.GameObject[] = [];
+
+    // Overlay with spotlight hole
     const overlay = this.add.graphics().setDepth(5000);
-    overlay.fillStyle(0x6D3A5B, 0.5);
-    overlay.fillRect(0, 0, width, height);
+    tutorialObjs.push(overlay);
 
-    const steps = [
-      { text: '🌸 Welcome to m3rg3r!\n\nTap generators to spawn items', y: height * 0.3 },
-      { text: '✨ Drag matching items\nonto each other to merge!', y: height * 0.4 },
-      { text: '💕 Keep merging to discover\nbeautiful new items!', y: height * 0.5 },
-      { text: '🗑️ Drag items to the trash\nto free up space', y: height * 0.6 },
-    ];
-
-    let step = 0;
-
-    const textObj = this.add.text(width / 2, steps[0].y, steps[0].text, {
-      fontSize: fs(16), color: TEXT.WHITE, fontFamily: FONT, fontStyle: '600',
+    // Instruction text
+    const textObj = this.add.text(width / 2, height * 0.25, '', {
+      fontSize: fs(14), color: TEXT.WHITE, fontFamily: FONT, fontStyle: '600',
       align: 'center', lineSpacing: s(6),
-      backgroundColor: 'rgba(109,58,91,0.85)', padding: { x: s(20), y: s(16) },
-    }).setOrigin(0.5).setDepth(5001);
+      backgroundColor: 'rgba(109,58,91,0.9)', padding: { x: s(16), y: s(12) },
+    }).setOrigin(0.5).setDepth(5003);
+    tutorialObjs.push(textObj);
 
-    const tapHint = this.add.text(width / 2, steps[0].y + s(60), 'Tap to continue', {
-      fontSize: fs(11), color: 'rgba(255,255,255,0.6)', fontFamily: FONT_BODY,
-    }).setOrigin(0.5).setDepth(5001);
-    this.tweens.add({ targets: tapHint, alpha: 0.3, duration: 800, yoyo: true, repeat: -1 });
-
-    const advanceZone = this.add.zone(width / 2, height / 2, width, height).setInteractive().setDepth(5002);
-    advanceZone.on('pointerdown', () => {
-      step++;
-      if (step >= steps.length) {
-        overlay.destroy();
-        textObj.destroy();
-        tapHint.destroy();
-        advanceZone.destroy();
-        this.mascot.showSpeech('Let\'s bloom! 🌸', 3000);
-        return;
-      }
-      textObj.setText(steps[step].text);
-      textObj.setY(steps[step].y);
-      tapHint.setY(steps[step].y + s(60));
+    // Pulsing arrow
+    const arrow = this.add.text(0, 0, '\u2B07', {
+      fontSize: fs(22), color: '#FFD700', fontFamily: FONT,
+    }).setOrigin(0.5).setDepth(5003).setAlpha(0);
+    tutorialObjs.push(arrow);
+    const arrowTween = this.tweens.add({
+      targets: arrow, y: '+=8', alpha: { from: 0.6, to: 1 },
+      duration: 500, yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
     });
+
+    const drawSpotlight = (cx: number, cy: number, radius: number) => {
+      overlay.clear();
+      overlay.fillStyle(0x6D3A5B, 0.6);
+      overlay.fillRect(0, 0, width, height);
+      overlay.fillStyle(0xFFF0F5, 0.3);
+      overlay.fillCircle(cx, cy, radius + s(4));
+      overlay.lineStyle(s(3), 0xFFD700, 0.6);
+      overlay.strokeCircle(cx, cy, radius);
+    };
+
+    const clearAll = () => {
+      arrowTween.destroy();
+      tutorialObjs.forEach(o => { if (o && o.active) o.destroy(); });
+      this.tutorialActive = false;
+      this.mascot.showSpeech('Let\'s bloom! 🌸', 3000);
+    };
+
+    // ─── STEP 1: Tap a generator ───
+    const firstGen = this.generators[0];
+    if (!firstGen) { clearAll(); return; }
+    const genCell = this.board.getCell(firstGen.col, firstGen.row);
+    if (!genCell) { clearAll(); return; }
+
+    drawSpotlight(genCell.x, genCell.y, this.board.cellDimension * 0.6);
+    textObj.setText('Tap here to spawn an item!');
+    textObj.setY(genCell.y - s(80));
+    arrow.setPosition(genCell.x, genCell.y - s(35)).setAlpha(1);
+
+    const step1Handler = () => {
+      this.events.off('generator-tapped', step1Handler);
+      // ─── STEP 2: Tap again ───
+      this.time.delayedCall(400, () => {
+        drawSpotlight(genCell.x, genCell.y, this.board.cellDimension * 0.6);
+        textObj.setText('Great! Tap again!');
+        textObj.setY(genCell.y - s(80));
+        arrow.setPosition(genCell.x, genCell.y - s(35));
+
+        const step2Handler = () => {
+          this.events.off('generator-tapped', step2Handler);
+          // ─── STEP 3: Drag to merge ───
+          this.time.delayedCall(400, () => {
+            const itemsArr = Array.from(this.items.values());
+            let matchA: MergeItem | null = null;
+            let matchB: MergeItem | null = null;
+            for (let i = 0; i < itemsArr.length; i++) {
+              for (let j = i + 1; j < itemsArr.length; j++) {
+                if (itemsArr[i].data_.chainId === itemsArr[j].data_.chainId &&
+                    itemsArr[i].data_.tier === itemsArr[j].data_.tier &&
+                    !isMaxTier(itemsArr[i].data_.chainId, itemsArr[i].data_.tier)) {
+                  matchA = itemsArr[i];
+                  matchB = itemsArr[j];
+                  break;
+                }
+              }
+              if (matchA) break;
+            }
+
+            if (matchA && matchB) {
+              const ax = matchA.x, ay = matchA.y;
+              const bx = matchB.x, by = matchB.y;
+              const cx = (ax + bx) / 2, cy = (ay + by) / 2;
+              const dist = Math.sqrt((ax - bx) ** 2 + (ay - by) ** 2);
+              drawSpotlight(cx, cy, dist / 2 + this.board.cellDimension * 0.6);
+
+              textObj.setText('Drag one onto the other\nto merge!');
+              textObj.setY(cy - s(90));
+
+              const mergeArrow = this.add.graphics().setDepth(5002);
+              mergeArrow.lineStyle(s(3), 0xFFD700, 0.7);
+              mergeArrow.lineBetween(ax, ay, bx, by);
+              tutorialObjs.push(mergeArrow);
+              this.tweens.add({ targets: mergeArrow, alpha: 0.3, duration: 600, yoyo: true, repeat: -1 });
+
+              arrow.setAlpha(0);
+
+              const step3Handler = () => {
+                this.events.off('merge-complete', step3Handler);
+                // ─── STEP 4: Celebration ───
+                overlay.clear();
+                overlay.fillStyle(0x6D3A5B, 0.4);
+                overlay.fillRect(0, 0, width, height);
+                textObj.setText('You merged your first item!\nKeep going to discover more!');
+                textObj.setY(height * 0.4);
+                arrow.setAlpha(0);
+                this.time.delayedCall(2500, () => clearAll());
+              };
+              this.events.on('merge-complete', step3Handler);
+            } else {
+              textObj.setText('Keep merging to discover\nnew items!');
+              textObj.setY(height * 0.4);
+              arrow.setAlpha(0);
+              overlay.clear();
+              overlay.fillStyle(0x6D3A5B, 0.4);
+              overlay.fillRect(0, 0, width, height);
+              this.time.delayedCall(2500, () => clearAll());
+            }
+          });
+        };
+        this.events.on('generator-tapped', step2Handler);
+      });
+    };
+    this.events.on('generator-tapped', step1Handler);
   }
 
   private drawBackground(width: number, height: number): void {
@@ -321,13 +658,23 @@ export class GameScene extends Phaser.Scene {
     for (const c of data.collection) this.collection.set(c.chainId, c.maxTier);
     for (const g of data.board.generators) {
       const def = GENERATORS.find(d => d.id === g.genId);
-      if (def) this.createGenerator(def, g.col, g.row, g.itemId, g.genTier ?? 1);
+      if (def) {
+        const gen = this.createGenerator(def, g.col, g.row, g.itemId, g.genTier ?? 1);
+        gen.lastAutoProduceTime = g.lastAutoProduceTime ?? Date.now();
+      }
     }
     for (const item of data.board.items) this.createItem(item);
     this.questSystem.initialize(data.quests.active, data.quests.completed);
     if (data.storage) this.storageTray.loadItems(data.storage);
     if (data.garden) this.gardenManager.load(data.garden);
     if (data.login) this.loginData = { ...data.login };
+    if (data.completedStoryBeats) this.completedStoryBeats = [...data.completedStoryBeats];
+    // Derive milestone flags from existing save state
+    this.hasEverMergedMaxTier = this.completedStoryBeats.includes('act1_first_max_tier');
+    this.hasEverMergedGen = this.completedStoryBeats.includes('act1_first_gen_merge');
+
+    // Calculate offline auto-production
+    this.processOfflineProduction(data);
   }
 
   private createItem(data: MergeItemData): MergeItem {
@@ -381,6 +728,7 @@ export class GameScene extends Phaser.Scene {
     if (this.isMerging) { dropped.returnToOriginal(); return; }
     const { width, height } = this.scale;
     this.events.emit('item-near-trash', false);
+    this.hideMergePreview();
 
     // Check if dropped on trash zone (bottom-right corner)
     const trashX = width - s(32);
@@ -390,6 +738,8 @@ export class GameScene extends Phaser.Scene {
       this.items.delete(data.id);
       this.board.setOccupied(data.col, data.row, null);
       this.sound_.trash();
+      this.lastMove = null;
+      this.updateUndoButton();
       // Poof animation
       this.tweens.add({
         targets: dropped, scaleX: 0, scaleY: 0, alpha: 0, duration: 200,
@@ -416,24 +766,75 @@ export class GameScene extends Phaser.Scene {
     const targetId = targetCell.itemId;
     if (targetId) {
       const target = this.items.get(targetId);
-      if (target && this.mergeSystem.canMerge(dropped, target)) { this.executeMerge(dropped, target); return; }
+      if (target && this.mergeSystem.canMerge(dropped, target)) {
+        this.lastMove = null;
+        this.updateUndoButton();
+        this.executeMerge(dropped, target);
+        return;
+      }
       if (this.generators.some(g => g.itemId === targetId)) { dropped.returnToOriginal(); return; }
       if (target) {
         const origCol = dropped.data_.col, origRow = dropped.data_.row;
-        // Clear target's cell and swap both items' board state atomically
-        // to prevent moveToCell's auto-clear from corrupting board state
+
+        // Record the swap for undo
+        this.recordMove(dropped.data_.id, origCol, origRow, targetCell.col, targetCell.row, target.data_.id);
+
+        // Clear both cells atomically
         this.board.setOccupied(targetCell.col, targetCell.row, null);
-        target.moveToCell(origCol, origRow);
-        // Update dropped's data to point at target cell BEFORE moveToCell,
-        // so moveToCell's clear step doesn't wipe target's new position
+        this.board.setOccupied(origCol, origRow, null);
+
+        // Set board state for both items
+        target.data_.col = origCol;
+        target.data_.row = origRow;
+        target.origCol_ = origCol;
+        target.origRow_ = origRow;
+        this.board.setOccupied(origCol, origRow, target.data_.id);
+
         dropped.data_.col = targetCell.col;
         dropped.data_.row = targetCell.row;
-        dropped.moveToCell(targetCell.col, targetCell.row);
+        dropped.origCol_ = targetCell.col;
+        dropped.origRow_ = targetCell.row;
+        this.board.setOccupied(targetCell.col, targetCell.row, dropped.data_.id);
+
+        // Arc animation for both items
+        const targetCellPos = this.board.getCell(origCol, origRow);
+        const droppedCellPos = this.board.getCell(targetCell.col, targetCell.row);
+        if (targetCellPos && droppedCellPos) {
+          this.animateArcMove(target, targetCellPos.x, targetCellPos.y, 250);
+          this.animateArcMove(dropped, droppedCellPos.x, droppedCellPos.y, 250);
+        }
+
+        // Scale bounce on both items
+        this.tweens.add({
+          targets: [dropped, target], scaleX: 1.1, scaleY: 1.1, duration: 75, yoyo: true,
+          ease: 'Bounce.easeOut',
+        });
+
+        // Show swap icon at midpoint
+        if (targetCellPos && droppedCellPos) {
+          const midX = (targetCellPos.x + droppedCellPos.x) / 2;
+          const midY = (targetCellPos.y + droppedCellPos.y) / 2;
+          const swapIcon = this.add.text(midX, midY, '\u21C4', {
+            fontSize: fs(14), color: TEXT.SECONDARY, fontFamily: FONT,
+          }).setOrigin(0.5).setDepth(2000).setAlpha(0.7);
+          this.tweens.add({
+            targets: swapIcon, alpha: 0, scaleX: 1.3, scaleY: 1.3, duration: 400,
+            onComplete: () => swapIcon.destroy(),
+          });
+        }
+
         this.sound_.swap();
+        haptic('light');
         return;
       }
     }
-    if (!targetCell.occupied && !targetCell.locked) { dropped.moveToCell(targetCell.col, targetCell.row); this.sound_.drop(); }
+    if (!targetCell.occupied && !targetCell.locked) {
+      const fromCol = dropped.data_.col;
+      const fromRow = dropped.data_.row;
+      dropped.moveToCell(targetCell.col, targetCell.row);
+      this.recordMove(dropped.data_.id, fromCol, fromRow, targetCell.col, targetCell.row);
+      this.sound_.drop();
+    }
     else { dropped.returnToOriginal(); }
   }
 
@@ -458,6 +859,12 @@ export class GameScene extends Phaser.Scene {
       if (isNewDiscovery) {
         this.playDiscoveryAnimation(newItem);
         this.sound_.discovery();
+      }
+
+      // Track first max-tier merge for story system
+      if (isMaxTier(result.newItem.chainId, result.newItem.tier) && !this.hasEverMergedMaxTier) {
+        this.hasEverMergedMaxTier = true;
+        this.time.delayedCall(3000, () => this.checkStoryBeats());
       }
 
       // Check if this is a max-tier item — offer garden placement
@@ -502,6 +909,7 @@ export class GameScene extends Phaser.Scene {
       const c1 = this.questSystem.onItemCreated(result.newItem.chainId, result.newItem.tier);
       const c2 = this.questSystem.onMerge();
       for (const q of [...c1, ...c2]) this.handleQuestComplete(q);
+      this.events.emit('merge-complete', result.newItem);
       this.updateUI();
       this.saveGame();
     }
@@ -513,6 +921,17 @@ export class GameScene extends Phaser.Scene {
     const tier = spawnTier ?? _gen.genDef.spawnTier;
     const item = this.spawnItem(_gen.genDef.chainId, tier, cell.col, cell.row);
     if (item) { this.sound_.spawn(); this.createSpawnParticles(cell.x, cell.y); }
+  }
+
+  /** Handle auto-produced items (same as tap but quieter, no multi-spawn) */
+  private handleAutoProduce(gen: Generator, cell: CellData, spawnTier: number): void {
+    if (this.isMerging) return;
+    const item = this.spawnItem(gen.genDef.chainId, spawnTier, cell.col, cell.row);
+    if (item) {
+      this.sound_.spawn();
+      this.createSpawnParticles(cell.x, cell.y);
+      this.saveGame();
+    }
   }
 
   private boardFullCooldown = 0;
@@ -596,6 +1015,12 @@ export class GameScene extends Phaser.Scene {
       this.totalMerges++;
       this.addXP(20 + result.newGenTier * 10);
       this.gems = Math.min(this.gems + 10 + result.newGenTier * 5, 999999);
+
+      // Track first generator merge for story system
+      if (!this.hasEverMergedGen) {
+        this.hasEverMergedGen = true;
+        this.time.delayedCall(3000, () => this.checkStoryBeats());
+      }
 
       // Show upgrade text
       const tierNames = ['', '', 'II', 'III', 'IV', 'V'];
@@ -705,6 +1130,8 @@ export class GameScene extends Phaser.Scene {
     this.mascot.react('excited');
     this.mascot.showSpeech(`Level ${this.playerLevel}! 🌟`, 3000);
     this.updateUI();
+    // Check story beats after level-up fanfare settles
+    this.time.delayedCall(2500, () => this.checkStoryBeats());
   }
 
   private createConfetti(): void {
@@ -921,6 +1348,8 @@ export class GameScene extends Phaser.Scene {
     this.mascot.showSpeech('Order complete! 💕', 2500);
     this.updateUI();
     this.saveGame();
+    // Check story beats after order celebration settles
+    this.time.delayedCall(2000, () => this.checkStoryBeats());
   }
 
   private checkAchievements(newChainId?: string, newTier?: number): void {
@@ -993,12 +1422,12 @@ export class GameScene extends Phaser.Scene {
   private saveGame(): void {
     const items: MergeItemData[] = [];
     this.items.forEach(item => items.push(item.getData()));
-    const gens = this.generators.map(g => ({ genId: g.genDef.id, genTier: g.genTier, col: g.col, row: g.row, itemId: g.itemId }));
+    const gens = this.generators.map(g => ({ genId: g.genDef.id, genTier: g.genTier, col: g.col, row: g.row, itemId: g.itemId, lastAutoProduceTime: g.lastAutoProduceTime }));
     const coll: { chainId: string; maxTier: number }[] = [];
     this.collection.forEach((maxTier, chainId) => coll.push({ chainId, maxTier }));
 
     SaveSystem.save({
-      version: 6, timestamp: Date.now(),
+      version: 8, timestamp: Date.now(),
       player: { level: this.playerLevel, xp: this.playerXP, xpToNext: this.xpToNext, gems: this.gems, totalMerges: this.totalMerges },
       board: { cols: 6, rows: 8, items, generators: gens },
       quests: this.questSystem.getSaveData(),
@@ -1008,6 +1437,7 @@ export class GameScene extends Phaser.Scene {
       garden: this.gardenManager.getDecorations(),
       orders: this.orderSystem.getSaveData(),
       login: { ...this.loginData },
+      completedStoryBeats: [...this.completedStoryBeats],
     });
   }
 
@@ -1346,5 +1776,357 @@ export class GameScene extends Phaser.Scene {
     this.tweens.add({
       targets: container, alpha: 1, duration: 300, ease: 'Power2',
     });
+  }
+
+  // ─── FEATURE: Story / Narrative System ───
+
+  private checkStoryBeats(): void {
+    if (this.storyPopupActive) return;
+
+    const pending = getPendingBeats(this.completedStoryBeats, {
+      level: this.playerLevel,
+      totalOrders: this.orderSystem.totalCompleted,
+      hasMaxTier: this.hasEverMergedMaxTier,
+      hasGenMerge: this.hasEverMergedGen,
+    });
+
+    if (pending.length === 0) return;
+
+    // Queue all pending beats -- show one at a time
+    this.storyQueue.push(...pending);
+    this.showNextStoryBeat();
+  }
+
+  private showNextStoryBeat(): void {
+    if (this.storyPopupActive || this.storyQueue.length === 0) return;
+
+    const beat = this.storyQueue.shift()!;
+    // Mark as completed immediately to prevent re-triggers
+    this.completedStoryBeats.push(beat.id);
+    this.storyPopupActive = true;
+
+    const char = CHARACTERS.find(c => c.id === beat.characterId);
+    const charName = char?.name || '???';
+    const charEmoji = char?.emoji || '🌸';
+
+    const { width, height } = this.scale;
+    const storyContainer = this.add.container(0, 0).setDepth(5500);
+
+    // Semi-transparent backdrop (player can still see their garden)
+    const backdrop = this.add.graphics();
+    backdrop.fillStyle(0x6D3A5B, 0.25);
+    backdrop.fillRect(0, 0, width, height);
+    storyContainer.add(backdrop);
+
+    // Dialogue card
+    const cardW = width * 0.88;
+    const cardH = s(90);
+    const cardX = (width - cardW) / 2;
+    const cardY = height * 0.35;
+    const r = s(16);
+
+    const card = this.add.graphics();
+    // Shadow
+    card.fillStyle(0x000000, 0.1);
+    card.fillRoundedRect(cardX + s(2), cardY + s(3), cardW, cardH, r);
+    // Background
+    card.fillStyle(0xFFF8F0, 0.97);
+    card.fillRoundedRect(cardX, cardY, cardW, cardH, r);
+    // Accent border
+    card.lineStyle(s(1.5), 0xF8BBD0, 0.6);
+    card.strokeRoundedRect(cardX, cardY, cardW, cardH, r);
+    storyContainer.add(card);
+
+    // Character portrait (reuse pre-rendered textures from PreloadScene)
+    const portraitSize = s(42);
+    const portraitX = cardX + s(14) + portraitSize / 2;
+    const portraitY = cardY + cardH / 2;
+    const portraitKey = `char_${beat.characterId}`;
+
+    if (this.textures.exists(portraitKey)) {
+      const portrait = this.add.image(portraitX, portraitY, portraitKey);
+      portrait.setDisplaySize(portraitSize, portraitSize);
+      storyContainer.add(portrait);
+    } else {
+      // Fallback: emoji
+      const emojiText = this.add.text(portraitX, portraitY, charEmoji, {
+        fontSize: fs(22),
+      }).setOrigin(0.5);
+      storyContainer.add(emojiText);
+    }
+
+    // Character name
+    const nameText = this.add.text(cardX + portraitSize + s(22), cardY + s(12), charName, {
+      fontSize: fs(11), color: TEXT.ACCENT, fontFamily: FONT, fontStyle: '700',
+    });
+    storyContainer.add(nameText);
+
+    // Dialogue text
+    const dialogueText = this.add.text(
+      cardX + portraitSize + s(22),
+      cardY + s(30),
+      beat.lines[0],
+      {
+        fontSize: fs(11), color: TEXT.PRIMARY, fontFamily: FONT_BODY,
+        wordWrap: { width: cardW - portraitSize - s(40) },
+        lineSpacing: s(3),
+      }
+    );
+    storyContainer.add(dialogueText);
+
+    // Reward display (if any)
+    if (beat.reward) {
+      const rewardParts: string[] = [];
+      if (beat.reward.coins) rewardParts.push(`+${beat.reward.coins} 🪙`);
+      if (beat.reward.gems) rewardParts.push(`+${beat.reward.gems} 💎`);
+      const rewardStr = rewardParts.join('  ');
+      const rewardText = this.add.text(
+        cardX + cardW - s(12),
+        cardY + cardH - s(16),
+        rewardStr,
+        {
+          fontSize: fs(9), color: TEXT.GOLD, fontFamily: FONT, fontStyle: '600',
+        }
+      ).setOrigin(1, 0.5);
+      storyContainer.add(rewardText);
+    }
+
+    // Tap hint
+    const tapHint = this.add.text(cardX + cardW - s(12), cardY + s(12), 'tap', {
+      fontSize: fs(8), color: TEXT.SECONDARY, fontFamily: FONT_BODY,
+    }).setOrigin(1, 0);
+    this.tweens.add({ targets: tapHint, alpha: 0.3, duration: 800, yoyo: true, repeat: -1 });
+    storyContainer.add(tapHint);
+
+    // Slide in from below
+    storyContainer.setAlpha(0);
+    storyContainer.y = s(20);
+    this.tweens.add({
+      targets: storyContainer, alpha: 1, y: 0, duration: 300, ease: 'Back.easeOut',
+    });
+
+    // Mascot reacts to story
+    this.mascot.react('happy');
+
+    // Dismiss handler
+    const dismiss = () => {
+      if (!storyContainer.active) return;
+      // Apply rewards
+      if (beat.reward) {
+        if (beat.reward.coins) this.orderSystem.coins += beat.reward.coins;
+        if (beat.reward.gems) this.gems = Math.min(this.gems + (beat.reward.gems || 0), 999999);
+        this.updateUI();
+      }
+
+      this.tweens.add({
+        targets: storyContainer, alpha: 0, y: s(-10), duration: 200,
+        onComplete: () => {
+          storyContainer.destroy();
+          this.storyPopupActive = false;
+          this.saveGame();
+          // Show next queued beat after a pause
+          if (this.storyQueue.length > 0) {
+            this.time.delayedCall(1200, () => this.showNextStoryBeat());
+          }
+        },
+      });
+    };
+
+    // Tap-to-dismiss zone
+    const dismissZone = this.add.zone(width / 2, height / 2, width, height)
+      .setInteractive().setDepth(5501);
+    dismissZone.on('pointerdown', () => {
+      dismissZone.destroy();
+      if (autoDismissTimer) autoDismissTimer.destroy();
+      dismiss();
+    });
+    storyContainer.add(dismissZone);
+
+    // Auto-dismiss after 4 seconds
+    const autoDismissTimer = this.time.delayedCall(4000, () => {
+      dismissZone.destroy();
+      dismiss();
+    });
+  }
+
+  private processOfflineProduction(_data: SaveData): void {
+    const now = Date.now();
+    const offlineCap = TIMING.AUTO_PRODUCE_OFFLINE_CAP;
+    let totalProduced = 0;
+    const totalCells = this.board.totalCols * this.board.totalRows;
+    for (const gen of this.generators) {
+      const lastTime = gen.lastAutoProduceTime;
+      const interval = gen.getAutoProduceIntervalMs();
+      const elapsed = now - lastTime;
+      if (elapsed < interval) continue;
+      const potential = Math.floor(elapsed / interval);
+      const toSpawn = Math.min(potential, offlineCap);
+      for (let i = 0; i < toSpawn; i++) {
+        const emptyCount = this.board.getEmptyCount();
+        const fullPct = 1 - (emptyCount / totalCells);
+        if (fullPct >= TIMING.AUTO_PRODUCE_BOARD_FULL_PCT) break;
+        const emptyCell = this.board.findEmptyCellNear(gen.col, gen.row);
+        if (!emptyCell) break;
+        const spawnTier = gen.rollSpawnTier();
+        const item = this.spawnItem(gen.genDef.chainId, spawnTier, emptyCell.col, emptyCell.row);
+        if (item) totalProduced++;
+      }
+      gen.lastAutoProduceTime = now;
+    }
+    if (totalProduced > 0) {
+      this.time.delayedCall(1200, () => this.showWelcomeBackPopup(totalProduced));
+    }
+  }
+
+  private showWelcomeBackPopup(itemCount: number): void {
+    const { width, height } = this.scale;
+    const container = this.add.container(0, 0).setDepth(5500);
+    const overlay = this.add.graphics();
+    overlay.fillStyle(0x6D3A5B, 0.3);
+    overlay.fillRect(0, 0, width, height);
+    container.add(overlay);
+    const cardW = width * 0.72;
+    const cardH = s(140);
+    const cardX = (width - cardW) / 2;
+    const cardY = (height - cardH) / 2 - s(20);
+    const r = s(20);
+    const card = this.add.graphics();
+    card.fillStyle(0x000000, 0.08);
+    card.fillRoundedRect(cardX + s(2), cardY + s(3), cardW, cardH, r);
+    card.fillStyle(0xFFF8F0, 1);
+    card.fillRoundedRect(cardX, cardY, cardW, cardH, r);
+    card.fillStyle(0x25C486, 0.2);
+    card.fillRoundedRect(cardX, cardY, cardW, s(44), { tl: r, tr: r, bl: 0, br: 0 });
+    card.lineStyle(s(1.5), 0x25C486, 0.4);
+    card.strokeRoundedRect(cardX, cardY, cardW, cardH, r);
+    container.add(card);
+    const title = this.add.text(width / 2, cardY + s(22), 'Welcome back!', {
+      fontSize: fs(16), color: TEXT.PRIMARY, fontFamily: FONT, fontStyle: '700',
+    }).setOrigin(0.5);
+    container.add(title);
+    const plural = itemCount === 1 ? 'item' : 'items';
+    const msg = this.add.text(
+      width / 2, cardY + s(65),
+      'Your generators made ' + itemCount + ' ' + plural + '\nwhile you were away!',
+      { fontSize: fs(12), color: TEXT.SECONDARY, fontFamily: FONT_BODY, align: 'center', lineSpacing: s(4) }
+    ).setOrigin(0.5);
+    container.add(msg);
+    const sparkle = this.add.text(width / 2, cardY + s(105), '🌸', { fontSize: fs(20) }).setOrigin(0.5);
+    container.add(sparkle);
+    container.setAlpha(0);
+    container.y = s(10);
+    this.tweens.add({
+      targets: container, alpha: 1, y: 0, duration: 300, ease: 'Back.easeOut',
+      onComplete: () => {
+        this.time.delayedCall(2500, () => {
+          this.tweens.add({
+            targets: container, alpha: 0, y: -s(10), duration: 250, ease: 'Power2',
+            onComplete: () => container.destroy(),
+          });
+        });
+      }
+    });
+    this.mascot.react('happy');
+    this.mascot.showSpeech('I kept working! 🌸', 3000);
+  }
+
+  public async generateGardenCard(): Promise<Blob> {
+    const CW = 1080, CH = 1920, oc = document.createElement('canvas');
+    oc.width = CW; oc.height = CH;
+    const cx = oc.getContext('2d')!;
+    const grd = cx.createLinearGradient(0, 0, 0, CH);
+    grd.addColorStop(0, '#FFF0F5'); grd.addColorStop(0.5, '#FCE4EC'); grd.addColorStop(1, '#F8BBD0');
+    cx.fillStyle = grd; cx.fillRect(0, 0, CW, CH);
+    cx.fillStyle = 'rgba(236,64,122,0.04)'; cx.font = '14px serif';
+    for (let px = 20; px < CW; px += 48) for (let py = 20; py < CH; py += 48) cx.fillText('\u2665', px + ((py % 96 === 20) ? 24 : 0), py);
+    const mg = 40, scRd = 16;
+    cx.strokeStyle = 'rgba(244,143,177,0.5)'; cx.lineWidth = 3;
+    for (let x = mg; x < CW - mg; x += scRd * 2) { cx.beginPath(); cx.arc(x + scRd, mg, scRd, Math.PI, 0); cx.stroke(); }
+    for (let x = mg; x < CW - mg; x += scRd * 2) { cx.beginPath(); cx.arc(x + scRd, CH - mg, scRd, 0, Math.PI); cx.stroke(); }
+    for (let vy = mg; vy < CH - mg; vy += scRd * 2) { cx.beginPath(); cx.arc(mg, vy + scRd, scRd, Math.PI / 2, -Math.PI / 2); cx.stroke(); }
+    for (let vy = mg; vy < CH - mg; vy += scRd * 2) { cx.beginPath(); cx.arc(CW - mg, vy + scRd, scRd, -Math.PI / 2, Math.PI / 2); cx.stroke(); }
+    cx.strokeStyle = 'rgba(240,98,146,0.25)'; cx.lineWidth = 2;
+    GameScene.gcR(cx, 56, 56, CW - 112, CH - 112, 32); cx.stroke();
+    cx.textAlign = 'center'; cx.textBaseline = 'middle';
+    cx.font = '700 72px Fredoka, Nunito, system-ui, sans-serif';
+    cx.fillStyle = 'rgba(236,64,122,0.15)'; cx.fillText('m3rg3r', CW / 2 + 3, 133);
+    cx.fillStyle = '#EC407A'; cx.fillText('m3rg3r', CW / 2, 130);
+    cx.font = '400 28px Nunito, system-ui, sans-serif'; cx.fillStyle = '#B07A9E'; cx.fillText('My Garden', CW / 2, 185);
+    const bi = await this.gcSnap();
+    let sT = 240;
+    if (bi) {
+      const tw = CW - 120, th = tw * (bi.height / bi.width), bx = 60, by = 220;
+      cx.fillStyle = 'rgba(212,160,184,0.25)'; GameScene.gcR(cx, bx + 4, by + 6, tw, th, 24); cx.fill();
+      cx.fillStyle = '#FCE4EC'; GameScene.gcR(cx, bx, by, tw, th, 24); cx.fill();
+      cx.save(); GameScene.gcR(cx, bx, by, tw, th, 24); cx.clip(); cx.drawImage(bi, bx, by, tw, th); cx.restore();
+      cx.strokeStyle = 'rgba(244,143,177,0.5)'; cx.lineWidth = 2; GameScene.gcR(cx, bx, by, tw, th, 24); cx.stroke();
+      sT = by + th + 40;
+    }
+    this.gcSt(cx, CW, sT); GameScene.gcSp(cx, CW, CH);
+    cx.font = '64px serif'; cx.textAlign = 'left'; cx.textBaseline = 'middle'; cx.fillText('\uD83C\uDF38', 80, CH - 170);
+    cx.textAlign = 'center'; cx.font = '600 32px Fredoka, Nunito, system-ui, sans-serif'; cx.fillStyle = '#EC407A';
+    cx.fillText('Play m3rg3r!', CW / 2, CH - 120);
+    cx.font = '400 22px Nunito, system-ui, sans-serif'; cx.fillStyle = '#B07A9E';
+    cx.fillText('merge-game-nine.vercel.app', CW / 2, CH - 82);
+    return new Promise<Blob>((res, rej) => { oc.toBlob(b => { if (b) res(b); else rej(new Error('fail')); }, 'image/png'); });
+  }
+
+  private gcSnap(): Promise<HTMLImageElement | null> {
+    return new Promise(res => {
+      if (this.game.renderer.type === Phaser.CANVAS) {
+        const i = new Image(); i.onload = () => res(i); i.onerror = () => res(null);
+        i.src = (this.game.canvas as HTMLCanvasElement).toDataURL('image/png');
+      } else {
+        (this.game.renderer as Phaser.Renderer.WebGL.WebGLRenderer).snapshot(
+          (sn: Phaser.Display.Color | HTMLImageElement) => res(sn instanceof HTMLImageElement ? sn : null));
+      }
+    });
+  }
+
+  private gcSt(ctx: CanvasRenderingContext2D, CW: number, top: number): void {
+    const ti = MERGE_CHAINS.reduce((n: number, ch: { items: unknown[] }) => n + ch.items.length, 0);
+    const co = Array.from(this.collection.entries()).filter(([ci, mt]) => { const ch = getChain(ci); return ch != null && mt >= ch.items[ch.items.length - 1].tier; }).length;
+    const di = Array.from(this.collection.values()).reduce((n, t) => n + t, 0);
+    const sv = SaveSystem.load();
+    const da = Math.max(1, Math.ceil((Date.now() - (sv?.timestamp ?? Date.now())) / 86400000) + 1);
+    const sr: { label: string; value: string; icon: string }[] = [
+      { label: 'Level', value: String(this.playerLevel), icon: '\u2B50' },
+      { label: 'Total Merges', value: this.totalMerges.toLocaleString(), icon: '\u2728' },
+      { label: 'Items Discovered', value: di + '/' + ti, icon: '\uD83C\uDF1F' },
+      { label: 'Chains Completed', value: co + '/' + MERGE_CHAINS.length, icon: '\uD83C\uDF38' },
+      { label: 'Days Played', value: String(da), icon: '\uD83D\uDCC5' },
+    ];
+    const pw = 440, ph = 56, pg = 14, pr = ph / 2;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.font = '700 30px Fredoka, Nunito, system-ui, sans-serif'; ctx.fillStyle = '#6D3A5B';
+    ctx.fillText('\u2728 Garden Stats \u2728', CW / 2, top + 10);
+    let y = top + 44;
+    for (const rw of sr) {
+      const px = (CW - pw) / 2;
+      ctx.fillStyle = 'rgba(212,160,184,0.2)'; GameScene.gcR(ctx, px + 2, y + 3, pw, ph, pr); ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,0.85)'; GameScene.gcR(ctx, px, y, pw, ph, pr); ctx.fill();
+      ctx.strokeStyle = 'rgba(244,143,177,0.35)'; ctx.lineWidth = 1.5; GameScene.gcR(ctx, px, y, pw, ph, pr); ctx.stroke();
+      ctx.textAlign = 'left'; ctx.font = '28px serif'; ctx.fillStyle = '#000'; ctx.fillText(rw.icon, px + 18, y + ph / 2 + 2);
+      ctx.font = '400 22px Nunito, system-ui, sans-serif'; ctx.fillStyle = '#B07A9E'; ctx.fillText(rw.label, px + 56, y + ph / 2 + 1);
+      ctx.textAlign = 'right'; ctx.font = '700 24px Fredoka, Nunito, system-ui, sans-serif'; ctx.fillStyle = '#6D3A5B';
+      ctx.fillText(rw.value, px + pw - 22, y + ph / 2 + 1); y += ph + pg;
+    }
+  }
+
+  private static gcSp(ctx: CanvasRenderingContext2D, CW: number, CH: number): void {
+    for (const p of [{x:100,y:100,z:18},{x:CW-110,y:120,z:22},{x:80,y:400,z:14},{x:CW-90,y:350,z:16},{x:130,y:CH-250,z:20},{x:CW-120,y:CH-280,z:18},{x:CW/2-200,y:90,z:12},{x:CW/2+180,y:95,z:14}]) {
+      ctx.fillStyle = 'rgba(255,215,0,0.35)'; ctx.beginPath();
+      ctx.moveTo(p.x, p.y-p.z*1.5); ctx.lineTo(p.x+p.z*0.35, p.y-p.z*0.35); ctx.lineTo(p.x+p.z*1.5, p.y);
+      ctx.lineTo(p.x+p.z*0.35, p.y+p.z*0.35); ctx.lineTo(p.x, p.y+p.z*1.5); ctx.lineTo(p.x-p.z*0.35, p.y+p.z*0.35);
+      ctx.lineTo(p.x-p.z*1.5, p.y); ctx.lineTo(p.x-p.z*0.35, p.y-p.z*0.35); ctx.closePath(); ctx.fill();
+    }
+    ctx.font = '22px serif'; ctx.fillStyle = 'rgba(236,64,122,0.2)'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    for (const h of [{x:160,y:160},{x:CW-170,y:190},{x:90,y:CH-320},{x:CW-100,y:CH-340}]) ctx.fillText('\u2764', h.x, h.y);
+  }
+
+  private static gcR(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number): void {
+    ctx.beginPath(); ctx.moveTo(x+r, y); ctx.lineTo(x+w-r, y); ctx.arcTo(x+w, y, x+w, y+r, r);
+    ctx.lineTo(x+w, y+h-r); ctx.arcTo(x+w, y+h, x+w-r, y+h, r); ctx.lineTo(x+r, y+h); ctx.arcTo(x, y+h, x, y+h-r, r);
+    ctx.lineTo(x, y+r); ctx.arcTo(x, y, x+r, y, r); ctx.closePath();
   }
 }

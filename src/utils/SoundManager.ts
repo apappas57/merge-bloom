@@ -270,10 +270,17 @@ export class SoundManager {
     setTimeout(() => this.playTone(80, 0.06, 'sine', 0.15, 0.005), 20);
   }
 
-  /** Swap sound: two quick tones alternating */
+  /** Swap sound: quick whoosh (sine sweep 300Hz -> 200Hz) + two tones */
   swap(): void {
-    this.playTone(350, 0.06, 'sine', 0.3, 0.005);
-    setTimeout(() => this.playTone(420, 0.06, 'sine', 0.3, 0.005), 50);
+    this.playTone(300, 0.08, 'sine', 0.3);
+    setTimeout(() => this.playTone(200, 0.06, 'sine', 0.2), 40);
+    haptic('light');
+  }
+
+  /** Undo sound: descending chime (reverse of merge) */
+  undo(): void {
+    this.playTone(659.25, 0.12, 'sine', 0.4, 0.005);
+    setTimeout(() => this.playTone(523.25, 0.15, 'sine', 0.5, 0.005), 80);
     haptic('light');
   }
 

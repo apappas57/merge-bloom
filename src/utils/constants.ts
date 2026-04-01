@@ -100,6 +100,18 @@ export const TIMING = {
   BOUNCE_DURATION: 200,
   GENERATOR_COOLDOWN: 500,
   AUTOSAVE: 30000,
+  /** Auto-produce intervals per generator tier (ms) */
+  AUTO_PRODUCE: {
+    1: 60000,
+    2: 50000,
+    3: 40000,
+    4: 30000,
+    5: 20000,
+  } as Record<number, number>,
+  /** Max items a generator can produce while offline */
+  AUTO_PRODUCE_OFFLINE_CAP: 3,
+  /** Board fullness threshold (0-1) above which auto-produce pauses */
+  AUTO_PRODUCE_BOARD_FULL_PCT: 0.9,
 };
 
 export const FONT = 'Fredoka, Nunito, system-ui, -apple-system, sans-serif';

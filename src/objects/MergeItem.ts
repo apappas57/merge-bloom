@@ -1,6 +1,6 @@
 import { SIZES, COLORS, TIMING, TEXT, fs, s } from '../utils/constants';
 import { Board } from './Board';
-import { getTextureKey } from '../data/chains';
+import { getTextureKey, getNextInChain, isMaxTier } from '../data/chains';
 
 export interface MergeItemData {
   id: string;
@@ -19,8 +19,8 @@ export class MergeItem extends Phaser.GameObjects.Container {
   public data_: MergeItemData;
   private sprite: Phaser.GameObjects.Image;
   private board: Board;
-  private origCol: number;
-  private origRow: number;
+  public origCol_: number;
+  public origRow_: number;
   private glowGfx: Phaser.GameObjects.Graphics;
   private holoShimmerGfx: Phaser.GameObjects.Graphics | null = null;
   private longPressTimer: Phaser.Time.TimerEvent | null = null;
@@ -33,8 +33,8 @@ export class MergeItem extends Phaser.GameObjects.Container {
 
     this.data_ = { ...data };
     this.board = board;
-    this.origCol = data.col;
-    this.origRow = data.row;
+    this.origCol_ = data.col;
+    this.origRow_ = data.row;
 
     this.glowGfx = scene.add.graphics();
     this.add(this.glowGfx);
@@ -116,8 +116,8 @@ export class MergeItem extends Phaser.GameObjects.Container {
 
     this.on('dragstart', () => {
       this.cancelLongPress();
-      this.origCol = this.data_.col;
-      this.origRow = this.data_.row;
+      this.origCol_ = this.data_.col;
+      this.origRow_ = this.data_.row;
       this.setDepth(1000);
       this.scene.tweens.add({ targets: this, scaleX: 1.15, scaleY: 1.15, duration: 100, ease: 'Back.easeOut' });
       this.board.setOccupied(this.data_.col, this.data_.row, null);
@@ -135,8 +135,14 @@ export class MergeItem extends Phaser.GameObjects.Container {
       this.x = dragX;
       this.y = dragY;
       const cell = this.board.getCellAt(dragX, dragY);
-      if (cell) { this.board.highlightCell(cell.col, cell.row, COLORS.CELL_VALID); }
-      else { this.board.clearHighlights(); }
+      if (cell) {
+        this.board.highlightCell(cell.col, cell.row, COLORS.CELL_VALID);
+        // Check for valid merge target and show preview
+        this.checkMergePreview(cell);
+      } else {
+        this.board.clearHighlights();
+        this.scene.events.emit('hide-merge-preview');
+      }
       // Trash zone proximity check
       const { width, height } = this.scene.scale;
       const nearTrash = dragX > width - s(60) && dragY > height - s(130);
@@ -147,6 +153,7 @@ export class MergeItem extends Phaser.GameObjects.Container {
       this.cancelLongPress();
       this.setDepth(10);
       this.board.clearHighlights();
+      this.scene.events.emit('hide-merge-preview');
       this.scene.tweens.add({ targets: this, scaleX: 1, scaleY: 1, duration: 100 });
       const cell = this.board.getCellAt(this.x, this.y);
       if (cell && !cell.locked) { this.scene.events.emit('item-dropped', this, cell); }
@@ -158,6 +165,31 @@ export class MergeItem extends Phaser.GameObjects.Container {
     });
   }
 
+  /** Check if the cell under the drag contains a compatible merge target and show preview */
+  private checkMergePreview(cell: { col: number; row: number; x: number; y: number; itemId: string | null }): void {
+    if (!cell.itemId) {
+      this.scene.events.emit('hide-merge-preview');
+      return;
+    }
+    // Check if target item is same chain, same tier, and not max tier
+    const targetCell = this.board.getCell(cell.col, cell.row);
+    if (!targetCell || !targetCell.itemId) {
+      this.scene.events.emit('hide-merge-preview');
+      return;
+    }
+
+    // We need to check the item data, but we only have the itemId
+    // Emit the preview check event with our data and the cell position
+    // GameScene will look up the target item and validate
+    const nextInChain = getNextInChain(this.data_.chainId, this.data_.tier);
+    if (nextInChain && !isMaxTier(this.data_.chainId, this.data_.tier)) {
+      // Emit with our chain info so GameScene can validate against the target
+      this.scene.events.emit('show-merge-preview', this.data_.chainId, nextInChain.tier, cell.x, cell.y, this.data_.id, targetCell.itemId);
+    } else {
+      this.scene.events.emit('hide-merge-preview');
+    }
+  }
+
   private cancelLongPress(): void {
     if (this.longPressTimer) {
       this.longPressTimer.remove(false);
@@ -166,11 +198,11 @@ export class MergeItem extends Phaser.GameObjects.Container {
   }
 
   returnToOriginal(): void {
-    const cell = this.board.getCell(this.origCol, this.origRow);
+    const cell = this.board.getCell(this.origCol_, this.origRow_);
     if (cell) {
-      this.board.setOccupied(this.origCol, this.origRow, this.data_.id);
-      this.data_.col = this.origCol;
-      this.data_.row = this.origRow;
+      this.board.setOccupied(this.origCol_, this.origRow_, this.data_.id);
+      this.data_.col = this.origCol_;
+      this.data_.row = this.origRow_;
       this.scene.tweens.add({ targets: this, x: cell.x, y: cell.y, duration: 200, ease: 'Back.easeOut' });
     }
   }
@@ -180,7 +212,7 @@ export class MergeItem extends Phaser.GameObjects.Container {
     if (!cell) return;
     this.board.setOccupied(this.data_.col, this.data_.row, null);
     this.data_.col = col; this.data_.row = row;
-    this.origCol = col; this.origRow = row;
+    this.origCol_ = col; this.origRow_ = row;
     this.board.setOccupied(col, row, this.data_.id);
     if (animate) { this.scene.tweens.add({ targets: this, x: cell.x, y: cell.y, duration: 150, ease: 'Power2' }); }
     else { this.x = cell.x; this.y = cell.y; }

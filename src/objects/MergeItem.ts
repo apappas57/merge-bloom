@@ -23,6 +23,9 @@ export class MergeItem extends Phaser.GameObjects.Container {
   private origRow: number;
   private glowGfx: Phaser.GameObjects.Graphics;
   private holoShimmerGfx: Phaser.GameObjects.Graphics | null = null;
+  private longPressTimer: Phaser.Time.TimerEvent | null = null;
+  private pointerStartX = 0;
+  private pointerStartY = 0;
 
   constructor(scene: Phaser.Scene, board: Board, data: MergeItemData) {
     const cell = board.getCell(data.col, data.row)!;
@@ -100,7 +103,19 @@ export class MergeItem extends Phaser.GameObjects.Container {
   }
 
   private setupDrag(): void {
+    // Long-press detection: 300ms hold without movement triggers preview
+    this.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+      this.pointerStartX = pointer.x;
+      this.pointerStartY = pointer.y;
+      this.cancelLongPress();
+      this.longPressTimer = this.scene.time.delayedCall(300, () => {
+        this.scene.events.emit('item-preview', this.data_, this.x, this.y);
+        this.longPressTimer = null;
+      });
+    });
+
     this.on('dragstart', () => {
+      this.cancelLongPress();
       this.origCol = this.data_.col;
       this.origRow = this.data_.row;
       this.setDepth(1000);
@@ -109,6 +124,14 @@ export class MergeItem extends Phaser.GameObjects.Container {
     });
 
     this.on('drag', (_p: Phaser.Input.Pointer, dragX: number, dragY: number) => {
+      // Cancel long-press if pointer moved more than 5px
+      if (this.longPressTimer) {
+        const dx = _p.x - this.pointerStartX;
+        const dy = _p.y - this.pointerStartY;
+        if (Math.sqrt(dx * dx + dy * dy) > 5) {
+          this.cancelLongPress();
+        }
+      }
       this.x = dragX;
       this.y = dragY;
       const cell = this.board.getCellAt(dragX, dragY);
@@ -121,6 +144,7 @@ export class MergeItem extends Phaser.GameObjects.Container {
     });
 
     this.on('dragend', () => {
+      this.cancelLongPress();
       this.setDepth(10);
       this.board.clearHighlights();
       this.scene.tweens.add({ targets: this, scaleX: 1, scaleY: 1, duration: 100 });
@@ -128,6 +152,17 @@ export class MergeItem extends Phaser.GameObjects.Container {
       if (cell && !cell.locked) { this.scene.events.emit('item-dropped', this, cell); }
       else { this.returnToOriginal(); }
     });
+
+    this.on('pointerup', () => {
+      this.cancelLongPress();
+    });
+  }
+
+  private cancelLongPress(): void {
+    if (this.longPressTimer) {
+      this.longPressTimer.remove(false);
+      this.longPressTimer = null;
+    }
   }
 
   returnToOriginal(): void {

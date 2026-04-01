@@ -3,6 +3,7 @@ import { ActiveQuest } from '../systems/QuestSystem';
 import { ActiveOrder } from '../systems/OrderSystem';
 import { CHARACTERS } from '../data/orders';
 import { getChainItem } from '../data/chains';
+import { SoundManager } from '../utils/SoundManager';
 
 export class UIScene extends Phaser.Scene {
   private gemsText!: Phaser.GameObjects.Text;
@@ -105,6 +106,8 @@ export class UIScene extends Phaser.Scene {
       }).setOrigin(0.5);
       const zone = this.add.zone(cx, cy, btnWidth, SIZES.BOTTOM_BAR).setInteractive();
       zone.on('pointerdown', () => {
+        const gs = this.scene.get('GameScene') as { sound_?: SoundManager } | undefined;
+        gs?.sound_?.buttonPress();
         if (!this.scene.isActive(def.scene)) this.scene.launch(def.scene);
       });
     });

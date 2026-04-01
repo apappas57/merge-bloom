@@ -1,65 +1,81 @@
-# m3rg3r — Project Instructions
+# m3rg3r -- Project Instructions
 
 ## What Is This
-A cozy kawaii merge game built as a gift for Alex's girlfriend. Inspired by Travel Town / Mystery Town. No ads, no energy system, no IAP — unlimited gems and instant generators.
+A premium kawaii merge game (PWA) built as a gift. Inspired by Travel Town / Gossip Harbor. No ads, no energy, no IAP. Targets "best merge game ever" quality.
 
-**Live URL:** https://merge-game-nine.vercel.app
+**Live:** https://merge-game-nine.vercel.app
 **Repo:** https://github.com/apappas57/merge-bloom
-
-## Tech Stack
-- **Phaser 3** (game engine)
-- **TypeScript** (strict mode)
-- **Vite 7** (build tool)
-- **vite-plugin-pwa** (service worker, offline play, Add to Home Screen)
-- **Google Fonts**: Fredoka (headings), Nunito (body)
-- **No React** — pure Phaser scenes
+**Stack:** Phaser 3, TypeScript (strict), Vite 7, vite-plugin-pwa, Vercel
 
 ## Architecture
 
 ```
 src/
-  main.ts              — Phaser config, scene registration, DPR scaling
-  scenes/              — 8 Phaser scenes (Boot, Preload, Menu, Game, UI, Shop, Collection, Settings)
-  objects/             — Board, MergeItem, Generator, Mascot, StorageTray
-  systems/             — MergeSystem, QuestSystem, OrderSystem, AchievementSystem, HintSystem, SaveSystem
-  data/                — chains.ts, quests.ts, orders.ts, achievements.ts, lore.ts
-  utils/               — constants.ts (DPR/colors/sizes), EmojiRenderer.ts, CharacterRenderer.ts
+  main.ts              -- Phaser config, DPR scaling
+  scenes/              -- Boot, Preload, Menu, Game, UI, Shop, Collection, Settings, DailyChallenge
+  objects/             -- Board, MergeItem, Generator, Mascot, StorageTray, GardenDecoration
+  systems/             -- MergeSystem, QuestSystem, OrderSystem, AchievementSystem, HintSystem, SaveSystem
+  data/                -- chains.ts, quests.ts, orders.ts, achievements.ts, lore.ts, dailyChallenges.ts
+  utils/               -- constants.ts, EmojiRenderer.ts, CharacterRenderer.ts, SoundManager.ts
 ```
 
 ## Key Design Decisions
-- **DPR rendering**: Game runs at `window.innerWidth * DPR` x `window.innerHeight * DPR` with `Phaser.Scale.FIT` for retina sharpness
-- **Emoji-based sprites**: Items rendered as emoji inside gradient-filled kawaii cards via canvas 2D (EmojiRenderer.ts). No external sprite sheets.
-- **Character portraits**: Custom canvas-drawn kawaii faces (CharacterRenderer.ts) — round body, big eyes, blush, unique colors per character
-- **Save system**: localStorage with version migration (currently v3). Auto-saves every 30s + on merge + on visibility change.
-- **Orders replace quests**: The order system (Travel Town style) is the primary progression driver. Characters request specific items for coin rewards.
+- **DPR rendering**: Game runs at `innerWidth * DPR` x `innerHeight * DPR` with `Phaser.Scale.FIT`
+- **Canvas-rendered sprites**: Items drawn programmatically via EmojiRenderer.ts (NO emoji text, all canvas 2D paths)
+- **Character system**: 10 named characters (Rosie, Lyra, Koji, Mizu, Nyx, Mochi, Suki, Ren, Kira, Vivi) with unique personalities and dialogue
+- **Generator merging**: 5 tiers per chain, weighted drop tables, hold-to-drag UX
+- **Save system**: localStorage v4 with migration chain, auto-save every 30s
+- **Orders**: Travel Town-style character orders drive progression (primary loop)
 
-## Color Palette (Kawaii Pink)
+## Game Content
+- 12 merge chains, 79 items, 12 generators (5 tiers each = 60 variants)
+- 10 characters, 29 orders, 30 quests, 16 achievements
+- Daily challenges, garden decoration mode, XP/leveling
+- Y2K kawaii aesthetic with holographic effects
+
+## Color Palette
 - Background: `#FFF0F5` (lavender blush)
 - Board: `#FCE4EC` (soft pink)
-- Cells: `#FFF0F5` with `#F8BBD0` borders
 - Accents: `#EC407A` (rose), `#F48FB1` (pink)
+- Y2K: `#E8A4C8` (chrome pink), `#87CEEB` (holo blue), `#D4A5FF` (jelly purple)
 - Text: `#6D3A5B` (primary), `#B07A9E` (secondary)
-
-## Content
-- 9 merge chains, 59 items total
-- 22 orders across 10 characters
-- 30 quests, 16 achievements
-- Lore text for every item
 
 ## Commands
 ```bash
-npm run dev      # Vite dev server (hot reload)
+npm run dev      # Vite dev server
 npm run build    # tsc + vite build
+npm run lint     # tsc --noEmit
 npm run preview  # Preview production build
 ```
 
-## Deployment
-- Vercel auto-deploys from GitHub pushes to `main`
-- PWA with skipWaiting + clientsClaim for immediate updates
-- Clear localStorage to reset game progress
+## Deploy
+- Vercel auto-deploys from `main` branch
+- PWA with skipWaiting + clientsClaim
+- Pre-deploy: `npx tsc --noEmit && npm run build`
 
-## Key Files
-- `GAME_DESIGN.md` — original game design document
-- `IMPROVEMENT_PLAN.md` — phased improvement roadmap (Sanrio aesthetic, competitive research)
-- `MYSTERY_TOWN_ANALYSIS.md` — Travel Town / Mystery Town deep dive with orders system spec
-- `VALIDATION_REPORT.md` — full codebase validation results
+## Custom Skills
+- `/game-deploy` -- build, test, commit, push pipeline
+- `/game-chain` -- add a complete merge chain across all files
+- `/game-audit` -- 9-check codebase health validation
+- `/game-asset` -- create/update game sprites and visual assets
+- `/game-ux` -- run UX review checklist against best practices
+- `/game-balance` -- check game balance (drop tables, XP curves, order difficulty)
+
+## Research Docs
+- `GAME_DESIGN.md` -- original design document
+- `DESIGN_SYSTEM.md` -- Y2K kawaii visual system (37KB)
+- `IMPROVEMENT_PLAN.md` -- phased roadmap
+- `GENERATOR_MERGING_SPEC.md` -- competitive research + gen merge spec
+- `Y2K_AESTHETIC_REFERENCE.md` -- Y2K theme guide with Phaser code
+- `ART_DIRECTION.md` -- top merge game art analysis + premium rendering technique
+- `BEST_MERGE_GAME_RESEARCH.md` -- 28-feature strategic roadmap
+- `MYSTERY_TOWN_ANALYSIS.md` -- Travel Town deep dive
+
+## Rules
+- NEVER use emoji `ctx.fillText()` for game sprites -- always canvas 2D paths
+- All items must read clearly at 40px AND look great at 168px
+- Test on iPhone (PWA mode) before considering a feature complete
+- Generator spawns use proximity-first BFS, not random placement
+- Characters have distinct personalities -- match dialogue to their voice
+- Sound effects use Web Audio synthesis, no external audio files
+- Save migrations must be backwards-compatible (never lose player progress)

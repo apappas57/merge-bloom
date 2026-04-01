@@ -212,29 +212,37 @@ export class Board {
   }
 
   findEmptyCellNear(col: number, row: number, exclude?: CellData[]): CellData | null {
-    const dirs = [[0,-1],[0,1],[-1,0],[1,0],[-1,-1],[-1,1],[1,-1],[1,1]];
-    for (const [dc, dr] of dirs) {
-      const nc = col + dc, nr = row + dr;
-      if (this.isValid(nc, nr)) {
-        const c = this.cells[nr][nc];
-        if (!c.occupied && !c.locked) {
+    const maxDist = Math.max(this.cols, this.rows);
+
+    // Ripple search: expand ring by ring from the source cell
+    for (let dist = 1; dist <= maxDist; dist++) {
+      const candidates: CellData[] = [];
+
+      // Walk the perimeter of the square ring at this distance
+      for (let dc = -dist; dc <= dist; dc++) {
+        for (let dr = -dist; dr <= dist; dr++) {
+          // Only cells on the ring edge (skip inner cells already checked)
+          if (Math.abs(dc) !== dist && Math.abs(dr) !== dist) continue;
+
+          const nc = col + dc;
+          const nr = row + dr;
+          if (!this.isValid(nc, nr)) continue;
+
+          const c = this.cells[nr][nc];
+          if (c.occupied || c.locked) continue;
           if (exclude && exclude.some(e => e.col === c.col && e.row === c.row)) continue;
-          return c;
+
+          candidates.push(c);
         }
+      }
+
+      if (candidates.length > 0) {
+        // Pick randomly among cells at the same distance for natural feel
+        return candidates[Phaser.Math.Between(0, candidates.length - 1)];
       }
     }
-    // Fallback: find any empty cell, respecting exclusions
-    const empty: CellData[] = [];
-    for (let r = 0; r < this.rows; r++)
-      for (let c = 0; c < this.cols; c++) {
-        const cell = this.cells[r][c];
-        if (!cell.occupied && !cell.locked) {
-          if (exclude && exclude.some(e => e.col === cell.col && e.row === cell.row)) continue;
-          empty.push(cell);
-        }
-      }
-    if (empty.length === 0) return null;
-    return empty[Phaser.Math.Between(0, empty.length - 1)];
+
+    return null;
   }
 
   get totalCols() { return this.cols; }

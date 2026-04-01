@@ -2,22 +2,22 @@ import { s } from './constants';
 
 /** Character color themes */
 const CHAR_COLORS: Record<string, { body: string; cheek: string; accent: string }> = {
-  rose:    { body: '#FFB3C6', cheek: '#FF6B8A', accent: '#FF4D7A' },
-  petal:   { body: '#D8B4FE', cheek: '#C084FC', accent: '#A855F7' },
-  bramble: { body: '#FED7AA', cheek: '#FB923C', accent: '#EA580C' },
-  coral:   { body: '#A5F3FC', cheek: '#67E8F9', accent: '#06B6D4' },
-  luna:    { body: '#C4B5FD', cheek: '#A78BFA', accent: '#7C3AED' },
-  pip:     { body: '#BBF7D0', cheek: '#86EFAC', accent: '#22C55E' },
-  blossom: { body: '#FBCFE8', cheek: '#F9A8D4', accent: '#EC4899' },
-  maple:   { body: '#FDE68A', cheek: '#FCD34D', accent: '#F59E0B' },
-  sunny:   { body: '#FEF08A', cheek: '#FDE047', accent: '#EAB308' },
-  cocoa:   { body: '#FECACA', cheek: '#FCA5A5', accent: '#EF4444' },
+  rosie:  { body: '#FFB3C6', cheek: '#FF6B8A', accent: '#FF4D7A' },
+  lyra:   { body: '#D8B4FE', cheek: '#C084FC', accent: '#A855F7' },
+  koji:   { body: '#FED7AA', cheek: '#FB923C', accent: '#EA580C' },
+  mizu:   { body: '#A5F3FC', cheek: '#67E8F9', accent: '#06B6D4' },
+  nyx:    { body: '#C4B5FD', cheek: '#A78BFA', accent: '#7C3AED' },
+  mochi:  { body: '#BBF7D0', cheek: '#86EFAC', accent: '#22C55E' },
+  suki:   { body: '#FBCFE8', cheek: '#F9A8D4', accent: '#EC4899' },
+  ren:    { body: '#FDE68A', cheek: '#FCD34D', accent: '#F59E0B' },
+  kira:   { body: '#FEF08A', cheek: '#FDE047', accent: '#EAB308' },
+  vivi:   { body: '#FECACA', cheek: '#FCA5A5', accent: '#EF4444' },
 };
 
 /** Character accessories/hats */
 const CHAR_HATS: Record<string, string> = {
-  rose: '🌹', petal: '✨', bramble: '🍳', coral: '🐚', luna: '🔮',
-  pip: '🌰', blossom: '🌸', maple: '🍁', sunny: '☀️', cocoa: '🧁',
+  rosie: '🌹', lyra: '✨', koji: '🍳', mizu: '🐚', nyx: '🔮',
+  mochi: '🎀', suki: '🌸', ren: '🍁', kira: '🌟', vivi: '🧁',
 };
 
 /**
@@ -36,7 +36,7 @@ export class CharacterRenderer {
       const ctx = canvas.getContext('2d');
       if (!ctx) continue;
 
-      const colors = CHAR_COLORS[id] || CHAR_COLORS.rose;
+      const colors = CHAR_COLORS[id] || CHAR_COLORS.rosie;
       const hat = CHAR_HATS[id] || '🌸';
       const cx = size / 2;
       const cy = size / 2 + size * 0.05;

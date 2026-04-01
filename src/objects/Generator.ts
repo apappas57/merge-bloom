@@ -312,7 +312,9 @@ export class Generator extends Phaser.GameObjects.Container {
     if (!this.isReady) return;
     const emptyCell = this.board.findEmptyCellNear(this.col, this.row);
     if (!emptyCell) {
+      // Shake the generator to show it can't spawn
       this.scene.tweens.add({ targets: this, x: this.x - s(5), duration: 50, yoyo: true, repeat: 3 });
+      this.scene.events.emit('board-full');
       return;
     }
 

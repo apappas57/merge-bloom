@@ -9,11 +9,18 @@ import { HintSystem } from '../systems/HintSystem';
 import { AchievementSystem } from '../systems/AchievementSystem';
 import { AchievementDef } from '../data/achievements';
 import { OrderSystem } from '../systems/OrderSystem';
-import { SaveSystem, SaveData } from '../systems/SaveSystem';
+import { SaveSystem, SaveData, LoginData, DAILY_REWARDS } from '../systems/SaveSystem';
 import { GENERATORS, getNextInChain, getChainItem, isMaxTier, getChain } from '../data/chains';
 import { GardenDecorationManager, GardenDecoData } from '../objects/GardenDecoration';
 import { SIZES, COLORS, TIMING, FONT, FONT_BODY, TEXT, fs, s } from '../utils/constants';
 import { SoundManager } from '../utils/SoundManager';
+
+/** Chain colors for preview tooltip backgrounds */
+const PREVIEW_CHAIN_COLORS: Record<string, number> = {
+  flower: 0xF8BBD0, butterfly: 0xB3E5FC, fruit: 0xFFCCBC, crystal: 0xD1C4E9,
+  nature: 0xC8E6C9, star: 0xFFF9C4, tea: 0xD7CCC8, shell: 0xB2EBF2,
+  sweet: 0xF8BBD0, love: 0xFFB3C6, cosmic: 0xD1C4E9, cafe: 0xEFEBE9,
+};
 
 export class GameScene extends Phaser.Scene {
   private board!: Board;
@@ -30,6 +37,8 @@ export class GameScene extends Phaser.Scene {
   private items: Map<string, MergeItem> = new Map();
   private generators: Generator[] = [];
   private isMerging = false;
+  private previewContainer: Phaser.GameObjects.Container | null = null;
+  private loginData: LoginData = { lastLoginDate: '', loginStreak: 0, lastClaimedDate: '' };
 
   public playerLevel = 1;
   private playerXP = 0;
@@ -81,9 +90,11 @@ export class GameScene extends Phaser.Scene {
     this.events.on('item-dropped', this.handleDrop, this);
     this.events.on('generator-tapped', this.handleGenTap, this);
     this.events.on('generator-dropped', this.handleGenDrop, this);
+    this.events.on('board-full', this.handleBoardFull, this);
     this.events.on('shop-buy-generator', this.onBuyGenerator, this);
     this.events.on('storage-retrieve', this.onStorageRetrieve, this);
     this.events.on('claim-order', this.onClaimOrder, this);
+    this.events.on('item-preview', this.showChainPreview, this);
     this.events.on('daily-challenge-complete', (reward: { xp: number; coins: number }) => {
       this.addXP(reward.xp);
       this.orderSystem.coins += reward.coins;
@@ -91,6 +102,9 @@ export class GameScene extends Phaser.Scene {
       this.updateUI();
       this.saveGame();
     });
+
+    // Drag sounds -- pickup on drag start
+    this.input.on('dragstart', () => { this.sound_.pickup(); });
 
     this.scene.launch('UIScene', {
       gems: this.gems, coins: this.orderSystem.coins, level: this.playerLevel,
@@ -132,6 +146,9 @@ export class GameScene extends Phaser.Scene {
 
     // First-play tutorial
     if (!save) this.showTutorial(width, height);
+
+    // Daily login reward check (delay so scene fully renders first)
+    this.time.delayedCall(800, () => this.checkDailyLogin());
   }
 
   private createTrashZone(width: number, height: number): void {
@@ -310,6 +327,7 @@ export class GameScene extends Phaser.Scene {
     this.questSystem.initialize(data.quests.active, data.quests.completed);
     if (data.storage) this.storageTray.loadItems(data.storage);
     if (data.garden) this.gardenManager.load(data.garden);
+    if (data.login) this.loginData = { ...data.login };
   }
 
   private createItem(data: MergeItemData): MergeItem {
@@ -371,6 +389,7 @@ export class GameScene extends Phaser.Scene {
       const data = dropped.data_;
       this.items.delete(data.id);
       this.board.setOccupied(data.col, data.row, null);
+      this.sound_.trash();
       // Poof animation
       this.tweens.add({
         targets: dropped, scaleX: 0, scaleY: 0, alpha: 0, duration: 200,
@@ -410,10 +429,11 @@ export class GameScene extends Phaser.Scene {
         dropped.data_.col = targetCell.col;
         dropped.data_.row = targetCell.row;
         dropped.moveToCell(targetCell.col, targetCell.row);
+        this.sound_.swap();
         return;
       }
     }
-    if (!targetCell.occupied && !targetCell.locked) { dropped.moveToCell(targetCell.col, targetCell.row); }
+    if (!targetCell.occupied && !targetCell.locked) { dropped.moveToCell(targetCell.col, targetCell.row); this.sound_.drop(); }
     else { dropped.returnToOriginal(); }
   }
 
@@ -495,6 +515,17 @@ export class GameScene extends Phaser.Scene {
     if (item) { this.sound_.spawn(); this.createSpawnParticles(cell.x, cell.y); }
   }
 
+  private boardFullCooldown = 0;
+
+  private handleBoardFull(): void {
+    const now = Date.now();
+    // Throttle so repeated taps don't spam the message
+    if (now - this.boardFullCooldown < 3000) return;
+    this.boardFullCooldown = now;
+    this.sound_.boardFull();
+    this.mascot.showSpeech('Board is full! Clear some space!', 3000);
+  }
+
   private createSpawnParticles(x: number, y: number): void {
     const colors = [0xFFB3D9, 0xA8E6CF, 0xA8D8EA];
     for (let i = 0; i < 5; i++) {
@@ -561,7 +592,7 @@ export class GameScene extends Phaser.Scene {
         }
       });
 
-      this.sound_.merge(result.newGenTier + 2); // Make it sound impactful
+      this.sound_.generatorMerge(result.newGenTier);
       this.totalMerges++;
       this.addXP(20 + result.newGenTier * 10);
       this.gems = Math.min(this.gems + 10 + result.newGenTier * 5, 999999);
@@ -905,6 +936,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private showAchievementToast(ach: AchievementDef): void {
+    this.sound_.achievement();
     const { width } = this.scale;
     const toastW = width * 0.75;
     const toastH = s(52);
@@ -966,7 +998,7 @@ export class GameScene extends Phaser.Scene {
     this.collection.forEach((maxTier, chainId) => coll.push({ chainId, maxTier }));
 
     SaveSystem.save({
-      version: 4, timestamp: Date.now(),
+      version: 6, timestamp: Date.now(),
       player: { level: this.playerLevel, xp: this.playerXP, xpToNext: this.xpToNext, gems: this.gems, totalMerges: this.totalMerges },
       board: { cols: 6, rows: 8, items, generators: gens },
       quests: this.questSystem.getSaveData(),
@@ -975,6 +1007,344 @@ export class GameScene extends Phaser.Scene {
       achievements: this.achievementSystem.getUnlocked(),
       garden: this.gardenManager.getDecorations(),
       orders: this.orderSystem.getSaveData(),
+      login: { ...this.loginData },
+    });
+  }
+
+  // ─── FEATURE: Merge Chain Preview (long-press) ───
+
+  private showChainPreview(itemData: MergeItemData, itemX: number, itemY: number): void {
+    // Dismiss any existing preview
+    this.dismissPreview();
+
+    const chain = getChain(itemData.chainId);
+    if (!chain) return;
+
+    const { width, height } = this.scale;
+    const container = this.add.container(0, 0).setDepth(5000);
+    this.previewContainer = container;
+
+    // Semi-transparent dismiss overlay
+    const overlay = this.add.graphics();
+    overlay.fillStyle(0x000000, 0.01);
+    overlay.fillRect(0, 0, width, height);
+    const overlayZone = this.add.zone(width / 2, height / 2, width, height).setInteractive();
+    overlayZone.on('pointerdown', () => this.dismissPreview());
+    container.add([overlay, overlayZone]);
+
+    // Determine which items to show: up to 4, centered on current item
+    const items = chain.items;
+    const currentIdx = items.findIndex(i => i.tier === itemData.tier);
+    if (currentIdx < 0) return;
+
+    // Show a window of items: 2 before current (if available), current, and remaining up to 4 total
+    const maxShow = Math.min(items.length, 4);
+    let startIdx = Math.max(0, currentIdx - 1);
+    let endIdx = startIdx + maxShow;
+    if (endIdx > items.length) { endIdx = items.length; startIdx = Math.max(0, endIdx - maxShow); }
+
+    const visibleItems = items.slice(startIdx, endIdx);
+    const currentVisIdx = currentIdx - startIdx;
+
+    // Card dimensions
+    const itemSlotW = s(38);
+    const arrowW = s(14);
+    const numItems = visibleItems.length;
+    const cardW = numItems * itemSlotW + (numItems - 1) * arrowW + s(28);
+    const cardH = s(68);
+    const cornerR = s(14);
+
+    // Position above the item, clamped to screen
+    let cardX = itemX - cardW / 2;
+    let cardY = itemY - s(60) - cardH;
+    if (cardX < s(8)) cardX = s(8);
+    if (cardX + cardW > width - s(8)) cardX = width - s(8) - cardW;
+    if (cardY < SIZES.TOP_BAR + s(4)) cardY = itemY + s(50); // Flip below if too high
+
+    // Card background with chain color
+    const chainColor = PREVIEW_CHAIN_COLORS[itemData.chainId] || 0xFFF0F5;
+    const cardBg = this.add.graphics();
+    // Shadow
+    cardBg.fillStyle(0x000000, 0.08);
+    cardBg.fillRoundedRect(cardX + s(2), cardY + s(3), cardW, cardH, cornerR);
+    // Main card
+    cardBg.fillStyle(chainColor, 0.95);
+    cardBg.fillRoundedRect(cardX, cardY, cardW, cardH, cornerR);
+    // White inner
+    cardBg.fillStyle(0xFFFFFF, 0.6);
+    cardBg.fillRoundedRect(cardX + s(3), cardY + s(3), cardW - s(6), cardH - s(6), cornerR - s(2));
+    // Border
+    cardBg.lineStyle(s(1.5), chainColor, 0.8);
+    cardBg.strokeRoundedRect(cardX, cardY, cardW, cardH, cornerR);
+    container.add(cardBg);
+
+    // Chain name at top
+    const chainLabel = this.add.text(cardX + cardW / 2, cardY + s(10), chain.name, {
+      fontSize: fs(8), color: TEXT.PRIMARY, fontFamily: FONT, fontStyle: '600',
+    }).setOrigin(0.5, 0);
+    container.add(chainLabel);
+
+    // Draw items in a row
+    const rowY = cardY + s(38);
+    let curX = cardX + s(14);
+
+    for (let i = 0; i < visibleItems.length; i++) {
+      const item = visibleItems[i];
+      const isCurrent = i === currentVisIdx;
+      const isMax = item.tier === items[items.length - 1].tier;
+      const centerX = curX + itemSlotW / 2;
+
+      // Glow ring for current item
+      if (isCurrent) {
+        const glow = this.add.graphics();
+        glow.fillStyle(0xFFD700, 0.25);
+        glow.fillCircle(centerX, rowY, s(18));
+        glow.lineStyle(s(2), 0xFFD700, 0.7);
+        glow.strokeCircle(centerX, rowY, s(16));
+        container.add(glow);
+
+        // Pulse the glow
+        this.tweens.add({
+          targets: glow, alpha: 0.5, duration: 600,
+          yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
+        });
+      }
+
+      // Item emoji
+      const emoji = this.add.text(centerX, rowY - s(2), item.emoji, {
+        fontSize: fs(isCurrent ? 18 : 15),
+      }).setOrigin(0.5);
+      container.add(emoji);
+
+      // Tier label or star marker
+      const label = isCurrent ? `T${item.tier} ★` : isMax ? `T${item.tier} ✨` : `T${item.tier}`;
+      const labelColor = isCurrent ? TEXT.ACCENT : isMax ? TEXT.GOLD : TEXT.SECONDARY;
+      const tierText = this.add.text(centerX, rowY + s(14), label, {
+        fontSize: fs(7), color: labelColor, fontFamily: FONT_BODY, fontStyle: isCurrent ? '700' : '400',
+      }).setOrigin(0.5);
+      container.add(tierText);
+
+      // Arrow to next item
+      if (i < visibleItems.length - 1) {
+        const arrowX = curX + itemSlotW + arrowW / 2;
+        const arrow = this.add.text(arrowX, rowY - s(2), '\u2192', {
+          fontSize: fs(12), color: TEXT.SECONDARY, fontFamily: FONT,
+        }).setOrigin(0.5);
+        container.add(arrow);
+      }
+
+      curX += itemSlotW + arrowW;
+    }
+
+    // Truncation indicators
+    if (startIdx > 0) {
+      const dots = this.add.text(cardX + s(6), rowY - s(2), '...', {
+        fontSize: fs(10), color: TEXT.SECONDARY, fontFamily: FONT,
+      }).setOrigin(0, 0.5);
+      container.add(dots);
+    }
+    if (endIdx < items.length) {
+      const dots = this.add.text(cardX + cardW - s(6), rowY - s(2), '...', {
+        fontSize: fs(10), color: TEXT.SECONDARY, fontFamily: FONT,
+      }).setOrigin(1, 0.5);
+      container.add(dots);
+    }
+
+    // Slide in animation
+    container.setAlpha(0);
+    container.y = s(8);
+    this.tweens.add({
+      targets: container, alpha: 1, y: 0, duration: 200, ease: 'Back.easeOut',
+    });
+  }
+
+  private dismissPreview(): void {
+    if (this.previewContainer) {
+      const c = this.previewContainer;
+      this.previewContainer = null;
+      this.tweens.add({
+        targets: c, alpha: 0, duration: 120, onComplete: () => c.destroy(),
+      });
+    }
+  }
+
+  // ─── FEATURE: Daily Login Rewards ───
+
+  private checkDailyLogin(): void {
+    const result = SaveSystem.checkLoginStreak(this.loginData);
+    if (!result) return; // Already claimed today
+
+    // Show the daily reward popup
+    this.showDailyRewardPopup(result.streak, result.reward);
+  }
+
+  private showDailyRewardPopup(streak: number, reward: typeof DAILY_REWARDS[number]): void {
+    const { width, height } = this.scale;
+    const container = this.add.container(0, 0).setDepth(6000);
+
+    // Overlay
+    const overlay = this.add.graphics();
+    overlay.fillStyle(0x6D3A5B, 0.45);
+    overlay.fillRect(0, 0, width, height);
+    container.add(overlay);
+
+    // Card
+    const cardW = width * 0.82;
+    const cardH = s(220);
+    const cardX = (width - cardW) / 2;
+    const cardY = (height - cardH) / 2 - s(10);
+    const r = s(22);
+
+    const card = this.add.graphics();
+    // Shadow
+    card.fillStyle(0x000000, 0.1);
+    card.fillRoundedRect(cardX + s(3), cardY + s(4), cardW, cardH, r);
+    // Background
+    card.fillStyle(0xFFF8F0, 1);
+    card.fillRoundedRect(cardX, cardY, cardW, cardH, r);
+    // Top accent strip
+    card.fillStyle(reward.type === 'gems' ? 0xD4A5FF : 0xFFD700, 0.3);
+    card.fillRoundedRect(cardX, cardY, cardW, s(50), { tl: r, tr: r, bl: 0, br: 0 });
+    // Border
+    card.lineStyle(s(1.5), reward.type === 'gems' ? 0xD4A5FF : 0xFFD700, 0.5);
+    card.strokeRoundedRect(cardX, cardY, cardW, cardH, r);
+    container.add(card);
+
+    // Banner title
+    const bannerEmoji = reward.special ? '🎊' : reward.type === 'gems' ? '💎' : '🪙';
+    const title = this.add.text(width / 2, cardY + s(25), `${bannerEmoji} Day ${streak} Reward! ${bannerEmoji}`, {
+      fontSize: fs(18), color: TEXT.PRIMARY, fontFamily: FONT, fontStyle: '700',
+    }).setOrigin(0.5);
+    container.add(title);
+
+    // Reward amount
+    const rewardIcon = reward.type === 'gems' ? '💎' : '🪙';
+    const rewardColor = reward.type === 'gems' ? '#D4A5FF' : '#FFD700';
+    const amountText = this.add.text(width / 2, cardY + s(70), `+${reward.amount} ${rewardIcon}`, {
+      fontSize: fs(32), color: rewardColor, fontFamily: FONT, fontStyle: '700',
+      stroke: '#FFFFFF', strokeThickness: s(3),
+    }).setOrigin(0.5).setScale(0);
+    container.add(amountText);
+
+    // Bounce in the reward amount
+    this.tweens.add({
+      targets: amountText, scaleX: 1.2, scaleY: 1.2, duration: 300, ease: 'Back.easeOut',
+      onComplete: () => {
+        this.tweens.add({ targets: amountText, scaleX: 1, scaleY: 1, duration: 150 });
+      }
+    });
+
+    // 7-dot progress bar
+    const dotSpacing = s(28);
+    const dotsStartX = width / 2 - ((7 - 1) * dotSpacing) / 2;
+    const dotsY = cardY + s(120);
+
+    for (let day = 1; day <= 7; day++) {
+      const dx = dotsStartX + (day - 1) * dotSpacing;
+      const dotGfx = this.add.graphics();
+
+      if (day < streak) {
+        // Claimed (filled)
+        dotGfx.fillStyle(0xA8E6CF, 1);
+        dotGfx.fillCircle(dx, dotsY, s(9));
+        dotGfx.lineStyle(s(1.5), 0x81C784, 0.8);
+        dotGfx.strokeCircle(dx, dotsY, s(9));
+        const check = this.add.text(dx, dotsY, '✓', {
+          fontSize: fs(9), color: TEXT.WHITE, fontFamily: FONT, fontStyle: '700',
+        }).setOrigin(0.5);
+        container.add(check);
+      } else if (day === streak) {
+        // Current day (highlighted with glow)
+        dotGfx.fillStyle(reward.type === 'gems' ? 0xD4A5FF : 0xFFD700, 1);
+        dotGfx.fillCircle(dx, dotsY, s(11));
+        dotGfx.lineStyle(s(2), 0xFFFFFF, 0.9);
+        dotGfx.strokeCircle(dx, dotsY, s(11));
+        this.tweens.add({
+          targets: dotGfx, alpha: 0.6, duration: 500,
+          yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
+        });
+      } else {
+        // Future (empty)
+        dotGfx.fillStyle(0xE0E0E0, 0.5);
+        dotGfx.fillCircle(dx, dotsY, s(8));
+        dotGfx.lineStyle(s(1), 0xBDBDBD, 0.4);
+        dotGfx.strokeCircle(dx, dotsY, s(8));
+      }
+      container.add(dotGfx);
+
+      // Day number below dots
+      const dayLabel = this.add.text(dx, dotsY + s(16), `${day}`, {
+        fontSize: fs(7), color: day === streak ? TEXT.ACCENT : TEXT.SECONDARY,
+        fontFamily: FONT_BODY, fontStyle: day === streak ? '700' : '400',
+      }).setOrigin(0.5);
+      container.add(dayLabel);
+    }
+
+    // "Streak!" label
+    const streakLabel = this.add.text(width / 2, dotsY + s(32), `${streak}-day streak!`, {
+      fontSize: fs(10), color: TEXT.SECONDARY, fontFamily: FONT_BODY,
+    }).setOrigin(0.5);
+    container.add(streakLabel);
+
+    // Auto-claim after 1.5 seconds
+    this.time.delayedCall(1500, () => {
+      // Apply reward
+      if (reward.type === 'gems') {
+        this.gems = Math.min(this.gems + reward.amount, 999999);
+      } else {
+        this.orderSystem.coins += reward.amount;
+      }
+
+      // Update login data
+      this.loginData = SaveSystem.claimDailyReward(this.loginData, streak);
+
+      // Fly animation for reward
+      const flyIcon = reward.type === 'gems' ? '💎' : '🪙';
+      for (let i = 0; i < 6; i++) {
+        const gem = this.add.text(
+          width / 2 + Phaser.Math.Between(-s(40), s(40)),
+          cardY + s(70),
+          flyIcon, { fontSize: fs(14) }
+        ).setOrigin(0.5).setDepth(6001);
+        this.tweens.add({
+          targets: gem,
+          x: reward.type === 'gems' ? width - s(60) : s(60),
+          y: SIZES.TOP_BAR / 2,
+          alpha: 0, scaleX: 0.3, scaleY: 0.3,
+          duration: 600 + i * 80,
+          delay: i * 60,
+          ease: 'Power2',
+          onComplete: () => gem.destroy(),
+        });
+      }
+
+      // Day 7 special confetti
+      if (reward.special) {
+        this.createConfetti();
+        this.mascot.react('excited');
+        this.mascot.showSpeech('Perfect week! 🎊', 3000);
+      } else {
+        this.mascot.react('happy');
+        const lines = ['Welcome back! 💕', 'Nice streak! 🌸', 'Keep it up! ✨'];
+        this.mascot.showSpeech(lines[Phaser.Math.Between(0, lines.length - 1)], 2500);
+      }
+
+      this.updateUI();
+      this.saveGame();
+
+      // Dismiss popup after a short pause
+      this.time.delayedCall(600, () => {
+        this.tweens.add({
+          targets: container, alpha: 0, duration: 300,
+          onComplete: () => container.destroy(),
+        });
+      });
+    });
+
+    // Slide in animation for the whole popup
+    container.setAlpha(0);
+    this.tweens.add({
+      targets: container, alpha: 1, duration: 300, ease: 'Power2',
     });
   }
 }

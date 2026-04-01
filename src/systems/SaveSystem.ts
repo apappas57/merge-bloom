@@ -16,7 +16,7 @@ export interface SaveData {
     cols: number;
     rows: number;
     items: MergeItemData[];
-    generators: { genId: string; col: number; row: number; itemId: string }[];
+    generators: { genId: string; genTier: number; col: number; row: number; itemId: string }[];
   };
   quests: {
     active: ActiveQuest[];
@@ -35,7 +35,7 @@ export interface SaveData {
 }
 
 const SAVE_KEY = 'm3rg3r_save';
-const SAVE_VERSION = 3;
+const SAVE_VERSION = 4;
 
 export class SaveSystem {
   static save(data: SaveData): void {
@@ -58,6 +58,16 @@ export class SaveSystem {
       if (!data.storage) data.storage = [null, null, null, null];
       if (!data.achievements) data.achievements = [];
       if (!data.orders) data.orders = undefined;
+
+      // v3 -> v4 migration: add genTier to generators
+      if (data.version < 4) {
+        data.board.generators = data.board.generators.map(g => ({
+          ...g,
+          genTier: (g as Record<string, unknown>).genTier as number ?? 1,
+        }));
+        data.version = 4;
+      }
+
       return data;
     } catch {
       return null;

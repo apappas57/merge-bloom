@@ -80,6 +80,17 @@ export class Board {
       }
     }
 
+    // Subtle holographic shimmer overlay on board background (barely visible, adds depth)
+    const holoAlpha = 0.04;
+    this.graphics.fillStyle(0xD4A5FF, holoAlpha);
+    this.graphics.fillRoundedRect(bx + bw * 0.1, by, bw * 0.15, bh, r);
+    this.graphics.fillStyle(0x87CEEB, holoAlpha);
+    this.graphics.fillRoundedRect(bx + bw * 0.35, by, bw * 0.15, bh, r);
+    this.graphics.fillStyle(0xE8A4C8, holoAlpha);
+    this.graphics.fillRoundedRect(bx + bw * 0.6, by, bw * 0.15, bh, r);
+    this.graphics.fillStyle(0xFFD93D, holoAlpha * 0.7);
+    this.graphics.fillRoundedRect(bx + bw * 0.8, by, bw * 0.12, bh, r);
+
     // Soft border
     this.graphics.lineStyle(s(1.5), COLORS.CELL_BORDER, 0.35);
     this.graphics.strokeRoundedRect(bx, by, bw, bh, r);
@@ -143,10 +154,22 @@ export class Board {
     const cx = cell.x - this.cellSize / 2;
     const cy = cell.y - this.cellSize / 2;
     const cr = s(12);
+
+    // Outer glow halo (enhanced Y2K glow effect)
+    this.graphics.fillStyle(color, 0.15);
+    this.graphics.fillRoundedRect(cx - s(3), cy - s(3), this.cellSize + s(6), this.cellSize + s(6), cr + s(2));
+
+    // Main highlight fill
     this.graphics.fillStyle(color, 0.4);
     this.graphics.fillRoundedRect(cx, cy, this.cellSize, this.cellSize, cr);
-    this.graphics.lineStyle(s(2), color, 0.6);
+
+    // Brighter border stroke
+    this.graphics.lineStyle(s(2.5), color, 0.7);
     this.graphics.strokeRoundedRect(cx, cy, this.cellSize, this.cellSize, cr);
+
+    // Inner white highlight for jelly/glass depth
+    this.graphics.lineStyle(s(1), 0xFFFFFF, 0.25);
+    this.graphics.strokeRoundedRect(cx + s(2), cy + s(2), this.cellSize - s(4), this.cellSize - s(4), cr - s(1));
   }
 
   clearHighlights(): void { this.drawBoard(); }
@@ -188,16 +211,30 @@ export class Board {
     return empty[Phaser.Math.Between(0, empty.length - 1)];
   }
 
-  findEmptyCellNear(col: number, row: number): CellData | null {
+  findEmptyCellNear(col: number, row: number, exclude?: CellData[]): CellData | null {
     const dirs = [[0,-1],[0,1],[-1,0],[1,0],[-1,-1],[-1,1],[1,-1],[1,1]];
     for (const [dc, dr] of dirs) {
       const nc = col + dc, nr = row + dr;
       if (this.isValid(nc, nr)) {
         const c = this.cells[nr][nc];
-        if (!c.occupied && !c.locked) return c;
+        if (!c.occupied && !c.locked) {
+          if (exclude && exclude.some(e => e.col === c.col && e.row === c.row)) continue;
+          return c;
+        }
       }
     }
-    return this.findEmptyCell();
+    // Fallback: find any empty cell, respecting exclusions
+    const empty: CellData[] = [];
+    for (let r = 0; r < this.rows; r++)
+      for (let c = 0; c < this.cols; c++) {
+        const cell = this.cells[r][c];
+        if (!cell.occupied && !cell.locked) {
+          if (exclude && exclude.some(e => e.col === cell.col && e.row === cell.row)) continue;
+          empty.push(cell);
+        }
+      }
+    if (empty.length === 0) return null;
+    return empty[Phaser.Math.Between(0, empty.length - 1)];
   }
 
   get totalCols() { return this.cols; }

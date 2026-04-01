@@ -26,11 +26,22 @@ export class UIScene extends Phaser.Scene {
     this.curCoins = data.coins || 0;
     this.curLevel = data.level;
 
-    // === COMPACT TOP BAR ===
+    // === COMPACT TOP BAR (Frosted glass / jelly look) ===
     const topBg = this.add.graphics();
-    topBg.fillStyle(COLORS.UI_BG, 0.95);
+    // Base fill with higher transparency for frosted glass effect
+    topBg.fillStyle(0xFFFFFF, 0.55);
     topBg.fillRect(0, 0, width, SIZES.TOP_BAR);
-    topBg.fillStyle(COLORS.ACCENT_ROSE, 0.2);
+    // Subtle pink tint overlay
+    topBg.fillStyle(COLORS.UI_BG, 0.35);
+    topBg.fillRect(0, 0, width, SIZES.TOP_BAR);
+    // Inner highlight along top edge (light inner glow)
+    topBg.fillStyle(0xFFFFFF, 0.3);
+    topBg.fillRect(0, 0, width, s(1));
+    // Inner border highlight
+    topBg.lineStyle(s(0.5), 0xFFFFFF, 0.4);
+    topBg.strokeRect(0, s(1), width, SIZES.TOP_BAR - s(2));
+    // Bottom accent line
+    topBg.fillStyle(COLORS.ACCENT_ROSE, 0.15);
     topBg.fillRect(0, SIZES.TOP_BAR - s(1), width, s(1));
 
     // Content starts below safe area (Dynamic Island on iPhone 16)
@@ -59,11 +70,24 @@ export class UIScene extends Phaser.Scene {
     // === ORDER BAR ===
     this.renderOrders(data.orders);
 
-    // === BOTTOM BAR ===
+    // === BOTTOM BAR (Frosted glass / jelly look) ===
     const bottomY = this.scale.height - SIZES.BOTTOM_BAR;
     const bottomBg = this.add.graphics();
-    bottomBg.fillStyle(COLORS.UI_BG, 0.95);
+    // Base frosted glass fill
+    bottomBg.fillStyle(0xFFFFFF, 0.55);
     bottomBg.fillRect(0, bottomY, width, SIZES.BOTTOM_BAR);
+    // Subtle pink tint overlay
+    bottomBg.fillStyle(COLORS.UI_BG, 0.35);
+    bottomBg.fillRect(0, bottomY, width, SIZES.BOTTOM_BAR);
+    // Top edge highlight (inner glow)
+    bottomBg.fillStyle(0xFFFFFF, 0.3);
+    bottomBg.fillRect(0, bottomY, width, s(1));
+    // Inner border highlight
+    bottomBg.lineStyle(s(0.5), 0xFFFFFF, 0.4);
+    bottomBg.strokeRect(0, bottomY + s(1), width, SIZES.BOTTOM_BAR - s(2));
+    // Top accent separator
+    bottomBg.fillStyle(COLORS.ACCENT_ROSE, 0.1);
+    bottomBg.fillRect(0, bottomY, width, s(1));
 
     const btnDefs = [
       { emoji: '📅', label: 'Daily', scene: 'DailyChallengeScene' },

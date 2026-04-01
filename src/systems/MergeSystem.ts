@@ -1,5 +1,6 @@
 import { MergeItem, MergeItemData } from '../objects/MergeItem';
-import { getNextInChain, isMaxTier } from '../data/chains';
+import { Generator } from '../objects/Generator';
+import { getNextInChain, isMaxTier, GeneratorTierDef, getGenTierDef } from '../data/chains';
 import { FONT, fs, s } from '../utils/constants';
 
 // Chain-specific particle colors
@@ -23,6 +24,14 @@ export interface MergeResult {
   newItem?: MergeItemData;
   xpGained?: number;
   gemsGained?: number;
+}
+
+export interface GeneratorMergeResult {
+  success: boolean;
+  newGenTier: number;
+  newTierDef: GeneratorTierDef | null;
+  col: number;
+  row: number;
 }
 
 export class MergeSystem {
@@ -76,17 +85,68 @@ export class MergeSystem {
     };
   }
 
+  canMergeGenerators(a: Generator, b: Generator): boolean {
+    return Generator.canMergeGenerators(a, b);
+  }
+
+  async executeGeneratorMerge(dropped: Generator, target: Generator): Promise<GeneratorMergeResult> {
+    const newTier = target.genTier + 1;
+    const newTierDef = getGenTierDef(target.genDef, newTier);
+    if (!newTierDef) return { success: false, newGenTier: 0, newTierDef: null, col: 0, row: 0 };
+
+    const col = target.col;
+    const row = target.row;
+
+    await Promise.all([dropped.playMergeAway(), target.playMergeAway()]);
+
+    // Generator merges always feel impactful (tier + 3 for particle count)
+    this.createParticles(target.x, target.y, newTier + 3, target.genDef.chainId);
+
+    // Screen shake for tier 3+ generator merges
+    if (newTier >= 3) {
+      const intensity = s(Math.min(newTier, 5));
+      this.scene.cameras.main.shake(100, intensity / 1000);
+    }
+
+    return { success: true, newGenTier: newTier, newTierDef: newTierDef, col, row };
+  }
+
   private createParticles(x: number, y: number, tier: number, chainId: string): void {
     const colors = CHAIN_PARTICLES[chainId] || [0xFF9CAD, 0xA8E6CF, 0xA8D8EA, 0xFFD700];
+    const holoColors = [0xFF6B9D, 0xFFD93D, 0x6BCB77, 0x4D96FF, 0xD4A5FF];
     const count = 10 + tier * 3;
 
     // Mix of circles, hearts-like shapes
     for (let i = 0; i < count; i++) {
       const p = this.scene.add.graphics();
-      const color = colors[Phaser.Math.Between(0, colors.length - 1)];
-      const size = s(Phaser.Math.Between(3, 5 + tier));
-      p.fillStyle(color, 0.9);
-      p.fillCircle(0, 0, size);
+      // For T7+ merges: mix in holographic rainbow-colored particles
+      const useHolo = tier >= 7 && i % 3 === 0;
+      const color = useHolo
+        ? holoColors[Phaser.Math.Between(0, holoColors.length - 1)]
+        : colors[Phaser.Math.Between(0, colors.length - 1)];
+      const size = s(Phaser.Math.Between(3, 6 + tier)); // Slightly larger particles
+      const alpha = useHolo ? 1 : 0.9;
+
+      // For T5+ merges: mix in small star-shaped particles
+      if (tier >= 5 && i % 4 === 0) {
+        // Draw a 4-point star particle
+        const sr = size;
+        p.fillStyle(color, alpha);
+        p.beginPath();
+        p.moveTo(0, -sr * 1.5);
+        p.lineTo(sr * 0.4, -sr * 0.4);
+        p.lineTo(sr * 1.5, 0);
+        p.lineTo(sr * 0.4, sr * 0.4);
+        p.lineTo(0, sr * 1.5);
+        p.lineTo(-sr * 0.4, sr * 0.4);
+        p.lineTo(-sr * 1.5, 0);
+        p.lineTo(-sr * 0.4, -sr * 0.4);
+        p.closePath();
+        p.fillPath();
+      } else {
+        p.fillStyle(color, alpha);
+        p.fillCircle(0, 0, size);
+      }
       p.setPosition(x, y).setDepth(2000);
 
       const angle = (i / count) * Math.PI * 2;

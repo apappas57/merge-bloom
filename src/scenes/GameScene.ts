@@ -80,6 +80,7 @@ export class GameScene extends Phaser.Scene {
     // Events
     this.events.on('item-dropped', this.handleDrop, this);
     this.events.on('generator-tapped', this.handleGenTap, this);
+    this.events.on('generator-dropped', this.handleGenDrop, this);
     this.events.on('shop-buy-generator', this.onBuyGenerator, this);
     this.events.on('storage-retrieve', this.onStorageRetrieve, this);
     this.events.on('claim-order', this.onClaimOrder, this);
@@ -214,7 +215,9 @@ export class GameScene extends Phaser.Scene {
 
   private createAmbientSparkles(width: number, height: number): void {
     const sparkles = ['💕', '✨', '🌸', '💗', '⭐', '🎀', '💖'];
-    for (let i = 0; i < 6; i++) {
+
+    // Original emoji sparkles (slightly fewer to make room for star graphics)
+    for (let i = 0; i < 4; i++) {
       const e = sparkles[Phaser.Math.Between(0, sparkles.length - 1)];
       const x = Phaser.Math.Between(0, width);
       const y = Phaser.Math.Between(SIZES.TOP_BAR, height - SIZES.BOTTOM_BAR);
@@ -227,6 +230,53 @@ export class GameScene extends Phaser.Scene {
         onRepeat: () => {
           t.setPosition(Phaser.Math.Between(0, width), Phaser.Math.Between(SIZES.TOP_BAR, height - SIZES.BOTTOM_BAR));
           t.setAlpha(0.08);
+        },
+      });
+    }
+
+    // Canvas-drawn 4-point star sparkles with drift animation
+    const starColors = [0xFF6B9D, 0xFFD93D, 0xD4A5FF, 0x87CEEB, 0xE8A4C8];
+    for (let i = 0; i < 4; i++) {
+      const g = this.add.graphics().setDepth(0);
+      const color = starColors[Phaser.Math.Between(0, starColors.length - 1)];
+      const starSize = s(Phaser.Math.Between(3, 6));
+
+      // Draw a 4-point star
+      g.fillStyle(color, 0.7);
+      g.beginPath();
+      g.moveTo(0, -starSize * 1.5);
+      g.lineTo(starSize * 0.35, -starSize * 0.35);
+      g.lineTo(starSize * 1.5, 0);
+      g.lineTo(starSize * 0.35, starSize * 0.35);
+      g.lineTo(0, starSize * 1.5);
+      g.lineTo(-starSize * 0.35, starSize * 0.35);
+      g.lineTo(-starSize * 1.5, 0);
+      g.lineTo(-starSize * 0.35, -starSize * 0.35);
+      g.closePath();
+      g.fillPath();
+
+      const startX = Phaser.Math.Between(0, width);
+      const startY = Phaser.Math.Between(SIZES.TOP_BAR, height - SIZES.BOTTOM_BAR);
+      g.setPosition(startX, startY).setAlpha(0.1);
+
+      // Drift up with horizontal sway
+      const driftX = Phaser.Math.Between(-30, 30);
+      this.tweens.add({
+        targets: g,
+        y: startY - s(Phaser.Math.Between(50, 120)),
+        x: startX + s(driftX),
+        alpha: 0,
+        scaleX: { from: 0.5, to: 1.2 },
+        scaleY: { from: 0.5, to: 1.2 },
+        duration: Phaser.Math.Between(6000, 12000),
+        delay: Phaser.Math.Between(0, 6000),
+        repeat: -1,
+        onRepeat: () => {
+          const newX = Phaser.Math.Between(0, width);
+          const newY = Phaser.Math.Between(SIZES.TOP_BAR, height - SIZES.BOTTOM_BAR);
+          g.setPosition(newX, newY);
+          g.setAlpha(0.1);
+          g.setScale(0.5);
         },
       });
     }
@@ -254,7 +304,7 @@ export class GameScene extends Phaser.Scene {
     for (const c of data.collection) this.collection.set(c.chainId, c.maxTier);
     for (const g of data.board.generators) {
       const def = GENERATORS.find(d => d.id === g.genId);
-      if (def) this.createGenerator(def, g.col, g.row, g.itemId);
+      if (def) this.createGenerator(def, g.col, g.row, g.itemId, g.genTier ?? 1);
     }
     for (const item of data.board.items) this.createItem(item);
     this.questSystem.initialize(data.quests.active, data.quests.completed);
@@ -269,9 +319,9 @@ export class GameScene extends Phaser.Scene {
     return item;
   }
 
-  private createGenerator(def: typeof GENERATORS[0], col: number, row: number, itemId?: string): Generator {
+  private createGenerator(def: typeof GENERATORS[0], col: number, row: number, itemId?: string, genTier: number = 1): Generator {
     const id = itemId || newItemId();
-    const gen = new Generator(this, this.board, def, col, row, id);
+    const gen = new Generator(this, this.board, def, col, row, id, genTier);
     gen.setDepth(5);
     this.generators.push(gen);
     return gen;
@@ -437,10 +487,11 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-  private handleGenTap(_gen: Generator, cell: CellData): void {
+  private handleGenTap(_gen: Generator, cell: CellData, spawnTier?: number): void {
     if (this.isMerging) return;
     this.sound_.generatorTap();
-    const item = this.spawnItem(_gen.genDef.chainId, _gen.genDef.spawnTier, cell.col, cell.row);
+    const tier = spawnTier ?? _gen.genDef.spawnTier;
+    const item = this.spawnItem(_gen.genDef.chainId, tier, cell.col, cell.row);
     if (item) { this.sound_.spawn(); this.createSpawnParticles(cell.x, cell.y); }
   }
 
@@ -457,6 +508,98 @@ export class GameScene extends Phaser.Scene {
         targets: p, x: x + Math.cos(angle) * dist, y: y + Math.sin(angle) * dist,
         alpha: 0, duration: 300, onComplete: () => p.destroy(),
       });
+    }
+  }
+
+  private handleGenDrop(dropped: Generator, targetCell: CellData): void {
+    if (this.isMerging) { dropped.returnToOriginal(); return; }
+
+    const targetId = targetCell.itemId;
+    if (targetId) {
+      // Check if target is a generator we can merge with
+      const targetGen = this.generators.find(g => g.itemId === targetId);
+      if (targetGen && this.mergeSystem.canMergeGenerators(dropped, targetGen)) {
+        this.executeGeneratorMerge(dropped, targetGen);
+        return;
+      }
+      // Can't merge -- snap back
+      dropped.returnToOriginal();
+      return;
+    }
+
+    // Empty cell: move generator there
+    if (!targetCell.occupied && !targetCell.locked) {
+      dropped.moveToCell(targetCell.col, targetCell.row);
+      this.saveGame();
+    } else {
+      dropped.returnToOriginal();
+    }
+  }
+
+  private async executeGeneratorMerge(dropped: Generator, target: Generator): Promise<void> {
+    this.isMerging = true;
+
+    const genDef = target.genDef;
+    const targetCol = target.col;
+    const targetRow = target.row;
+
+    // Remove both generators from the array
+    this.generators = this.generators.filter(g => g !== dropped && g !== target);
+
+    const result = await this.mergeSystem.executeGeneratorMerge(dropped, target);
+    this.isMerging = false;
+
+    if (result.success && result.newTierDef) {
+      const newGen = this.createGenerator(genDef, result.col, result.row, undefined, result.newGenTier);
+
+      // Spawn animation for the new generator
+      newGen.setScale(0);
+      this.tweens.add({
+        targets: newGen, scaleX: 1.3, scaleY: 1.3, duration: 200, ease: 'Back.easeOut',
+        onComplete: () => {
+          this.tweens.add({ targets: newGen, scaleX: 1, scaleY: 1, duration: 150, ease: 'Bounce.easeOut' });
+        }
+      });
+
+      this.sound_.merge(result.newGenTier + 2); // Make it sound impactful
+      this.totalMerges++;
+      this.addXP(20 + result.newGenTier * 10);
+      this.gems = Math.min(this.gems + 10 + result.newGenTier * 5, 999999);
+
+      // Show upgrade text
+      const tierNames = ['', '', 'II', 'III', 'IV', 'V'];
+      const cell = this.board.getCell(targetCol, targetRow);
+      if (cell) {
+        const upgradeMsg = result.newGenTier >= 5 ? 'MAX TIER!' : `Tier ${tierNames[result.newGenTier]}!`;
+        const msgColor = result.newGenTier >= 5 ? '#FF6B9D' : result.newGenTier >= 4 ? '#FFD700' : '#EC407A';
+        const txt = this.add.text(cell.x, cell.y - s(30), upgradeMsg, {
+          fontSize: fs(16), color: msgColor, fontFamily: FONT, fontStyle: '700',
+          stroke: '#FFFFFF', strokeThickness: s(3),
+        }).setOrigin(0.5).setDepth(2001).setScale(0);
+        this.tweens.add({
+          targets: txt, scaleX: 1.3, scaleY: 1.3, duration: 200, ease: 'Back.easeOut',
+          onComplete: () => {
+            this.tweens.add({
+              targets: txt, scaleX: 1, scaleY: 1, duration: 100,
+              onComplete: () => {
+                this.tweens.add({
+                  targets: txt, y: cell.y - s(70), alpha: 0, duration: 800, ease: 'Power2',
+                  onComplete: () => txt.destroy(),
+                });
+              }
+            });
+          }
+        });
+      }
+
+      this.mascot.reactToMerge(result.newGenTier + 2);
+      const upgradeLines = [
+        'Upgraded! So powerful!', 'Getting stronger!', 'Amazing upgrade!',
+      ];
+      this.mascot.showSpeech(upgradeLines[Phaser.Math.Between(0, upgradeLines.length - 1)], 2500);
+
+      this.updateUI();
+      this.saveGame();
     }
   }
 
@@ -818,12 +961,12 @@ export class GameScene extends Phaser.Scene {
   private saveGame(): void {
     const items: MergeItemData[] = [];
     this.items.forEach(item => items.push(item.getData()));
-    const gens = this.generators.map(g => ({ genId: g.genDef.id, col: g.col, row: g.row, itemId: g.itemId }));
+    const gens = this.generators.map(g => ({ genId: g.genDef.id, genTier: g.genTier, col: g.col, row: g.row, itemId: g.itemId }));
     const coll: { chainId: string; maxTier: number }[] = [];
     this.collection.forEach((maxTier, chainId) => coll.push({ chainId, maxTier }));
 
     SaveSystem.save({
-      version: 3, timestamp: Date.now(),
+      version: 4, timestamp: Date.now(),
       player: { level: this.playerLevel, xp: this.playerXP, xpToNext: this.xpToNext, gems: this.gems, totalMerges: this.totalMerges },
       board: { cols: 6, rows: 8, items, generators: gens },
       quests: this.questSystem.getSaveData(),

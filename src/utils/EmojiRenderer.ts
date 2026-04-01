@@ -16,19 +16,25 @@ const CHAIN_COLORS: Record<string, { from: string; to: string; fromHex: number; 
 
 const DEFAULT_COLORS = { from: '#E0E0E0', to: '#BDBDBD', fromHex: 0xE0E0E0, toHex: 0xBDBDBD };
 
-function parseKey(key: string): { chainId: string; tier: number; isGenerator: boolean; isUI: boolean } {
+function parseKey(key: string): { chainId: string; tier: number; isGenerator: boolean; isUI: boolean; genTier: number } {
+  // Tiered generator keys: gen_gen_<chainId>_t<tier>
+  const genTierMatch = key.match(/^gen_gen_(.+)_t(\d+)$/);
+  if (genTierMatch) {
+    return { chainId: genTierMatch[1], tier: 0, isGenerator: true, isUI: false, genTier: parseInt(genTierMatch[2], 10) };
+  }
+  // Legacy generator keys: gen_gen_<chainId> (no tier suffix)
   if (key.startsWith('gen_')) {
     const rest = key.slice(4);
     const chainId = rest.replace('gen_', '');
-    return { chainId, tier: 0, isGenerator: true, isUI: false };
+    return { chainId, tier: 0, isGenerator: true, isUI: false, genTier: 1 };
   }
   if (key === 'gem' || key === 'star_ui' || key === 'sparkle') {
-    return { chainId: '', tier: 0, isGenerator: false, isUI: true };
+    return { chainId: '', tier: 0, isGenerator: false, isUI: true, genTier: 0 };
   }
   const parts = key.split('_');
   const tier = parseInt(parts[parts.length - 1], 10);
   const chainId = parts.slice(0, parts.length - 1).join('_');
-  return { chainId, tier, isGenerator: false, isUI: false };
+  return { chainId, tier, isGenerator: false, isUI: false, genTier: 0 };
 }
 
 function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number): void {
@@ -136,7 +142,7 @@ export class EmojiRenderer {
       const parsed = parseKey(key);
 
       if (parsed.isGenerator) {
-        EmojiRenderer.drawGenerator(ctx, size, emoji, parsed.chainId);
+        EmojiRenderer.drawGenerator(ctx, size, emoji, parsed.chainId, parsed.genTier);
       } else if (parsed.isUI) {
         EmojiRenderer.drawUI(ctx, size, emoji);
       } else {
@@ -534,18 +540,19 @@ export class EmojiRenderer {
     ctx.closePath();
   }
 
-  /** Draw a generator — chain-colored card with programmatic icon (no emoji dependency) */
-  private static drawGenerator(ctx: CanvasRenderingContext2D, size: number, _emoji: string, chainId: string): void {
+  /** Draw a generator -- chain-colored card with programmatic icon, tier-aware visuals */
+  private static drawGenerator(ctx: CanvasRenderingContext2D, size: number, _emoji: string, chainId: string, genTier: number = 1): void {
     const colors = CHAIN_COLORS[chainId] || DEFAULT_COLORS;
     const cx = size / 2;
     const cy = size / 2;
     const pad = size * 0.06;
     const cr = size * 0.2;
 
-    // Shadow
+    // Shadow - stronger for higher tiers
     ctx.save();
-    ctx.shadowColor = 'rgba(190,80,130,0.2)';
-    ctx.shadowBlur = size * 0.06;
+    const shadowAlpha = 0.2 + genTier * 0.05;
+    ctx.shadowColor = `rgba(190,80,130,${shadowAlpha})`;
+    ctx.shadowBlur = size * (0.06 + genTier * 0.01);
     ctx.shadowOffsetY = size * 0.03;
     roundRect(ctx, pad, pad, size - pad * 2, size - pad * 2, cr);
     ctx.fillStyle = colors.from;
@@ -572,15 +579,62 @@ export class EmojiRenderer {
     ctx.fillRect(pad, pad, size - pad * 2, cy - pad);
     ctx.restore();
 
-    // Double border for generator distinction
-    roundRect(ctx, pad, pad, size - pad * 2, size - pad * 2, cr);
-    ctx.strokeStyle = colors.to;
-    ctx.lineWidth = size * 0.04;
-    ctx.stroke();
-    roundRect(ctx, pad + size * 0.03, pad + size * 0.03, size - pad * 2 - size * 0.06, size - pad * 2 - size * 0.06, cr - size * 0.02);
-    ctx.strokeStyle = 'rgba(255,255,255,0.35)';
-    ctx.lineWidth = size * 0.02;
-    ctx.stroke();
+    // Tier-specific border decorations
+    if (genTier >= 5) {
+      // Rainbow holographic border for T5
+      const rGrad = ctx.createLinearGradient(pad, pad, size - pad, size - pad);
+      rGrad.addColorStop(0, '#FF6B9D');
+      rGrad.addColorStop(0.25, '#FFD93D');
+      rGrad.addColorStop(0.5, '#6BCB77');
+      rGrad.addColorStop(0.75, '#4D96FF');
+      rGrad.addColorStop(1, '#FF6B9D');
+      roundRect(ctx, pad, pad, size - pad * 2, size - pad * 2, cr);
+      ctx.strokeStyle = rGrad;
+      ctx.lineWidth = size * 0.05;
+      ctx.stroke();
+      drawSparkles(ctx, cx, cy, size, 6);
+    } else if (genTier >= 4) {
+      // Gold border + sparkles for T4
+      roundRect(ctx, pad, pad, size - pad * 2, size - pad * 2, cr);
+      ctx.strokeStyle = '#FFD700';
+      ctx.lineWidth = size * 0.045;
+      ctx.stroke();
+      roundRect(ctx, pad + size * 0.03, pad + size * 0.03, size - pad * 2 - size * 0.06, size - pad * 2 - size * 0.06, cr - size * 0.02);
+      ctx.strokeStyle = 'rgba(255,215,0,0.4)';
+      ctx.lineWidth = size * 0.02;
+      ctx.stroke();
+      drawSparkles(ctx, cx, cy, size, 4);
+    } else if (genTier >= 3) {
+      // Gold border for T3
+      roundRect(ctx, pad, pad, size - pad * 2, size - pad * 2, cr);
+      ctx.strokeStyle = '#FFD700';
+      ctx.lineWidth = size * 0.04;
+      ctx.stroke();
+      roundRect(ctx, pad + size * 0.03, pad + size * 0.03, size - pad * 2 - size * 0.06, size - pad * 2 - size * 0.06, cr - size * 0.02);
+      ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+      ctx.lineWidth = size * 0.02;
+      ctx.stroke();
+    } else if (genTier >= 2) {
+      // Silver border for T2
+      roundRect(ctx, pad, pad, size - pad * 2, size - pad * 2, cr);
+      ctx.strokeStyle = '#C0C0C0';
+      ctx.lineWidth = size * 0.04;
+      ctx.stroke();
+      roundRect(ctx, pad + size * 0.03, pad + size * 0.03, size - pad * 2 - size * 0.06, size - pad * 2 - size * 0.06, cr - size * 0.02);
+      ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+      ctx.lineWidth = size * 0.02;
+      ctx.stroke();
+    } else {
+      // Standard double border for T1
+      roundRect(ctx, pad, pad, size - pad * 2, size - pad * 2, cr);
+      ctx.strokeStyle = colors.to;
+      ctx.lineWidth = size * 0.04;
+      ctx.stroke();
+      roundRect(ctx, pad + size * 0.03, pad + size * 0.03, size - pad * 2 - size * 0.06, size - pad * 2 - size * 0.06, cr - size * 0.02);
+      ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+      ctx.lineWidth = size * 0.02;
+      ctx.stroke();
+    }
 
     // Draw chain plush body shape as the generator icon
     const plushR = size * 0.22;
@@ -599,20 +653,28 @@ export class EmojiRenderer {
     EmojiRenderer.drawPlushBody(ctx, cx, plushY, plushR, chainId);
     ctx.stroke();
 
-    // Cute face on the plush
-    drawCuteEyes(ctx, cx, plushY - plushR * 0.05, size * 0.55, false);
+    // Cute face on the plush - higher tiers get happy eyes
+    const isHappy = genTier >= 4;
+    drawCuteEyes(ctx, cx, plushY - plushR * 0.05, size * 0.55, isHappy);
     drawBlush(ctx, cx, plushY - plushR * 0.05, size * 0.55);
     drawSmile(ctx, cx, plushY - plushR * 0.05, size * 0.55);
 
-    // Sparkle accents around the plush
-    ctx.fillStyle = 'rgba(255,255,255,0.6)';
+    // Sparkle accents around the plush - more sparkles for higher tiers
+    ctx.fillStyle = `rgba(255,255,255,${0.5 + genTier * 0.1})`;
     const sparklePositions = [
       { x: cx - plushR * 1.3, y: plushY - plushR * 0.8 },
       { x: cx + plushR * 1.3, y: plushY - plushR * 0.6 },
       { x: cx - plushR * 1.1, y: plushY + plushR * 0.6 },
     ];
+    // Add extra sparkle positions for higher tiers
+    if (genTier >= 3) {
+      sparklePositions.push({ x: cx + plushR * 1.0, y: plushY + plushR * 0.8 });
+    }
+    if (genTier >= 4) {
+      sparklePositions.push({ x: cx, y: plushY - plushR * 1.3 });
+    }
     for (const sp of sparklePositions) {
-      const sr = size * 0.02;
+      const sr = size * (0.02 + genTier * 0.003);
       ctx.beginPath();
       ctx.moveTo(sp.x, sp.y - sr * 2);
       ctx.quadraticCurveTo(sp.x + sr * 0.3, sp.y - sr * 0.3, sp.x + sr * 2, sp.y);
@@ -625,21 +687,19 @@ export class EmojiRenderer {
     // "+" badge (rose pink circle with white plus)
     const plusR = size * 0.11;
     const plusX = size - pad - plusR - size * 0.01;
-    const plusY = pad + plusR + size * 0.01;
+    const plusY2 = pad + plusR + size * 0.01;
     ctx.beginPath();
-    ctx.arc(plusX, plusY, plusR, 0, Math.PI * 2);
+    ctx.arc(plusX, plusY2, plusR, 0, Math.PI * 2);
     ctx.fillStyle = '#EC407A';
     ctx.fill();
-    // White border on badge
     ctx.strokeStyle = 'rgba(255,255,255,0.5)';
     ctx.lineWidth = size * 0.015;
     ctx.stroke();
-    // Plus symbol
     ctx.fillStyle = '#FFFFFF';
     ctx.font = `bold ${plusR * 1.4}px sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('+', plusX, plusY + 1);
+    ctx.fillText('+', plusX, plusY2 + 1);
   }
 
   /** Draw UI textures (gem, star, sparkle) */

@@ -1,4 +1,4 @@
-import { MERGE_CHAINS, GENERATORS } from '../data/chains';
+import { MERGE_CHAINS, GENERATORS, getGenTextureKey } from '../data/chains';
 import { CHARACTERS } from '../data/orders';
 import { EmojiRenderer } from '../utils/EmojiRenderer';
 import { CharacterRenderer } from '../utils/CharacterRenderer';
@@ -16,8 +16,12 @@ export class PreloadScene extends Phaser.Scene {
       }
     }
 
+    // Generate textures for all 5 tiers of each generator
     for (const gen of GENERATORS) {
-      list.push({ key: `gen_${gen.id}`, emoji: gen.emoji });
+      for (const tierDef of gen.tiers) {
+        const key = getGenTextureKey(gen.id, tierDef.tier);
+        list.push({ key, emoji: tierDef.emoji });
+      }
     }
 
     list.push(
@@ -29,7 +33,7 @@ export class PreloadScene extends Phaser.Scene {
     // Render at 2x the display size for extra crispness on 3x Retina
     EmojiRenderer.generateTextures(this, list, SIZES.ITEM_SIZE * 2);
 
-    // Character portraits — large for crisp rendering in order cards
+    // Character portraits -- large for crisp rendering in order cards
     CharacterRenderer.generateTextures(
       this,
       CHARACTERS.map(c => c.id),

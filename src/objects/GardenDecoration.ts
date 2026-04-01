@@ -112,16 +112,26 @@ export class GardenDecorationManager {
     const px = slot.x * width;
     const py = slot.y * height;
 
-    // Sparkle burst at placement
+    // Canvas-drawn sparkle burst at placement
+    const sparkleColors = [0xFFD93D, 0xFF6B9D, 0xD4A5FF, 0x87CEEB, 0xA8E6CF];
     for (let i = 0; i < 6; i++) {
-      const p = this.scene.add.text(
-        px + Phaser.Math.Between(-s(20), s(20)),
-        py, '✨', { fontSize: fs(10) }
-      ).setOrigin(0.5).setDepth(2);
+      const sg = this.scene.add.graphics().setDepth(2);
+      const sx = px + Phaser.Math.Between(-s(20), s(20));
+      const sy = py;
+      const sr = s(Phaser.Math.Between(2, 4));
+      sg.setPosition(sx, sy);
+      const sc = sparkleColors[Phaser.Math.Between(0, sparkleColors.length - 1)];
+      sg.fillStyle(sc, 0.9);
+      sg.beginPath();
+      sg.moveTo(0, -sr * 1.5); sg.lineTo(sr * 0.35, -sr * 0.35);
+      sg.lineTo(sr * 1.5, 0); sg.lineTo(sr * 0.35, sr * 0.35);
+      sg.lineTo(0, sr * 1.5); sg.lineTo(-sr * 0.35, sr * 0.35);
+      sg.lineTo(-sr * 1.5, 0); sg.lineTo(-sr * 0.35, -sr * 0.35);
+      sg.closePath(); sg.fillPath();
       this.scene.tweens.add({
-        targets: p, y: p.y - s(Phaser.Math.Between(20, 40)), alpha: 0,
+        targets: sg, y: sy - s(Phaser.Math.Between(20, 40)), alpha: 0,
         duration: 600, delay: i * 80,
-        onComplete: () => p.destroy(),
+        onComplete: () => sg.destroy(),
       });
     }
 

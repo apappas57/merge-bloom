@@ -41,7 +41,7 @@ export class DailyChallengeScene extends Phaser.Scene {
     headerBg.fillRect(0, 0, width, headerH);
 
     // Daily badge
-    this.add.text(s(14), s(14), '📅 Daily Challenge', {
+    this.add.text(s(14), s(14), 'Daily Challenge', {
       fontSize: fs(16), color: TEXT.PRIMARY, fontFamily: FONT, fontStyle: '700',
     });
 
@@ -56,7 +56,7 @@ export class DailyChallengeScene extends Phaser.Scene {
     }).setOrigin(1, 0);
 
     // Reward preview
-    this.add.text(width - s(14), s(34), `🪙${this.challenge.rewardCoins}  ⭐${this.challenge.rewardXP}`, {
+    this.add.text(width - s(14), s(34), `${this.challenge.rewardCoins} coins  ${this.challenge.rewardXP} XP`, {
       fontSize: fs(10), color: TEXT.GOLD, fontFamily: FONT,
     }).setOrigin(1, 0);
 
@@ -196,7 +196,7 @@ export class DailyChallengeScene extends Phaser.Scene {
     card.fillStyle(0xFFF8F0, 1);
     card.fillRoundedRect(cx, cy, cardW, cardH, s(20));
 
-    this.add.text(width / 2, cy + s(30), '🎉 Challenge Complete!', {
+    this.add.text(width / 2, cy + s(30), 'Challenge Complete!', {
       fontSize: fs(20), color: TEXT.PRIMARY, fontFamily: FONT, fontStyle: '700',
     }).setOrigin(0.5).setDepth(5002);
 
@@ -204,20 +204,41 @@ export class DailyChallengeScene extends Phaser.Scene {
       fontSize: fs(12), color: TEXT.SECONDARY, fontFamily: FONT_BODY,
     }).setOrigin(0.5).setDepth(5002);
 
-    this.add.text(width / 2, cy + s(90), `+${this.challenge.rewardCoins} 🪙  +${this.challenge.rewardXP} ⭐`, {
+    this.add.text(width / 2, cy + s(90), `+${this.challenge.rewardCoins} coins  +${this.challenge.rewardXP} XP`, {
       fontSize: fs(18), color: TEXT.GOLD, fontFamily: FONT, fontStyle: '700',
     }).setOrigin(0.5).setDepth(5002);
 
-    // Hearts
+    // Canvas-drawn celebration particles (hearts, stars, circles)
+    const celebColors = [0xFF6B9D, 0xFFD93D, 0xD4A5FF, 0x87CEEB, 0xE8A4C8];
     for (let i = 0; i < 10; i++) {
-      const h = this.add.text(
-        Phaser.Math.Between(s(20), width - s(20)),
-        height, ['💕', '✨', '🌸', '💖', '⭐'][Phaser.Math.Between(0, 4)],
-        { fontSize: fs(Phaser.Math.Between(12, 20)) }
-      ).setOrigin(0.5).setDepth(5003);
+      const pg = this.add.graphics().setDepth(5003);
+      const px = Phaser.Math.Between(s(20), width - s(20));
+      const pr = s(Phaser.Math.Between(4, 8));
+      const pc = celebColors[Phaser.Math.Between(0, celebColors.length - 1)];
+      pg.setPosition(px, height);
+      pg.fillStyle(pc, 0.85);
+      const pShape = Phaser.Math.Between(0, 2);
+      if (pShape === 0) {
+        // Heart
+        pg.fillCircle(-pr * 0.3, -pr * 0.15, pr * 0.45);
+        pg.fillCircle(pr * 0.3, -pr * 0.15, pr * 0.45);
+        pg.fillTriangle(-pr * 0.65, 0, pr * 0.65, 0, 0, pr * 0.7);
+      } else if (pShape === 1) {
+        // Star
+        pg.beginPath();
+        for (let si = 0; si < 10; si++) {
+          const sa = -Math.PI / 2 + (si * Math.PI) / 5;
+          const sr = si % 2 === 0 ? pr : pr * 0.4;
+          if (si === 0) pg.moveTo(Math.cos(sa) * sr, Math.sin(sa) * sr);
+          else pg.lineTo(Math.cos(sa) * sr, Math.sin(sa) * sr);
+        }
+        pg.closePath(); pg.fillPath();
+      } else {
+        pg.fillCircle(0, 0, pr * 0.5);
+      }
       this.tweens.add({
-        targets: h, y: -s(20), duration: Phaser.Math.Between(1500, 3000),
-        delay: i * 100, onComplete: () => h.destroy(),
+        targets: pg, y: -s(20), duration: Phaser.Math.Between(1500, 3000),
+        delay: i * 100, onComplete: () => pg.destroy(),
       });
     }
 
@@ -227,7 +248,7 @@ export class DailyChallengeScene extends Phaser.Scene {
     btnBg.fillStyle(0xFF9CAD, 1);
     btnBg.fillRoundedRect(width / 2 - btnW / 2, cy + cardH - s(50), btnW, btnH, btnH / 2);
 
-    this.add.text(width / 2, cy + cardH - s(32), 'Done 💕', {
+    this.add.text(width / 2, cy + cardH - s(32), 'Done', {
       fontSize: fs(13), color: TEXT.WHITE, fontFamily: FONT, fontStyle: '600',
     }).setOrigin(0.5).setDepth(5003);
 
@@ -240,11 +261,22 @@ export class DailyChallengeScene extends Phaser.Scene {
     bg.fillGradientStyle(0xFFF8F0, 0xFFF8F0, 0xE8F5E9, 0xE8F5E9, 1);
     bg.fillRect(0, 0, width, height);
 
-    this.add.text(width / 2, height * 0.35, '✅', { fontSize: fs(48) }).setOrigin(0.5);
+    // Canvas-drawn checkmark
+    const chkG = this.add.graphics();
+    const chkCx = width / 2, chkCy = height * 0.35, chkR = s(24);
+    chkG.fillStyle(0x81C784, 1);
+    chkG.fillCircle(chkCx, chkCy, chkR);
+    chkG.lineStyle(s(4), 0xFFFFFF, 1);
+    chkG.beginPath();
+    chkG.moveTo(chkCx - chkR * 0.4, chkCy);
+    chkG.lineTo(chkCx - chkR * 0.05, chkCy + chkR * 0.35);
+    chkG.lineTo(chkCx + chkR * 0.45, chkCy - chkR * 0.3);
+    chkG.strokePath();
+
     this.add.text(width / 2, height * 0.48, 'Today\'s challenge complete!', {
       fontSize: fs(18), color: TEXT.PRIMARY, fontFamily: FONT, fontStyle: '700',
     }).setOrigin(0.5);
-    this.add.text(width / 2, height * 0.55, 'Come back tomorrow for a new puzzle 🌸', {
+    this.add.text(width / 2, height * 0.55, 'Come back tomorrow for a new puzzle', {
       fontSize: fs(12), color: TEXT.SECONDARY, fontFamily: FONT_BODY,
     }).setOrigin(0.5);
 
@@ -253,7 +285,7 @@ export class DailyChallengeScene extends Phaser.Scene {
     btnBg.fillStyle(0xFF9CAD, 1);
     btnBg.fillRoundedRect(width / 2 - btnW / 2, height * 0.65, btnW, btnH, btnH / 2);
 
-    this.add.text(width / 2, height * 0.65 + btnH / 2, 'Back 💕', {
+    this.add.text(width / 2, height * 0.65 + btnH / 2, 'Back', {
       fontSize: fs(13), color: TEXT.WHITE, fontFamily: FONT, fontStyle: '600',
     }).setOrigin(0.5);
 

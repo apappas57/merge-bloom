@@ -36,11 +36,14 @@ export class ShopScene extends Phaser.Scene {
     handle.fillStyle(COLORS.CELL_BORDER, 0.4);
     handle.fillRoundedRect(width / 2 - s(25), panelY + s(10), s(50), s(4), s(2));
 
-    this.add.text(width / 2, panelY + s(32), '🛒 Shop', {
+    this.add.text(width / 2, panelY + s(32), 'Shop', {
       fontSize: fs(22), color: TEXT.PRIMARY, fontFamily: FONT, fontStyle: '700',
     }).setOrigin(0.5);
 
-    this.add.text(width / 2, panelY + s(55), `💎 ${gameScene.gems.toLocaleString()} gems`, {
+    // Gem icon (canvas-drawn) + gem count
+    const gemG = this.add.graphics();
+    this.drawGemIcon(gemG, width / 2 - s(40), panelY + s(55), s(5));
+    this.add.text(width / 2, panelY + s(55), `${gameScene.gems.toLocaleString()} gems`, {
       fontSize: fs(12), color: '#A8D8EA', fontFamily: FONT_BODY,
     }).setOrigin(0.5);
 
@@ -70,7 +73,16 @@ export class ShopScene extends Phaser.Scene {
       card.lineStyle(s(1), unlocked ? COLORS.CELL_BORDER : 0xE0D8E8, 0.4);
       card.strokeRoundedRect(s(12), y, width - s(24), cardH, s(14));
 
-      this.add.text(s(30), y + cardH / 2, gen.emoji, { fontSize: fs(24) }).setOrigin(0, 0.5);
+      // Generator icon: use rendered texture if available, fallback to chain initial
+      const genTexKey = `${gen.chainId}_1`;
+      if (this.textures.exists(genTexKey)) {
+        const genImg = this.add.image(s(42), y + cardH / 2, genTexKey);
+        genImg.setDisplaySize(s(28), s(28));
+      } else {
+        this.add.text(s(30), y + cardH / 2, gen.name.charAt(0), {
+          fontSize: fs(20), color: TEXT.PRIMARY, fontFamily: FONT, fontStyle: '700',
+        }).setOrigin(0, 0.5);
+      }
 
       this.add.text(s(70), y + s(12), gen.name, {
         fontSize: fs(13), color: unlocked ? TEXT.PRIMARY : TEXT.SECONDARY, fontFamily: FONT, fontStyle: '600',
@@ -81,14 +93,23 @@ export class ShopScene extends Phaser.Scene {
       });
 
       if (!unlocked) {
-        this.add.text(width - s(30), y + cardH / 2, `🔒 Lv.${gen.unlockedAtLevel}`, {
+        // Lock icon (canvas-drawn) + level requirement
+        const lockG = this.add.graphics();
+        const lx = width - s(82), ly = y + cardH / 2;
+        lockG.fillStyle(0xB07A9E, 0.5);
+        lockG.fillRoundedRect(lx - s(5), ly - s(2), s(10), s(9), s(1.5));
+        lockG.lineStyle(s(1.5), 0xB07A9E, 0.5);
+        lockG.beginPath();
+        lockG.arc(lx, ly - s(5), s(4), Math.PI, 0, false);
+        lockG.strokePath();
+        this.add.text(width - s(30), y + cardH / 2, `Lv.${gen.unlockedAtLevel}`, {
           fontSize: fs(11), color: TEXT.SECONDARY, fontFamily: FONT_BODY,
         }).setOrigin(1, 0.5);
       } else {
         const btnW = s(80), btnH = s(32);
         const btnX = width - s(30) - btnW;
         const btnY2 = y + (cardH - btnH) / 2;
-        const costText = gen.cost === 0 ? 'Free!' : `💎 ${gen.cost}`;
+        const costText = gen.cost === 0 ? 'Free!' : `${gen.cost}`;
         const canAfford = gen.cost === 0 || gameScene.gems >= gen.cost;
 
         const btnGfx = this.add.graphics();
@@ -109,6 +130,27 @@ export class ShopScene extends Phaser.Scene {
         }
       }
     });
+  }
+
+  /** Draw a diamond/gem shape */
+  private drawGemIcon(g: Phaser.GameObjects.Graphics, cx: number, cy: number, r: number): void {
+    g.fillStyle(0x87CEEB, 1);
+    g.beginPath();
+    g.moveTo(cx, cy - r);
+    g.lineTo(cx + r * 0.8, cy - r * 0.2);
+    g.lineTo(cx + r * 0.5, cy + r);
+    g.lineTo(cx - r * 0.5, cy + r);
+    g.lineTo(cx - r * 0.8, cy - r * 0.2);
+    g.closePath();
+    g.fillPath();
+    g.fillStyle(0xFFFFFF, 0.35);
+    g.beginPath();
+    g.moveTo(cx, cy - r);
+    g.lineTo(cx + r * 0.3, cy - r * 0.1);
+    g.lineTo(cx - r * 0.15, cy - r * 0.1);
+    g.lineTo(cx - r * 0.5, cy - r * 0.2);
+    g.closePath();
+    g.fillPath();
   }
 
   private closeShop(): void {

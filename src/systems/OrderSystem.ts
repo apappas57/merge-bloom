@@ -127,6 +127,32 @@ export class OrderSystem {
     return rewards;
   }
 
+  /**
+   * Check which active orders can be fulfilled by items currently on the board.
+   * Returns an array of booleans (one per active order) indicating whether
+   * at least one unfulfilled slot has a matching item on the board.
+   */
+  findBoardMatches(boardItems: Map<string, { chainId: string; tier: number }>): boolean[] {
+    return this.activeOrders.map(order => {
+      if (order.completed) return false;
+
+      for (let si = 0; si < order.def.items.length; si++) {
+        const req = order.def.items[si];
+        if (order.progress[si] >= req.quantity) continue;
+
+        // Check if any board item matches this requirement
+        let found = false;
+        boardItems.forEach(item => {
+          if (!found && item.chainId === req.chainId && item.tier === req.tier) {
+            found = true;
+          }
+        });
+        if (found) return true;
+      }
+      return false;
+    });
+  }
+
   getActiveOrders(): ActiveOrder[] {
     return this.activeOrders;
   }

@@ -215,34 +215,28 @@ export class Board {
   }
 
   findEmptyCellNear(col: number, row: number, exclude?: CellData[]): CellData | null {
-    const maxDist = Math.max(this.cols, this.rows);
+    // Only check the 8 immediately adjacent cells (distance 1).
+    // If all 8 are occupied, return null — do NOT expand outward.
+    const candidates: CellData[] = [];
 
-    // Ripple search: expand ring by ring from the source cell
-    for (let dist = 1; dist <= maxDist; dist++) {
-      const candidates: CellData[] = [];
+    for (let dc = -1; dc <= 1; dc++) {
+      for (let dr = -1; dr <= 1; dr++) {
+        if (dc === 0 && dr === 0) continue; // skip self
 
-      // Walk the perimeter of the square ring at this distance
-      for (let dc = -dist; dc <= dist; dc++) {
-        for (let dr = -dist; dr <= dist; dr++) {
-          // Only cells on the ring edge (skip inner cells already checked)
-          if (Math.abs(dc) !== dist && Math.abs(dr) !== dist) continue;
+        const nc = col + dc;
+        const nr = row + dr;
+        if (!this.isValid(nc, nr)) continue;
 
-          const nc = col + dc;
-          const nr = row + dr;
-          if (!this.isValid(nc, nr)) continue;
+        const c = this.cells[nr][nc];
+        if (c.occupied || c.locked) continue;
+        if (exclude && exclude.some(e => e.col === c.col && e.row === c.row)) continue;
 
-          const c = this.cells[nr][nc];
-          if (c.occupied || c.locked) continue;
-          if (exclude && exclude.some(e => e.col === c.col && e.row === c.row)) continue;
-
-          candidates.push(c);
-        }
+        candidates.push(c);
       }
+    }
 
-      if (candidates.length > 0) {
-        // Pick randomly among cells at the same distance for natural feel
-        return candidates[Phaser.Math.Between(0, candidates.length - 1)];
-      }
+    if (candidates.length > 0) {
+      return candidates[Phaser.Math.Between(0, candidates.length - 1)];
     }
 
     return null;

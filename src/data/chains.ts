@@ -243,11 +243,11 @@ const GEN_TIER_DATA: Record<string, { names: string[]; emojis: string[] }> = {
 
 /** Standard tier definitions shared by all generators */
 const TIER_TEMPLATES: Omit<GeneratorTierDef, 'name' | 'emoji'>[] = [
-  { tier: 1, cooldown: 500, spawnTable: [{ tier: 1, weight: 100 }],                                                                  multiSpawnChance: 0 },
-  { tier: 2, cooldown: 450, spawnTable: [{ tier: 1, weight: 70 }, { tier: 2, weight: 30 }],                                          multiSpawnChance: 0.1 },
-  { tier: 3, cooldown: 400, spawnTable: [{ tier: 1, weight: 40 }, { tier: 2, weight: 40 }, { tier: 3, weight: 20 }],                 multiSpawnChance: 0.2 },
-  { tier: 4, cooldown: 350, spawnTable: [{ tier: 1, weight: 20 }, { tier: 2, weight: 30 }, { tier: 3, weight: 30 }, { tier: 4, weight: 20 }], multiSpawnChance: 0.35 },
-  { tier: 5, cooldown: 300, spawnTable: [{ tier: 2, weight: 20 }, { tier: 3, weight: 30 }, { tier: 4, weight: 30 }, { tier: 5, weight: 20 }], multiSpawnChance: 0.5 },
+  { tier: 1, cooldown: 300, spawnTable: [{ tier: 1, weight: 100 }],                                                                  multiSpawnChance: 0 },
+  { tier: 2, cooldown: 250, spawnTable: [{ tier: 1, weight: 70 }, { tier: 2, weight: 30 }],                                          multiSpawnChance: 0.1 },
+  { tier: 3, cooldown: 200, spawnTable: [{ tier: 1, weight: 40 }, { tier: 2, weight: 40 }, { tier: 3, weight: 20 }],                 multiSpawnChance: 0.2 },
+  { tier: 4, cooldown: 150, spawnTable: [{ tier: 1, weight: 20 }, { tier: 2, weight: 30 }, { tier: 3, weight: 30 }, { tier: 4, weight: 20 }], multiSpawnChance: 0.35 },
+  { tier: 5, cooldown: 100, spawnTable: [{ tier: 2, weight: 20 }, { tier: 3, weight: 30 }, { tier: 4, weight: 30 }, { tier: 5, weight: 20 }], multiSpawnChance: 0.5 },
 ];
 
 function buildGeneratorTiers(chainId: string): GeneratorTierDef[] {
@@ -261,18 +261,18 @@ function buildGeneratorTiers(chainId: string): GeneratorTierDef[] {
 }
 
 export const GENERATORS: GeneratorDef[] = [
-  { id: 'gen_flower',    chainId: 'flower',    emoji: '🌻', name: 'Flower Pot',     spawnTier: 1, cooldown: 500, cost: 0,    unlockedAtLevel: 1, maxTier: 5, tiers: buildGeneratorTiers('flower') },
-  { id: 'gen_butterfly', chainId: 'butterfly',  emoji: '🪺', name: 'Nest',           spawnTier: 1, cooldown: 500, cost: 100,  unlockedAtLevel: 1, maxTier: 5, tiers: buildGeneratorTiers('butterfly') },
-  { id: 'gen_fruit',     chainId: 'fruit',      emoji: '🧺', name: 'Basket',         spawnTier: 1, cooldown: 500, cost: 200,  unlockedAtLevel: 2, maxTier: 5, tiers: buildGeneratorTiers('fruit') },
-  { id: 'gen_crystal',   chainId: 'crystal',    emoji: '⛏️', name: 'Pickaxe',        spawnTier: 1, cooldown: 500, cost: 500,  unlockedAtLevel: 3, maxTier: 5, tiers: buildGeneratorTiers('crystal') },
-  { id: 'gen_nature',    chainId: 'nature',     emoji: '🪵', name: 'Stump',          spawnTier: 1, cooldown: 500, cost: 800,  unlockedAtLevel: 4, maxTier: 5, tiers: buildGeneratorTiers('nature') },
-  { id: 'gen_tea',       chainId: 'tea',        emoji: '🍃', name: 'Tea Garden',     spawnTier: 1, cooldown: 500, cost: 600,  unlockedAtLevel: 6, maxTier: 5, tiers: buildGeneratorTiers('tea') },
-  { id: 'gen_shell',     chainId: 'shell',      emoji: '🌊', name: 'Tide Pool',      spawnTier: 1, cooldown: 500, cost: 900,  unlockedAtLevel: 7, maxTier: 5, tiers: buildGeneratorTiers('shell') },
-  { id: 'gen_sweet',     chainId: 'sweet',      emoji: '🍯', name: 'Honey Pot',      spawnTier: 1, cooldown: 500, cost: 1200, unlockedAtLevel: 8, maxTier: 5, tiers: buildGeneratorTiers('sweet') },
-  { id: 'gen_star',      chainId: 'star',       emoji: '🔭', name: 'Telescope',      spawnTier: 1, cooldown: 500, cost: 1000, unlockedAtLevel: 5, maxTier: 5, tiers: buildGeneratorTiers('star') },
-  { id: 'gen_love',      chainId: 'love',       emoji: '💘', name: "Cupid's Bow",    spawnTier: 1, cooldown: 500, cost: 600,  unlockedAtLevel: 3, maxTier: 5, tiers: buildGeneratorTiers('love') },
-  { id: 'gen_cosmic',    chainId: 'cosmic',     emoji: '🔭', name: 'Observatory',    spawnTier: 1, cooldown: 500, cost: 1800, unlockedAtLevel: 9, maxTier: 5, tiers: buildGeneratorTiers('cosmic') },
-  { id: 'gen_cafe',      chainId: 'cafe',       emoji: '☕', name: 'Coffee Machine', spawnTier: 1, cooldown: 500, cost: 1000, unlockedAtLevel: 5, maxTier: 5, tiers: buildGeneratorTiers('cafe') },
+  { id: 'gen_flower',    chainId: 'flower',    emoji: '🌻', name: 'Flower Pot',     spawnTier: 1, cooldown: 300, cost: 0,    unlockedAtLevel: 1, maxTier: 5, tiers: buildGeneratorTiers('flower') },
+  { id: 'gen_butterfly', chainId: 'butterfly',  emoji: '🪺', name: 'Nest',           spawnTier: 1, cooldown: 300, cost: 100,  unlockedAtLevel: 1, maxTier: 5, tiers: buildGeneratorTiers('butterfly') },
+  { id: 'gen_fruit',     chainId: 'fruit',      emoji: '🧺', name: 'Basket',         spawnTier: 1, cooldown: 300, cost: 200,  unlockedAtLevel: 2, maxTier: 5, tiers: buildGeneratorTiers('fruit') },
+  { id: 'gen_crystal',   chainId: 'crystal',    emoji: '⛏️', name: 'Pickaxe',        spawnTier: 1, cooldown: 300, cost: 500,  unlockedAtLevel: 3, maxTier: 5, tiers: buildGeneratorTiers('crystal') },
+  { id: 'gen_nature',    chainId: 'nature',     emoji: '🪵', name: 'Stump',          spawnTier: 1, cooldown: 300, cost: 800,  unlockedAtLevel: 4, maxTier: 5, tiers: buildGeneratorTiers('nature') },
+  { id: 'gen_tea',       chainId: 'tea',        emoji: '🍃', name: 'Tea Garden',     spawnTier: 1, cooldown: 300, cost: 600,  unlockedAtLevel: 6, maxTier: 5, tiers: buildGeneratorTiers('tea') },
+  { id: 'gen_shell',     chainId: 'shell',      emoji: '🌊', name: 'Tide Pool',      spawnTier: 1, cooldown: 300, cost: 900,  unlockedAtLevel: 7, maxTier: 5, tiers: buildGeneratorTiers('shell') },
+  { id: 'gen_sweet',     chainId: 'sweet',      emoji: '🍯', name: 'Honey Pot',      spawnTier: 1, cooldown: 300, cost: 1200, unlockedAtLevel: 8, maxTier: 5, tiers: buildGeneratorTiers('sweet') },
+  { id: 'gen_star',      chainId: 'star',       emoji: '🔭', name: 'Telescope',      spawnTier: 1, cooldown: 300, cost: 1000, unlockedAtLevel: 5, maxTier: 5, tiers: buildGeneratorTiers('star') },
+  { id: 'gen_love',      chainId: 'love',       emoji: '💘', name: "Cupid's Bow",    spawnTier: 1, cooldown: 300, cost: 600,  unlockedAtLevel: 3, maxTier: 5, tiers: buildGeneratorTiers('love') },
+  { id: 'gen_cosmic',    chainId: 'cosmic',     emoji: '🔭', name: 'Observatory',    spawnTier: 1, cooldown: 300, cost: 1800, unlockedAtLevel: 9, maxTier: 5, tiers: buildGeneratorTiers('cosmic') },
+  { id: 'gen_cafe',      chainId: 'cafe',       emoji: '☕', name: 'Coffee Machine', spawnTier: 1, cooldown: 300, cost: 1000, unlockedAtLevel: 5, maxTier: 5, tiers: buildGeneratorTiers('cafe') },
 ];
 
 /** Get the texture key for a generator at a specific tier */

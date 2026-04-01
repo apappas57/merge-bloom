@@ -34,35 +34,37 @@ export class MenuScene extends Phaser.Scene {
     // Outer scalloped border feel with rounded bumps along edges
     this.drawScallopBorder(width, height);
 
-    // === FLOATING DECORATIONS (3 parallax layers) ===
-    const deco = ['🌸', '💕', '🌷', '💗', '🦋', '✨', '💐', '🎀', '💖', '🌹', '⭐', '🍰', '🌺', '🌼', '🌻', '🧁', '🍀'];
+    // === FLOATING DECORATIONS (3 parallax layers, canvas-drawn shapes) ===
+    const shapeColors = [0xFFB8D0, 0xFF6B9D, 0xD4A5FF, 0x87CEEB, 0xE8A4C8, 0xFFD93D, 0xA8E6CF, 0xF48FB1];
+    const shapeTypes = ['star', 'heart', 'circle', 'diamond', 'blossom'] as const;
 
     const layers = [
-      { count: 5, minSize: 24, maxSize: 40, alpha: 0.08, speedMult: 0.4, depthBase: 2 },
-      { count: 7, minSize: 16, maxSize: 28, alpha: 0.15, speedMult: 0.8, depthBase: 3 },
-      { count: 4, minSize: 10, maxSize: 18, alpha: 0.22, speedMult: 1.4, depthBase: 4 },
+      { count: 5, minSize: 5, maxSize: 10, alpha: 0.08, speedMult: 0.4, depthBase: 2 },
+      { count: 7, minSize: 3, maxSize: 7, alpha: 0.15, speedMult: 0.8, depthBase: 3 },
+      { count: 4, minSize: 2, maxSize: 5, alpha: 0.22, speedMult: 1.4, depthBase: 4 },
     ];
 
     for (const layer of layers) {
       for (let i = 0; i < layer.count; i++) {
-        const e = deco[Phaser.Math.Between(0, deco.length - 1)];
         const x = Phaser.Math.Between(s(20), width - s(20));
         const y = Phaser.Math.Between(s(40), height - s(40));
-        const fontSize = Phaser.Math.Between(layer.minSize, layer.maxSize);
-        const t = this.add.text(x, y, e, { fontSize: fs(fontSize) })
-          .setOrigin(0.5).setAlpha(layer.alpha).setDepth(layer.depthBase);
+        const r = s(Phaser.Math.Between(layer.minSize, layer.maxSize));
+        const color = shapeColors[Phaser.Math.Between(0, shapeColors.length - 1)];
+        const shape = shapeTypes[Phaser.Math.Between(0, shapeTypes.length - 1)];
+        const g = this.add.graphics().setPosition(x, y).setAlpha(layer.alpha).setDepth(layer.depthBase);
+        this.drawMenuShape(g, 0, 0, r, color, shape);
 
         const baseDuration = Phaser.Math.Between(3000, 5000);
         const duration = Math.round(baseDuration / layer.speedMult);
         const drift = s(Phaser.Math.Between(10, 25)) * layer.speedMult;
 
         this.tweens.add({
-          targets: t, y: y - drift,
+          targets: g, y: y - drift,
           duration, yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
           delay: Phaser.Math.Between(0, 2000),
         });
         this.tweens.add({
-          targets: t, x: x + s(Phaser.Math.Between(-6, 6)) * layer.speedMult,
+          targets: g, x: x + s(Phaser.Math.Between(-6, 6)) * layer.speedMult,
           duration: duration * 1.3,
           yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
           delay: Phaser.Math.Between(0, 1500),
@@ -108,8 +110,8 @@ export class MenuScene extends Phaser.Scene {
     // === SECONDARY BUTTONS (Collection, Settings) ===
     const secBtnY = height * 0.68;
     const secBtns = [
-      { label: '📖 Collection', scene: 'CollectionScene', x: width / 2 - s(70) },
-      { label: '⚙️ Settings', scene: 'SettingsScene', x: width / 2 + s(70) },
+      { label: 'Collection', scene: 'CollectionScene', x: width / 2 - s(70) },
+      { label: 'Settings', scene: 'SettingsScene', x: width / 2 + s(70) },
     ];
     for (const btn of secBtns) {
       const bg2 = this.add.graphics().setDepth(10);
@@ -128,12 +130,12 @@ export class MenuScene extends Phaser.Scene {
       });
     }
 
-    // === DECORATIVE BOW at top ===
-    this.add.text(width / 2, s(50), '🎀', { fontSize: fs(24) })
-      .setOrigin(0.5).setAlpha(0.4).setDepth(5);
+    // === DECORATIVE BOW at top (canvas-drawn) ===
+    const bowG = this.add.graphics().setDepth(5).setAlpha(0.4);
+    this.drawBow(bowG, width / 2, s(50), s(12));
 
     // === FOOTER ===
-    this.add.text(width / 2, height - s(35), 'Made with 💕', {
+    this.add.text(width / 2, height - s(35), 'Made with love', {
       fontSize: fs(11), color: TEXT.SECONDARY, fontFamily: FONT_BODY,
     }).setOrigin(0.5).setAlpha(0.5).setDepth(10);
 
@@ -238,15 +240,74 @@ export class MenuScene extends Phaser.Scene {
     g.arc(cx, cy + sz * 0.2, sz * 0.12, 0.15, Math.PI - 0.15, false);
     g.strokePath();
 
-    // Flower accessory
-    this.add.text(cx + sz * 0.55, cy - sz * 0.8, '🌸', { fontSize: fs(16) })
-      .setOrigin(0.5).setDepth(11);
+    // Flower accessory (canvas-drawn cherry blossom)
+    const flowerG = this.add.graphics().setDepth(11);
+    const fx = cx + sz * 0.55, fy = cy - sz * 0.8, fr = s(5);
+    flowerG.fillStyle(0xF8BBD0, 0.9);
+    for (let pi = 0; pi < 5; pi++) {
+      const pa = (pi / 5) * Math.PI * 2 - Math.PI / 2;
+      flowerG.fillEllipse(fx + Math.cos(pa) * fr * 0.4, fy + Math.sin(pa) * fr * 0.4, fr * 0.5, fr * 0.35);
+    }
+    flowerG.fillStyle(0xFFD54F, 1);
+    flowerG.fillCircle(fx, fy, fr * 0.15);
 
     // Gentle bob
     this.tweens.add({
       targets: g, y: g.y - s(3), duration: 2000,
       yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
     });
+  }
+
+  private drawMenuShape(g: Phaser.GameObjects.Graphics, cx: number, cy: number, r: number, color: number, shape: string): void {
+    g.fillStyle(color, 1);
+    switch (shape) {
+      case 'star':
+        g.beginPath();
+        for (let i = 0; i < 10; i++) {
+          const a = -Math.PI / 2 + (i * Math.PI) / 5;
+          const rad = i % 2 === 0 ? r : r * 0.4;
+          if (i === 0) g.moveTo(cx + Math.cos(a) * rad, cy + Math.sin(a) * rad);
+          else g.lineTo(cx + Math.cos(a) * rad, cy + Math.sin(a) * rad);
+        }
+        g.closePath(); g.fillPath();
+        break;
+      case 'heart':
+        // Heart using two circles + triangle (Phaser-compatible)
+        g.fillCircle(cx - r * 0.3, cy - r * 0.15, r * 0.45);
+        g.fillCircle(cx + r * 0.3, cy - r * 0.15, r * 0.45);
+        g.fillTriangle(cx - r * 0.65, cy, cx + r * 0.65, cy, cx, cy + r * 0.7);
+        break;
+      case 'circle':
+        g.fillCircle(cx, cy, r * 0.6);
+        g.fillStyle(0xFFFFFF, 0.3);
+        g.fillCircle(cx - r * 0.15, cy - r * 0.15, r * 0.2);
+        break;
+      case 'diamond':
+        g.beginPath();
+        g.moveTo(cx, cy - r); g.lineTo(cx + r * 0.6, cy);
+        g.lineTo(cx, cy + r); g.lineTo(cx - r * 0.6, cy);
+        g.closePath(); g.fillPath();
+        break;
+      case 'blossom':
+        for (let i = 0; i < 5; i++) {
+          const a = (i / 5) * Math.PI * 2 - Math.PI / 2;
+          g.fillEllipse(cx + Math.cos(a) * r * 0.35, cy + Math.sin(a) * r * 0.35, r * 0.4, r * 0.25);
+        }
+        g.fillStyle(0xFFD54F, 1);
+        g.fillCircle(cx, cy, r * 0.12);
+        break;
+    }
+  }
+
+  private drawBow(g: Phaser.GameObjects.Graphics, cx: number, cy: number, r: number): void {
+    g.fillStyle(0xEC407A, 1);
+    // Left loop (ellipse via fillEllipse)
+    g.fillEllipse(cx - r * 0.8, cy, r * 1.4, r);
+    // Right loop
+    g.fillEllipse(cx + r * 0.8, cy, r * 1.4, r);
+    // Center knot
+    g.fillStyle(0xD81B60, 1);
+    g.fillCircle(cx, cy, r * 0.25);
   }
 
   private createPlayButton(width: number, height: number): void {

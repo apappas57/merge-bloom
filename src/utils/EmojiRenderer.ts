@@ -51,59 +51,6 @@ function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: numbe
   ctx.closePath();
 }
 
-/** Draw cute kawaii eyes on a shape */
-function drawCuteEyes(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, happy: boolean = false): void {
-  const eyeSpacing = size * 0.16;
-  const eyeR = size * 0.045;
-
-  if (happy) {
-    // Happy closed eyes (^_^)
-    ctx.strokeStyle = '#4A3728';
-    ctx.lineWidth = size * 0.02;
-    ctx.lineCap = 'round';
-    [-1, 1].forEach(dir => {
-      ctx.beginPath();
-      ctx.arc(cx + dir * eyeSpacing, cy, eyeR * 1.5, Math.PI + 0.3, -0.3);
-      ctx.stroke();
-    });
-  } else {
-    // Open dot eyes with shine
-    [-1, 1].forEach(dir => {
-      const ex = cx + dir * eyeSpacing;
-      ctx.fillStyle = '#3D2B1F';
-      ctx.beginPath();
-      ctx.arc(ex, cy, eyeR, 0, Math.PI * 2);
-      ctx.fill();
-      // Shine
-      ctx.fillStyle = '#FFFFFF';
-      ctx.beginPath();
-      ctx.arc(ex - eyeR * 0.3, cy - eyeR * 0.4, eyeR * 0.4, 0, Math.PI * 2);
-      ctx.fill();
-    });
-  }
-}
-
-/** Draw blush marks */
-function drawBlush(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number): void {
-  const spacing = size * 0.22;
-  ctx.fillStyle = 'rgba(255,130,170,0.25)';
-  [-1, 1].forEach(dir => {
-    ctx.beginPath();
-    ctx.ellipse(cx + dir * spacing, cy + size * 0.06, size * 0.06, size * 0.035, 0, 0, Math.PI * 2);
-    ctx.fill();
-  });
-}
-
-/** Draw a tiny smile */
-function drawSmile(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number): void {
-  ctx.strokeStyle = '#5C3D2E';
-  ctx.lineWidth = size * 0.015;
-  ctx.lineCap = 'round';
-  ctx.beginPath();
-  ctx.arc(cx, cy + size * 0.08, size * 0.05, 0.2, Math.PI - 0.2);
-  ctx.stroke();
-}
-
 /** Draw sparkle decorations for high-tier items */
 function drawSparkles(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, count: number): void {
   ctx.fillStyle = 'rgba(255,215,0,0.6)';
@@ -1534,6 +1481,478 @@ function getItemIconConfig(chainId: string, tier: number): IconConfig {
 }
 
 // ============================================================
+// GENERATOR SOURCE ICON DRAWING FUNCTIONS
+// Each generator looks like a "source" object (pot, nest, basket)
+// ============================================================
+
+function drawFlowerPotIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, tier: number, color: string, accent: string): void {
+  const r = size * 0.4;
+  // Pot body (trapezoid)
+  const topW = r * 0.55;
+  const botW = r * 0.4;
+  const potH = r * 0.65;
+  const potY = cy + r * 0.15;
+  const potGrad = ctx.createLinearGradient(cx - topW, potY, cx + topW, potY + potH);
+  potGrad.addColorStop(0, '#D2691E');
+  potGrad.addColorStop(0.5, '#A0522D');
+  potGrad.addColorStop(1, '#8B4513');
+  ctx.fillStyle = potGrad;
+  ctx.beginPath();
+  ctx.moveTo(cx - topW, potY);
+  ctx.lineTo(cx + topW, potY);
+  ctx.lineTo(cx + botW, potY + potH);
+  ctx.lineTo(cx - botW, potY + potH);
+  ctx.closePath();
+  ctx.fill();
+  // Pot rim
+  ctx.fillStyle = '#D2691E';
+  ctx.beginPath();
+  ctx.ellipse(cx, potY, topW * 1.1, r * 0.08, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // Dirt
+  ctx.fillStyle = '#5D4037';
+  ctx.beginPath();
+  ctx.ellipse(cx, potY + r * 0.05, topW * 0.85, r * 0.06, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // Sprout growing from pot
+  ctx.strokeStyle = '#4CAF50';
+  ctx.lineWidth = size * 0.04;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(cx, potY);
+  ctx.quadraticCurveTo(cx + r * 0.1, potY - r * 0.4, cx - r * 0.05, potY - r * 0.6);
+  ctx.stroke();
+  // Leaf
+  ctx.fillStyle = accent;
+  ctx.beginPath();
+  ctx.ellipse(cx - r * 0.05, potY - r * 0.6, r * 0.18, r * 0.08, -0.5, 0, Math.PI * 2);
+  ctx.fill();
+  if (tier >= 3) {
+    ctx.beginPath();
+    ctx.ellipse(cx + r * 0.12, potY - r * 0.4, r * 0.14, r * 0.06, 0.4, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  addHighlight(ctx, cx - topW * 0.3, potY + potH * 0.2, r * 0.3);
+}
+
+function drawNestIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, tier: number, color: string, accent: string): void {
+  const r = size * 0.4;
+  // Nest body (woven basket shape)
+  const nestGrad = ctx.createRadialGradient(cx, cy + r * 0.2, 0, cx, cy + r * 0.2, r * 0.7);
+  nestGrad.addColorStop(0, '#D7CCC8');
+  nestGrad.addColorStop(0.5, '#A1887F');
+  nestGrad.addColorStop(1, '#795548');
+  ctx.fillStyle = nestGrad;
+  ctx.beginPath();
+  ctx.ellipse(cx, cy + r * 0.2, r * 0.7, r * 0.4, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // Nest front lip
+  ctx.fillStyle = '#8D6E63';
+  ctx.beginPath();
+  ctx.ellipse(cx, cy, r * 0.72, r * 0.2, 0, 0, Math.PI);
+  ctx.fill();
+  // Weave lines
+  ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+  ctx.lineWidth = size * 0.015;
+  for (let i = 0; i < 4; i++) {
+    ctx.beginPath();
+    ctx.ellipse(cx, cy + r * (0.1 + i * 0.08), r * (0.65 - i * 0.04), r * 0.04, 0, 0.2, Math.PI - 0.2);
+    ctx.stroke();
+  }
+  // Small eggs in nest
+  const eggColors = [accent, color, '#FFFFFF'];
+  const eggCount = Math.min(tier, 3);
+  for (let i = 0; i < eggCount; i++) {
+    const ex = cx + (i - (eggCount - 1) / 2) * r * 0.25;
+    const ey = cy - r * 0.05;
+    ctx.fillStyle = eggColors[i % eggColors.length];
+    ctx.beginPath();
+    ctx.ellipse(ex, ey, r * 0.1, r * 0.14, 0, 0, Math.PI * 2);
+    ctx.fill();
+    addHighlight(ctx, ex - r * 0.03, ey - r * 0.05, r * 0.08);
+  }
+}
+
+function drawBasketIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, tier: number, color: string, accent: string): void {
+  const r = size * 0.4;
+  // Basket body
+  const basketGrad = ctx.createLinearGradient(cx - r * 0.6, cy, cx + r * 0.6, cy + r * 0.5);
+  basketGrad.addColorStop(0, '#FFE0B2');
+  basketGrad.addColorStop(0.5, '#FFCC80');
+  basketGrad.addColorStop(1, '#FFA726');
+  ctx.fillStyle = basketGrad;
+  ctx.beginPath();
+  ctx.moveTo(cx - r * 0.65, cy - r * 0.1);
+  ctx.lineTo(cx + r * 0.65, cy - r * 0.1);
+  ctx.lineTo(cx + r * 0.5, cy + r * 0.55);
+  ctx.quadraticCurveTo(cx, cy + r * 0.65, cx - r * 0.5, cy + r * 0.55);
+  ctx.closePath();
+  ctx.fill();
+  // Handle
+  ctx.strokeStyle = '#E65100';
+  ctx.lineWidth = size * 0.035;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.arc(cx, cy - r * 0.1, r * 0.5, Math.PI + 0.3, -0.3);
+  ctx.stroke();
+  // Weave pattern
+  ctx.strokeStyle = 'rgba(139,69,19,0.25)';
+  ctx.lineWidth = size * 0.012;
+  for (let i = 0; i < 3; i++) {
+    const ly = cy + r * (0.05 + i * 0.15);
+    ctx.beginPath();
+    ctx.moveTo(cx - r * 0.6, ly);
+    ctx.lineTo(cx + r * 0.6, ly);
+    ctx.stroke();
+  }
+  // Small items peeking out
+  const itemGrad = ctx.createRadialGradient(cx, cy - r * 0.2, 0, cx, cy - r * 0.2, r * 0.2);
+  itemGrad.addColorStop(0, accent);
+  itemGrad.addColorStop(1, color);
+  ctx.fillStyle = itemGrad;
+  ctx.beginPath();
+  ctx.arc(cx - r * 0.15, cy - r * 0.15, r * 0.12, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(cx + r * 0.15, cy - r * 0.18, r * 0.1, 0, Math.PI * 2);
+  ctx.fill();
+  addHighlight(ctx, cx - r * 0.3, cy + r * 0.1, r * 0.3);
+}
+
+function drawCauldronIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, tier: number, color: string, accent: string): void {
+  const r = size * 0.4;
+  // Cauldron body
+  const cauldGrad = ctx.createRadialGradient(cx - r * 0.2, cy - r * 0.1, 0, cx, cy + r * 0.1, r * 0.6);
+  cauldGrad.addColorStop(0, '#546E7A');
+  cauldGrad.addColorStop(0.6, '#37474F');
+  cauldGrad.addColorStop(1, '#263238');
+  ctx.fillStyle = cauldGrad;
+  ctx.beginPath();
+  ctx.moveTo(cx - r * 0.6, cy - r * 0.2);
+  ctx.bezierCurveTo(cx - r * 0.65, cy + r * 0.3, cx - r * 0.5, cy + r * 0.6, cx, cy + r * 0.65);
+  ctx.bezierCurveTo(cx + r * 0.5, cy + r * 0.6, cx + r * 0.65, cy + r * 0.3, cx + r * 0.6, cy - r * 0.2);
+  ctx.closePath();
+  ctx.fill();
+  // Rim
+  ctx.fillStyle = '#455A64';
+  ctx.beginPath();
+  ctx.ellipse(cx, cy - r * 0.2, r * 0.65, r * 0.1, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // Glowing liquid inside
+  const liqGrad = ctx.createRadialGradient(cx, cy - r * 0.15, 0, cx, cy - r * 0.15, r * 0.45);
+  liqGrad.addColorStop(0, accent);
+  liqGrad.addColorStop(0.6, color);
+  liqGrad.addColorStop(1, color + '60');
+  ctx.fillStyle = liqGrad;
+  ctx.beginPath();
+  ctx.ellipse(cx, cy - r * 0.15, r * 0.5, r * 0.08, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // Bubble highlights
+  ctx.fillStyle = 'rgba(255,255,255,0.5)';
+  ctx.beginPath();
+  ctx.arc(cx - r * 0.15, cy - r * 0.3, r * 0.06, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(cx + r * 0.1, cy - r * 0.35, r * 0.04, 0, Math.PI * 2);
+  ctx.fill();
+  // Feet
+  [-1, 0, 1].forEach(d => {
+    ctx.fillStyle = '#37474F';
+    ctx.beginPath();
+    ctx.ellipse(cx + d * r * 0.35, cy + r * 0.65, r * 0.07, r * 0.05, 0, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  addHighlight(ctx, cx - r * 0.25, cy - r * 0.05, r * 0.4);
+}
+
+function drawTreasureChestIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, tier: number, color: string, accent: string): void {
+  const r = size * 0.4;
+  const w = r * 0.65;
+  const h = r * 0.45;
+  // Chest body
+  const chestGrad = ctx.createLinearGradient(cx - w, cy, cx + w, cy + h);
+  chestGrad.addColorStop(0, '#8D6E63');
+  chestGrad.addColorStop(0.5, '#6D4C41');
+  chestGrad.addColorStop(1, '#4E342E');
+  ctx.fillStyle = chestGrad;
+  roundRect(ctx, cx - w, cy - h * 0.2, w * 2, h * 1.2, r * 0.06);
+  ctx.fill();
+  // Lid (curved top)
+  ctx.fillStyle = '#795548';
+  ctx.beginPath();
+  ctx.moveTo(cx - w, cy - h * 0.2);
+  ctx.bezierCurveTo(cx - w, cy - h * 0.8, cx + w, cy - h * 0.8, cx + w, cy - h * 0.2);
+  ctx.closePath();
+  ctx.fill();
+  // Metal bands
+  ctx.fillStyle = accent;
+  roundRect(ctx, cx - w - r * 0.02, cy - h * 0.3, w * 2 + r * 0.04, h * 0.12, r * 0.02);
+  ctx.fill();
+  roundRect(ctx, cx - w - r * 0.02, cy + h * 0.4, w * 2 + r * 0.04, h * 0.12, r * 0.02);
+  ctx.fill();
+  // Lock/clasp
+  ctx.fillStyle = accent;
+  ctx.beginPath();
+  ctx.arc(cx, cy - h * 0.25, r * 0.08, 0, Math.PI * 2);
+  ctx.fill();
+  // Glow from inside (ajar for higher tiers)
+  if (tier >= 2) {
+    const glowGrad = ctx.createRadialGradient(cx, cy - h * 0.5, 0, cx, cy - h * 0.3, r * 0.4);
+    glowGrad.addColorStop(0, accent + '80');
+    glowGrad.addColorStop(1, accent + '00');
+    ctx.fillStyle = glowGrad;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy - h * 0.35, r * 0.4, r * 0.15, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  addHighlight(ctx, cx - w * 0.4, cy - h * 0.5, r * 0.35);
+}
+
+function drawTeapotIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, tier: number, color: string, accent: string): void {
+  const r = size * 0.4;
+  // Pot body
+  const potGrad = ctx.createRadialGradient(cx - r * 0.15, cy - r * 0.1, 0, cx, cy + r * 0.1, r * 0.55);
+  potGrad.addColorStop(0, '#FFFFFF');
+  potGrad.addColorStop(0.3, accent);
+  potGrad.addColorStop(1, color);
+  ctx.fillStyle = potGrad;
+  ctx.beginPath();
+  ctx.ellipse(cx, cy + r * 0.1, r * 0.55, r * 0.45, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // Lid
+  ctx.fillStyle = darkenColor(color, 0.1);
+  ctx.beginPath();
+  ctx.ellipse(cx, cy - r * 0.3, r * 0.35, r * 0.08, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // Lid knob
+  ctx.fillStyle = accent;
+  ctx.beginPath();
+  ctx.arc(cx, cy - r * 0.4, r * 0.06, 0, Math.PI * 2);
+  ctx.fill();
+  // Spout
+  ctx.strokeStyle = color;
+  ctx.lineWidth = size * 0.04;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(cx + r * 0.5, cy);
+  ctx.quadraticCurveTo(cx + r * 0.8, cy - r * 0.15, cx + r * 0.75, cy - r * 0.35);
+  ctx.stroke();
+  // Handle
+  ctx.strokeStyle = darkenColor(color, 0.15);
+  ctx.lineWidth = size * 0.04;
+  ctx.beginPath();
+  ctx.arc(cx - r * 0.55, cy + r * 0.05, r * 0.22, -Math.PI * 0.5, Math.PI * 0.5);
+  ctx.stroke();
+  // Steam
+  if (tier >= 2) {
+    ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+    ctx.lineWidth = size * 0.02;
+    for (let i = 0; i < 2; i++) {
+      const sx = cx + (i - 0.5) * r * 0.2;
+      ctx.beginPath();
+      ctx.moveTo(sx, cy - r * 0.45);
+      ctx.quadraticCurveTo(sx + r * 0.08, cy - r * 0.65, sx - r * 0.05, cy - r * 0.8);
+      ctx.stroke();
+    }
+  }
+  addHighlight(ctx, cx - r * 0.2, cy - r * 0.1, r * 0.35);
+}
+
+function drawSeashellBoxIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, tier: number, color: string, accent: string): void {
+  const r = size * 0.4;
+  // Large open clam shell (bottom half)
+  const shellGrad = ctx.createRadialGradient(cx, cy + r * 0.2, 0, cx, cy + r * 0.2, r * 0.7);
+  shellGrad.addColorStop(0, '#FFFFFF');
+  shellGrad.addColorStop(0.3, accent);
+  shellGrad.addColorStop(1, color);
+  ctx.fillStyle = shellGrad;
+  ctx.beginPath();
+  ctx.ellipse(cx, cy + r * 0.15, r * 0.7, r * 0.35, 0, 0, Math.PI);
+  ctx.fill();
+  // Shell ridges on bottom half
+  ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+  ctx.lineWidth = size * 0.012;
+  for (let i = 1; i <= 4; i++) {
+    ctx.beginPath();
+    ctx.arc(cx, cy + r * 0.5, r * (0.15 * i), Math.PI + 0.4, -0.4);
+    ctx.stroke();
+  }
+  // Upper shell (open, angled back)
+  ctx.fillStyle = accent;
+  ctx.beginPath();
+  ctx.moveTo(cx - r * 0.65, cy + r * 0.15);
+  ctx.bezierCurveTo(cx - r * 0.7, cy - r * 0.5, cx + r * 0.7, cy - r * 0.5, cx + r * 0.65, cy + r * 0.15);
+  ctx.bezierCurveTo(cx + r * 0.4, cy - r * 0.15, cx - r * 0.4, cy - r * 0.15, cx - r * 0.65, cy + r * 0.15);
+  ctx.fill();
+  // Pearl inside
+  const pearlGrad = ctx.createRadialGradient(cx - r * 0.05, cy + r * 0.05, 0, cx, cy + r * 0.1, r * 0.12);
+  pearlGrad.addColorStop(0, '#FFFFFF');
+  pearlGrad.addColorStop(0.5, '#F8BBD0');
+  pearlGrad.addColorStop(1, '#E0E0E0');
+  ctx.fillStyle = pearlGrad;
+  ctx.beginPath();
+  ctx.arc(cx, cy + r * 0.1, r * 0.1, 0, Math.PI * 2);
+  ctx.fill();
+  addHighlight(ctx, cx - r * 0.15, cy - r * 0.2, r * 0.4);
+}
+
+function drawGiftBoxIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, tier: number, color: string, accent: string): void {
+  const r = size * 0.4;
+  const w = r * 0.55;
+  const h = r * 0.5;
+  // Box body
+  const boxGrad = ctx.createLinearGradient(cx - w, cy - h * 0.2, cx + w, cy + h);
+  boxGrad.addColorStop(0, accent);
+  boxGrad.addColorStop(1, color);
+  ctx.fillStyle = boxGrad;
+  roundRect(ctx, cx - w, cy - h * 0.2, w * 2, h * 1.2, r * 0.05);
+  ctx.fill();
+  // Lid
+  ctx.fillStyle = darkenColor(color, 0.08);
+  roundRect(ctx, cx - w * 1.05, cy - h * 0.45, w * 2.1, h * 0.3, r * 0.04);
+  ctx.fill();
+  // Ribbon vertical
+  ctx.fillStyle = accent;
+  ctx.fillRect(cx - r * 0.05, cy - h * 0.45, r * 0.1, h * 1.65);
+  // Ribbon horizontal
+  ctx.fillRect(cx - w, cy + h * 0.2, w * 2, r * 0.08);
+  // Bow
+  ctx.fillStyle = accent;
+  [-1, 1].forEach(dir => {
+    ctx.beginPath();
+    ctx.ellipse(cx + dir * r * 0.15, cy - h * 0.5, r * 0.15, r * 0.08, dir * 0.3, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  ctx.beginPath();
+  ctx.arc(cx, cy - h * 0.5, r * 0.05, 0, Math.PI * 2);
+  ctx.fill();
+  // Glow from inside for higher tiers
+  if (tier >= 3) {
+    const glowGrad = ctx.createRadialGradient(cx, cy - h * 0.35, 0, cx, cy - h * 0.2, r * 0.3);
+    glowGrad.addColorStop(0, '#FFD70080');
+    glowGrad.addColorStop(1, '#FFD70000');
+    ctx.fillStyle = glowGrad;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy - h * 0.3, r * 0.3, r * 0.1, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  addHighlight(ctx, cx - w * 0.3, cy - h * 0.3, r * 0.3);
+}
+
+function drawPortalIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, tier: number, color: string, accent: string): void {
+  const r = size * 0.4;
+  // Outer ring
+  ctx.strokeStyle = color;
+  ctx.lineWidth = size * 0.04;
+  ctx.beginPath();
+  ctx.arc(cx, cy, r * 0.6, 0, Math.PI * 2);
+  ctx.stroke();
+  // Inner swirl
+  const swirlGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, r * 0.55);
+  swirlGrad.addColorStop(0, '#FFFFFF');
+  swirlGrad.addColorStop(0.3, accent);
+  swirlGrad.addColorStop(0.7, color);
+  swirlGrad.addColorStop(1, darkenColor(color, 0.2));
+  ctx.fillStyle = swirlGrad;
+  ctx.beginPath();
+  ctx.arc(cx, cy, r * 0.55, 0, Math.PI * 2);
+  ctx.fill();
+  // Spiral lines
+  ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+  ctx.lineWidth = size * 0.015;
+  for (let i = 0; i < 3; i++) {
+    ctx.beginPath();
+    const startAngle = (i / 3) * Math.PI * 2;
+    for (let t = 0; t < 20; t++) {
+      const a = startAngle + t * 0.3;
+      const d = r * (0.08 + t * 0.022);
+      const x = cx + Math.cos(a) * d;
+      const y = cy + Math.sin(a) * d;
+      if (t === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+  }
+  // Star sparkles around rim
+  ctx.fillStyle = 'rgba(255,255,255,0.7)';
+  for (let i = 0; i < 4; i++) {
+    const angle = (i / 4) * Math.PI * 2 - Math.PI / 4;
+    const sx = cx + Math.cos(angle) * r * 0.65;
+    const sy = cy + Math.sin(angle) * r * 0.65;
+    const sr = r * 0.06;
+    ctx.beginPath();
+    ctx.moveTo(sx, sy - sr * 2);
+    ctx.quadraticCurveTo(sx + sr * 0.3, sy - sr * 0.3, sx + sr * 2, sy);
+    ctx.quadraticCurveTo(sx + sr * 0.3, sy + sr * 0.3, sx, sy + sr * 2);
+    ctx.quadraticCurveTo(sx - sr * 0.3, sy + sr * 0.3, sx - sr * 2, sy);
+    ctx.quadraticCurveTo(sx - sr * 0.3, sy - sr * 0.3, sx, sy - sr * 2);
+    ctx.fill();
+  }
+}
+
+function drawCoffeeMachineIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, tier: number, color: string, accent: string): void {
+  const r = size * 0.4;
+  const w = r * 0.5;
+  const h = r * 0.7;
+  // Machine body
+  const machGrad = ctx.createLinearGradient(cx - w, cy - h, cx + w, cy + h * 0.3);
+  machGrad.addColorStop(0, accent);
+  machGrad.addColorStop(0.5, color);
+  machGrad.addColorStop(1, darkenColor(color, 0.15));
+  ctx.fillStyle = machGrad;
+  roundRect(ctx, cx - w, cy - h * 0.6, w * 2, h * 1.2, r * 0.08);
+  ctx.fill();
+  // Top tank
+  ctx.fillStyle = darkenColor(color, 0.1);
+  roundRect(ctx, cx - w * 0.8, cy - h * 0.85, w * 1.6, h * 0.3, r * 0.05);
+  ctx.fill();
+  // Spout
+  ctx.fillStyle = '#455A64';
+  ctx.fillRect(cx - r * 0.06, cy + h * 0.2, r * 0.12, h * 0.25);
+  // Cup underneath
+  ctx.fillStyle = '#FFFFFF';
+  ctx.beginPath();
+  ctx.moveTo(cx - r * 0.2, cy + h * 0.45);
+  ctx.lineTo(cx + r * 0.2, cy + h * 0.45);
+  ctx.lineTo(cx + r * 0.15, cy + h * 0.65);
+  ctx.lineTo(cx - r * 0.15, cy + h * 0.65);
+  ctx.closePath();
+  ctx.fill();
+  // Drip
+  if (tier >= 2) {
+    ctx.fillStyle = '#6D4C41';
+    ctx.beginPath();
+    ctx.ellipse(cx, cy + h * 0.4, r * 0.03, r * 0.05, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  // Button
+  ctx.fillStyle = accent;
+  ctx.beginPath();
+  ctx.arc(cx + w * 0.5, cy - h * 0.1, r * 0.06, 0, Math.PI * 2);
+  ctx.fill();
+  addHighlight(ctx, cx - w * 0.3, cy - h * 0.4, r * 0.3);
+}
+
+/** Map chains to generator source-object icons */
+function getGeneratorIconConfig(chainId: string, genTier: number): IconConfig {
+  const configs: Record<string, IconConfig> = {
+    flower:    { draw: drawFlowerPotIcon, color: '#8D6E63', accent: '#4CAF50' },
+    butterfly: { draw: drawNestIcon, color: '#795548', accent: '#B3E5FC' },
+    fruit:     { draw: drawBasketIcon, color: '#FFA726', accent: '#FF7043' },
+    crystal:   { draw: drawCauldronIcon, color: '#37474F', accent: '#B39DDB' },
+    nature:    { draw: drawFlowerPotIcon, color: '#6D4C41', accent: '#66BB6A' },
+    star:      { draw: drawTreasureChestIcon, color: '#5D4037', accent: '#FFD700' },
+    tea:       { draw: drawTeapotIcon, color: '#8D6E63', accent: '#A5D6A7' },
+    shell:     { draw: drawSeashellBoxIcon, color: '#80DEEA', accent: '#B2EBF2' },
+    sweet:     { draw: drawGiftBoxIcon, color: '#F06292', accent: '#F8BBD0' },
+    love:      { draw: drawGiftBoxIcon, color: '#FF6B8A', accent: '#FFB3C6' },
+    cosmic:    { draw: drawPortalIcon, color: '#7C4DFF', accent: '#B388FF' },
+    cafe:      { draw: drawCoffeeMachineIcon, color: '#6D4C41', accent: '#A1887F' },
+  };
+  return configs[chainId] || { draw: drawBasketIcon, color: '#E0E0E0', accent: '#F5F5F5' };
+}
+
+// ============================================================
 // UI ICON DRAWING FUNCTIONS (gem, star, sparkle)
 // ============================================================
 
@@ -1845,79 +2264,6 @@ function drawSpecularHighlight(
   ctx.restore();
 }
 
-/** Stitching seam detail using setLineDash along the plush body path */
-function drawStitching(
-  ctx: CanvasRenderingContext2D,
-  cx: number,
-  cy: number,
-  radius: number,
-  bodyPathFn: (ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number, chainId: string) => void,
-  chainId: string,
-  chainColor: string,
-  size: number
-): void {
-  ctx.save();
-  const stitchLen = size * 0.035;
-  const gapLen = size * 0.025;
-  ctx.setLineDash([stitchLen, gapLen]);
-  ctx.lineDashOffset = 0;
-
-  const insetR = radius * 0.88;
-  bodyPathFn(ctx, cx, cy, insetR, chainId);
-
-  ctx.strokeStyle = darkenColor(chainColor, 0.2) + 'A0';
-  ctx.lineWidth = size * 0.012;
-  ctx.lineCap = 'round';
-  ctx.stroke();
-
-  ctx.setLineDash([]);
-  ctx.restore();
-}
-
-/** Cached fabric texture pattern for plush material suggestion */
-let _fabricPattern: CanvasPattern | null = null;
-
-function generateFabricTexture(size: number = 64): HTMLCanvasElement {
-  const canvas = document.createElement('canvas');
-  canvas.width = size;
-  canvas.height = size;
-  const tCtx = canvas.getContext('2d')!;
-  const dotCount = Math.floor(size * size * 0.08);
-  for (let i = 0; i < dotCount; i++) {
-    const hash = (i * 2654435761) >>> 0;
-    const x = (hash % size);
-    const y = ((hash >>> 16) % size);
-    const brightness = ((hash >>> 8) & 0xFF) > 128;
-    tCtx.fillStyle = brightness
-      ? 'rgba(255,255,255,0.04)'
-      : 'rgba(0,0,0,0.03)';
-    tCtx.beginPath();
-    tCtx.arc(x, y, 0.6, 0, Math.PI * 2);
-    tCtx.fill();
-  }
-  return canvas;
-}
-
-/** Apply fabric texture to the current clipped region */
-function applyFabricTexture(
-  ctx: CanvasRenderingContext2D,
-  cx: number,
-  cy: number,
-  radius: number
-): void {
-  if (!_fabricPattern) {
-    const texCanvas = generateFabricTexture(64);
-    _fabricPattern = ctx.createPattern(texCanvas, 'repeat');
-  }
-  if (!_fabricPattern) return;
-
-  ctx.save();
-  ctx.globalAlpha = 0.5;
-  ctx.fillStyle = _fabricPattern;
-  ctx.fillRect(cx - radius * 1.5, cy - radius * 1.5, radius * 3, radius * 3);
-  ctx.restore();
-}
-
 /** Warm ambient light overlay (Gossip Harbor golden-hour trick) */
 function drawWarmAmbient(
   ctx: CanvasRenderingContext2D,
@@ -1938,71 +2284,6 @@ function drawWarmAmbient(
   ctx.fillRect(cx - radius * 1.5, cy - radius * 1.5, radius * 3, radius * 3);
   ctx.restore();
 }
-
-/** Sub-surface scattering simulation: warm inner glow on light-facing edge */
-function drawSubSurfaceScatter(
-  ctx: CanvasRenderingContext2D,
-  cx: number,
-  cy: number,
-  radius: number
-): void {
-  ctx.save();
-  const sssGrad = ctx.createRadialGradient(
-    cx - radius * 0.6, cy - radius * 0.6, radius * 0.3,
-    cx, cy, radius
-  );
-  sssGrad.addColorStop(0, 'rgba(255,200,180,0)');
-  sssGrad.addColorStop(0.7, 'rgba(255,200,180,0)');
-  sssGrad.addColorStop(0.88, 'rgba(255,220,200,0.12)');
-  sssGrad.addColorStop(1.0, 'rgba(255,180,160,0.08)');
-
-  ctx.fillStyle = sssGrad;
-  ctx.fillRect(cx - radius * 1.5, cy - radius * 1.5, radius * 3, radius * 3);
-  ctx.restore();
-}
-
-/** Ambient occlusion: dark gradient at base where body meets card surface */
-function drawAmbientOcclusion(
-  ctx: CanvasRenderingContext2D,
-  cx: number,
-  cy: number,
-  radius: number
-): void {
-  ctx.save();
-  const aoGrad = ctx.createLinearGradient(cx, cy + radius, cx, cy + radius * 0.3);
-  aoGrad.addColorStop(0, 'rgba(0,0,0,0.15)');
-  aoGrad.addColorStop(0.4, 'rgba(0,0,0,0.05)');
-  aoGrad.addColorStop(1, 'rgba(0,0,0,0)');
-
-  ctx.fillStyle = aoGrad;
-  ctx.fillRect(cx - radius * 1.5, cy, radius * 3, radius * 1.5);
-  ctx.restore();
-}
-
-/** Curved surface overlay on belly icon (makes it look printed on a sphere) */
-function drawCurvedSurfaceOverlay(
-  ctx: CanvasRenderingContext2D,
-  cx: number,
-  cy: number,
-  iconRadius: number
-): void {
-  ctx.save();
-  const curveGrad = ctx.createRadialGradient(
-    cx - iconRadius * 0.15, cy - iconRadius * 0.15, 0,
-    cx, cy, iconRadius
-  );
-  curveGrad.addColorStop(0, 'rgba(0,0,0,0)');
-  curveGrad.addColorStop(0.6, 'rgba(0,0,0,0)');
-  curveGrad.addColorStop(0.85, 'rgba(0,0,0,0.06)');
-  curveGrad.addColorStop(1.0, 'rgba(0,0,0,0.12)');
-
-  ctx.fillStyle = curveGrad;
-  ctx.beginPath();
-  ctx.arc(cx, cy, iconRadius, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.restore();
-}
-
 
 // ============================================================
 // MAIN RENDERER CLASS
@@ -2037,40 +2318,35 @@ export class EmojiRenderer {
     }
   }
 
-  /** Draw a cute plush-style item -- the core visual identity */
+  /** Draw an item -- large illustration filling 70-80% of the card (Travel Town style) */
   private static drawPlushItem(ctx: CanvasRenderingContext2D, size: number, chainId: string, tier: number): void {
     const colors = CHAIN_COLORS[chainId] || DEFAULT_COLORS;
     const cx = size / 2;
     const cy = size / 2;
-    const pad = size * 0.08;
-    const bodyR = (size - pad * 2) / 2;
-    const cr = size * 0.18;
+    const pad = size * 0.06;
+    const cr = size * 0.16;
 
-    // === Background card ===
-    // Shadow
+    // === Subtle background card (30% opacity, not the focal point) ===
     ctx.save();
-    ctx.shadowColor = 'rgba(0,0,0,0.12)';
-    ctx.shadowBlur = size * 0.05;
-    ctx.shadowOffsetY = size * 0.03;
+    ctx.shadowColor = 'rgba(0,0,0,0.10)';
+    ctx.shadowBlur = size * 0.04;
+    ctx.shadowOffsetY = size * 0.025;
     roundRect(ctx, pad, pad, size - pad * 2, size - pad * 2, cr);
-    ctx.fillStyle = colors.from;
+    ctx.fillStyle = '#FFFFFF';
     ctx.fill();
     ctx.restore();
 
-    // Gradient fill
-    const grad = ctx.createLinearGradient(pad, pad, pad, size - pad);
-    grad.addColorStop(0, colors.from);
-    grad.addColorStop(1, colors.to);
+    // Subtle chain-color tint on card
     roundRect(ctx, pad, pad, size - pad * 2, size - pad * 2, cr);
-    ctx.fillStyle = grad;
+    ctx.fillStyle = colors.from + '4D'; // 30% opacity
     ctx.fill();
 
-    // Inner shine
+    // Very soft inner shine (barely visible)
     ctx.save();
     roundRect(ctx, pad, pad, size - pad * 2, size - pad * 2, cr);
     ctx.clip();
     const shine = ctx.createLinearGradient(0, pad, 0, cy);
-    shine.addColorStop(0, 'rgba(255,255,255,0.4)');
+    shine.addColorStop(0, 'rgba(255,255,255,0.25)');
     shine.addColorStop(1, 'rgba(255,255,255,0)');
     ctx.fillStyle = shine;
     ctx.fillRect(pad, pad, size - pad * 2, cy - pad);
@@ -2078,7 +2354,6 @@ export class EmojiRenderer {
 
     // Border (tier-based)
     if (tier >= 7) {
-      // Holographic gradient border with multi-stop shimmer
       const holoGrad = ctx.createLinearGradient(pad, pad, size - pad, size - pad);
       holoGrad.addColorStop(0, '#FF6B9D');
       holoGrad.addColorStop(0.15, '#FFD93D');
@@ -2088,400 +2363,56 @@ export class EmojiRenderer {
       holoGrad.addColorStop(1, '#FF6B9D');
       roundRect(ctx, pad, pad, size - pad * 2, size - pad * 2, cr);
       ctx.strokeStyle = holoGrad;
-      ctx.lineWidth = size * 0.045;
+      ctx.lineWidth = size * 0.04;
       ctx.stroke();
-
-      // Outer glow halo for holographic effect
       ctx.save();
       ctx.globalAlpha = 0.15;
       roundRect(ctx, pad - size * 0.01, pad - size * 0.01, size - pad * 2 + size * 0.02, size - pad * 2 + size * 0.02, cr + size * 0.01);
       ctx.strokeStyle = holoGrad;
-      ctx.lineWidth = size * 0.03;
+      ctx.lineWidth = size * 0.025;
       ctx.stroke();
-      ctx.globalAlpha = 1;
       ctx.restore();
-
       drawSparkles(ctx, cx, cy, size, 5);
     } else if (tier >= 5) {
       roundRect(ctx, pad, pad, size - pad * 2, size - pad * 2, cr);
       ctx.strokeStyle = '#FFD54F';
-      ctx.lineWidth = size * 0.035;
+      ctx.lineWidth = size * 0.03;
       ctx.stroke();
       drawSparkles(ctx, cx, cy, size, 3);
     } else if (tier >= 3) {
       roundRect(ctx, pad, pad, size - pad * 2, size - pad * 2, cr);
-      ctx.strokeStyle = colors.to;
-      ctx.lineWidth = size * 0.025;
+      ctx.strokeStyle = colors.to + 'A0';
+      ctx.lineWidth = size * 0.02;
       ctx.stroke();
     } else {
       roundRect(ctx, pad, pad, size - pad * 2, size - pad * 2, cr);
-      ctx.strokeStyle = colors.to;
-      ctx.lineWidth = size * 0.02;
-      ctx.globalAlpha = 0.5;
+      ctx.strokeStyle = colors.to + '60';
+      ctx.lineWidth = size * 0.015;
       ctx.stroke();
-      ctx.globalAlpha = 1;
     }
 
-    // === Plush body (unique shape per chain) -- VOLUMETRIC RENDERING ===
-    const plushR = bodyR * 0.55;
-    const plushY = cy + size * 0.02;
+    // === LARGE ITEM ILLUSTRATION (the dominant visual) ===
+    const iconSize = size * 0.75; // 75% of the card
+    const iconY = cy + size * 0.02; // slightly below center for visual weight
 
-    // LAYER 1: Gradient contact shadow (replaces flat fill)
-    drawContactShadow(ctx, cx, plushY, plushR, plushY + plushR * 0.12);
+    // Drop shadow beneath the item illustration
+    drawContactShadow(ctx, cx, iconY, iconSize * 0.35, iconY + iconSize * 0.32);
 
-    // LAYER 2: Ambient occlusion at base (clipped to plush body)
-    ctx.save();
-    EmojiRenderer.drawPlushBody(ctx, cx, plushY, plushR, chainId);
-    ctx.clip();
-    drawAmbientOcclusion(ctx, cx, plushY, plushR);
-    ctx.restore();
-
-    // LAYER 3: Main body gradient (upgraded with stronger directional lighting)
-    const darkShadow = darkenColor(colors.to, 0.15);
-    const plushGrad = ctx.createRadialGradient(
-      cx - plushR * 0.35, plushY - plushR * 0.35, plushR * 0.05,
-      cx, plushY, plushR
-    );
-    plushGrad.addColorStop(0, '#FFFFFF');
-    plushGrad.addColorStop(0.3, colors.from);
-    plushGrad.addColorStop(0.7, colors.to);
-    plushGrad.addColorStop(1.0, darkShadow);
-    ctx.fillStyle = plushGrad;
-
-    // Draw chain-specific plush body shape
-    EmojiRenderer.drawPlushBody(ctx, cx, plushY, plushR, chainId);
-    ctx.fill();
-
-    // LAYER 4: Fabric texture overlay (clipped to body)
-    ctx.save();
-    EmojiRenderer.drawPlushBody(ctx, cx, plushY, plushR, chainId);
-    ctx.clip();
-    applyFabricTexture(ctx, cx, plushY, plushR);
-    ctx.restore();
-
-    // LAYER 5: Warm ambient light overlay (clipped to body)
-    ctx.save();
-    EmojiRenderer.drawPlushBody(ctx, cx, plushY, plushR, chainId);
-    ctx.clip();
-    drawWarmAmbient(ctx, cx, plushY, plushR);
-    ctx.restore();
-
-    // LAYER 5b: Sub-surface scattering (clipped to body)
-    ctx.save();
-    EmojiRenderer.drawPlushBody(ctx, cx, plushY, plushR, chainId);
-    ctx.clip();
-    drawSubSurfaceScatter(ctx, cx, plushY, plushR);
-    ctx.restore();
-
-    // LAYER 6: Stitching detail
-    drawStitching(
-      ctx, cx, plushY, plushR,
-      (c, x, y, r, cId) => EmojiRenderer.drawPlushBody(c, x, y, r, cId),
-      chainId, colors.to, size
-    );
-
-    // LAYER 6b: Rim light on shadow edge (lower-right)
-    drawGradientRimLight(ctx, cx, plushY, plushR);
-
-    // LAYER 6c: Body outline (softer/thinner than before)
-    ctx.strokeStyle = colors.to + '60';
-    ctx.lineWidth = size * 0.008;
-    EmojiRenderer.drawPlushBody(ctx, cx, plushY, plushR, chainId);
-    ctx.stroke();
-
-    // === Cute face ===
-    const faceY = plushY - plushR * 0.05;
-    const isHappy = tier >= 5;
-    drawCuteEyes(ctx, cx, faceY, size, isHappy);
-    drawBlush(ctx, cx, faceY, size);
-    drawSmile(ctx, cx, faceY, size);
-
-    // === Programmatic icon on the plush belly (replaces emoji) ===
-    const iconSize = size * 0.30;
-    const iconY = plushY + plushR * 0.45;
-
-    // Subtle circular background behind the icon
-    ctx.save();
-    ctx.fillStyle = 'rgba(255,255,255,0.20)';
-    ctx.beginPath();
-    ctx.arc(cx, iconY, iconSize * 0.55, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
-
-    // Draw the programmatic icon
+    // Draw the item illustration at full size
     const iconConfig = getItemIconConfig(chainId, tier);
     ctx.save();
     iconConfig.draw(ctx, cx, iconY, iconSize, tier, iconConfig.color, iconConfig.accent);
     ctx.restore();
 
-    // LAYER 7: Curved surface overlay on belly icon
-    drawCurvedSurfaceOverlay(ctx, cx, iconY, iconSize * 0.55);
-
-    // LAYER 7b: Specular highlight (two-part, upper-left)
-    drawSpecularHighlight(ctx, cx, plushY, plushR, 0.7);
+    // Warm ambient light overlay on the whole card (very subtle)
+    ctx.save();
+    roundRect(ctx, pad, pad, size - pad * 2, size - pad * 2, cr);
+    ctx.clip();
+    drawWarmAmbient(ctx, cx, cy, size * 0.4);
+    ctx.restore();
   }
 
-  /** Draw the plush body path for a specific chain shape */
-  private static drawPlushBody(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number, chainId: string): void {
-    ctx.beginPath();
-
-    switch (chainId) {
-      case 'flower': {
-        // Petal/tulip shape -- wider at top, tapered bottom
-        const w = r * 1.1;
-        const h = r * 1.15;
-        ctx.moveTo(cx, cy + h);
-        // Taper up from bottom-center to the wide top
-        ctx.bezierCurveTo(cx - w * 0.3, cy + h * 0.4, cx - w * 1.1, cy + h * 0.1, cx - w * 0.85, cy - h * 0.3);
-        // Round across the wide top (left petal lobe)
-        ctx.bezierCurveTo(cx - w * 0.7, cy - h * 0.85, cx - w * 0.25, cy - h * 1.0, cx, cy - h * 0.8);
-        // Top right petal lobe
-        ctx.bezierCurveTo(cx + w * 0.25, cy - h * 1.0, cx + w * 0.7, cy - h * 0.85, cx + w * 0.85, cy - h * 0.3);
-        // Taper back down to bottom
-        ctx.bezierCurveTo(cx + w * 1.1, cy + h * 0.1, cx + w * 0.3, cy + h * 0.4, cx, cy + h);
-        break;
-      }
-
-      case 'butterfly': {
-        // Wing/oval shape -- wider than tall, pinched at center
-        const w = r * 1.2;
-        const h = r * 0.85;
-        ctx.moveTo(cx, cy - h);
-        // Top-right to right wing bulge
-        ctx.bezierCurveTo(cx + w * 0.6, cy - h * 1.1, cx + w * 1.2, cy - h * 0.5, cx + w, cy);
-        // Right pinch to bottom-right
-        ctx.bezierCurveTo(cx + w * 1.2, cy + h * 0.5, cx + w * 0.6, cy + h * 1.1, cx, cy + h);
-        // Bottom-left to left wing bulge
-        ctx.bezierCurveTo(cx - w * 0.6, cy + h * 1.1, cx - w * 1.2, cy + h * 0.5, cx - w, cy);
-        // Left pinch back to top
-        ctx.bezierCurveTo(cx - w * 1.2, cy - h * 0.5, cx - w * 0.6, cy - h * 1.1, cx, cy - h);
-        break;
-      }
-
-      case 'fruit': {
-        // Apple shape -- round but slightly wider at bottom with a small indent at top
-        const w = r * 1.0;
-        const h = r * 1.05;
-        ctx.moveTo(cx, cy - h * 0.9);
-        // Top-right curve (slight indent at center top)
-        ctx.bezierCurveTo(cx + w * 0.35, cy - h * 1.05, cx + w * 1.05, cy - h * 0.6, cx + w * 0.95, cy - h * 0.05);
-        // Right side to bottom-right (wider at bottom)
-        ctx.bezierCurveTo(cx + w * 1.1, cy + h * 0.5, cx + w * 0.7, cy + h * 1.05, cx, cy + h);
-        // Bottom-left to left side
-        ctx.bezierCurveTo(cx - w * 0.7, cy + h * 1.05, cx - w * 1.1, cy + h * 0.5, cx - w * 0.95, cy - h * 0.05);
-        // Left side back up to top indent
-        ctx.bezierCurveTo(cx - w * 1.05, cy - h * 0.6, cx - w * 0.35, cy - h * 1.05, cx, cy - h * 0.9);
-        break;
-      }
-
-      case 'crystal': {
-        // Hexagonal gem shape -- faceted with soft rounded corners
-        const w = r * 0.95;
-        const h = r * 1.05;
-        const softR = r * 0.12;
-        // 6-sided gem: flat top/bottom, angled sides
-        const points: [number, number][] = [
-          [cx - w * 0.5, cy - h],        // top-left
-          [cx + w * 0.5, cy - h],         // top-right
-          [cx + w, cy - h * 0.15],        // right-upper
-          [cx + w * 0.7, cy + h * 0.85],  // right-lower
-          [cx - w * 0.7, cy + h * 0.85],  // left-lower
-          [cx - w, cy - h * 0.15],        // left-upper
-        ];
-        // Draw with rounded corners between each pair of edges
-        ctx.moveTo(
-          (points[5][0] + points[0][0]) / 2,
-          (points[5][1] + points[0][1]) / 2
-        );
-        for (let i = 0; i < 6; i++) {
-          const curr = points[i];
-          const next = points[(i + 1) % 6];
-          const midX = (curr[0] + next[0]) / 2;
-          const midY = (curr[1] + next[1]) / 2;
-          ctx.quadraticCurveTo(curr[0] + (curr[0] > cx ? -softR * 0.3 : softR * 0.3), curr[1], midX, midY);
-        }
-        break;
-      }
-
-      case 'nature': {
-        // Leaf/teardrop shape -- pointed at top, round at bottom
-        const w = r * 0.95;
-        const h = r * 1.15;
-        ctx.moveTo(cx, cy - h);
-        // Right side -- curves outward then rounds at bottom
-        ctx.bezierCurveTo(cx + w * 0.6, cy - h * 0.5, cx + w * 1.1, cy + h * 0.1, cx + w * 0.8, cy + h * 0.5);
-        // Bottom-right to bottom center (round bottom)
-        ctx.bezierCurveTo(cx + w * 0.55, cy + h * 0.95, cx + w * 0.15, cy + h * 1.05, cx, cy + h * 0.95);
-        // Bottom-left
-        ctx.bezierCurveTo(cx - w * 0.15, cy + h * 1.05, cx - w * 0.55, cy + h * 0.95, cx - w * 0.8, cy + h * 0.5);
-        // Left side back up to point
-        ctx.bezierCurveTo(cx - w * 1.1, cy + h * 0.1, cx - w * 0.6, cy - h * 0.5, cx, cy - h);
-        break;
-      }
-
-      case 'star': {
-        // 5-pointed star with very rounded points (plush star cushion)
-        const outerR = r * 1.1;
-        const innerR = r * 0.55;
-        const points = 5;
-        const startAngle = -Math.PI / 2;
-        // Build star vertices
-        const verts: [number, number][] = [];
-        for (let i = 0; i < points * 2; i++) {
-          const angle = startAngle + (i * Math.PI) / points;
-          const rad = i % 2 === 0 ? outerR : innerR;
-          verts.push([cx + Math.cos(angle) * rad, cy + Math.sin(angle) * rad]);
-        }
-        // Draw with rounded corners using quadratic curves through midpoints
-        const first = verts[0];
-        const last = verts[verts.length - 1];
-        ctx.moveTo((last[0] + first[0]) / 2, (last[1] + first[1]) / 2);
-        for (let i = 0; i < verts.length; i++) {
-          const curr = verts[i];
-          const next = verts[(i + 1) % verts.length];
-          const midX = (curr[0] + next[0]) / 2;
-          const midY = (curr[1] + next[1]) / 2;
-          ctx.quadraticCurveTo(curr[0], curr[1], midX, midY);
-        }
-        break;
-      }
-
-      case 'tea': {
-        // Mug/cup shape -- rounded rectangle, wider at top
-        const topW = r * 1.05;
-        const botW = r * 0.8;
-        const h = r * 1.0;
-        const cornerR = r * 0.25;
-        ctx.moveTo(cx - topW + cornerR, cy - h);
-        // Top edge
-        ctx.lineTo(cx + topW - cornerR, cy - h);
-        // Top-right corner
-        ctx.quadraticCurveTo(cx + topW, cy - h, cx + topW, cy - h + cornerR);
-        // Right side (tapers in toward bottom)
-        ctx.lineTo(cx + botW, cy + h - cornerR);
-        // Bottom-right corner
-        ctx.quadraticCurveTo(cx + botW, cy + h, cx + botW - cornerR, cy + h);
-        // Bottom edge
-        ctx.lineTo(cx - botW + cornerR, cy + h);
-        // Bottom-left corner
-        ctx.quadraticCurveTo(cx - botW, cy + h, cx - botW, cy + h - cornerR);
-        // Left side (tapers out toward top)
-        ctx.lineTo(cx - topW, cy - h + cornerR);
-        // Top-left corner
-        ctx.quadraticCurveTo(cx - topW, cy - h, cx - topW + cornerR, cy - h);
-        break;
-      }
-
-      case 'shell': {
-        // Shell/swirl shape -- slightly asymmetric, organic curves
-        const w = r * 1.0;
-        const h = r * 1.05;
-        ctx.moveTo(cx + w * 0.1, cy - h);
-        // Top-right -- asymmetric bulge
-        ctx.bezierCurveTo(cx + w * 0.8, cy - h * 1.05, cx + w * 1.15, cy - h * 0.4, cx + w * 0.95, cy + h * 0.1);
-        // Right to bottom-right -- sweeping curve
-        ctx.bezierCurveTo(cx + w * 0.8, cy + h * 0.6, cx + w * 0.5, cy + h * 1.05, cx - w * 0.1, cy + h);
-        // Bottom-left -- tighter curve
-        ctx.bezierCurveTo(cx - w * 0.6, cy + h * 0.95, cx - w * 1.05, cy + h * 0.5, cx - w * 0.95, cy - h * 0.05);
-        // Left back up to top -- softer asymmetry
-        ctx.bezierCurveTo(cx - w * 0.85, cy - h * 0.55, cx - w * 0.5, cy - h * 0.95, cx + w * 0.1, cy - h);
-        break;
-      }
-
-      case 'sweet': {
-        // Cupcake shape -- wider top dome, narrower bottom base
-        const topW = r * 1.05;
-        const botW = r * 0.7;
-        const h = r * 1.05;
-        const domeH = h * 0.55;
-        // Start at bottom-left
-        ctx.moveTo(cx - botW, cy + h);
-        // Bottom edge
-        ctx.lineTo(cx + botW, cy + h);
-        // Right side tapers up to dome start
-        ctx.lineTo(cx + topW * 0.85, cy + h - domeH);
-        // Dome -- wide rounded top
-        ctx.bezierCurveTo(
-          cx + topW * 1.15, cy - h * 0.3,
-          cx + topW * 0.6, cy - h * 1.05,
-          cx, cy - h * 0.95
-        );
-        ctx.bezierCurveTo(
-          cx - topW * 0.6, cy - h * 1.05,
-          cx - topW * 1.15, cy - h * 0.3,
-          cx - topW * 0.85, cy + h - domeH
-        );
-        // Left side down to bottom
-        ctx.lineTo(cx - botW, cy + h);
-        break;
-      }
-
-      case 'love': {
-        // Heart shape -- classic soft plush heart
-        const w = r * 1.0;
-        const h = r * 1.1;
-        // Start at the bottom point of the heart
-        ctx.moveTo(cx, cy + h * 0.85);
-        // Left side curve up to the left hump
-        ctx.bezierCurveTo(
-          cx - w * 0.3, cy + h * 0.4,
-          cx - w * 1.2, cy + h * 0.1,
-          cx - w * 1.0, cy - h * 0.3
-        );
-        // Left hump to center dip
-        ctx.bezierCurveTo(
-          cx - w * 0.85, cy - h * 0.85,
-          cx - w * 0.2, cy - h * 0.95,
-          cx, cy - h * 0.55
-        );
-        // Center dip to right hump
-        ctx.bezierCurveTo(
-          cx + w * 0.2, cy - h * 0.95,
-          cx + w * 0.85, cy - h * 0.85,
-          cx + w * 1.0, cy - h * 0.3
-        );
-        // Right hump down to bottom point
-        ctx.bezierCurveTo(
-          cx + w * 1.2, cy + h * 0.1,
-          cx + w * 0.3, cy + h * 0.4,
-          cx, cy + h * 0.85
-        );
-        break;
-      }
-
-      case 'cosmic': {
-        // Crescent/planet shape -- main circle body with a small ring arc
-        const bodyR = r * 0.85;
-        // Main planet circle
-        ctx.arc(cx, cy, bodyR, 0, Math.PI * 2);
-        ctx.closePath();
-        // Draw the ring as a separate ellipse (stroked later separately via fill only here)
-        // The ring wraps around -- draw it as a thick elliptical path behind
-        ctx.moveTo(cx + r * 1.2, cy + r * 0.05);
-        ctx.ellipse(cx, cy + r * 0.05, r * 1.2, r * 0.3, -0.15, 0, Math.PI * 2);
-        break;
-      }
-
-      case 'cafe': {
-        // Coffee bean shape -- vertical oval with a curved line through the middle
-        const w = r * 0.8;
-        const h = r * 1.1;
-        // Main bean oval
-        ctx.ellipse(cx, cy, w, h, 0, 0, Math.PI * 2);
-        break;
-      }
-
-      default: {
-        // Fallback: simple circle
-        ctx.arc(cx, cy, r, 0, Math.PI * 2);
-        break;
-      }
-    }
-
-    ctx.closePath();
-  }
-
-  /** Draw a generator -- chain-colored card with programmatic icon, tier-aware visuals */
+  /** Draw a generator -- chain-colored card with large source-object icon */
   private static drawGenerator(ctx: CanvasRenderingContext2D, size: number, chainId: string, genTier: number = 1): void {
     const colors = CHAIN_COLORS[chainId] || DEFAULT_COLORS;
     const cx = size / 2;
@@ -2522,7 +2453,6 @@ export class EmojiRenderer {
 
     // Tier-specific border decorations
     if (genTier >= 5) {
-      // Rainbow holographic border for T5
       const rGrad = ctx.createLinearGradient(pad, pad, size - pad, size - pad);
       rGrad.addColorStop(0, '#FF6B9D');
       rGrad.addColorStop(0.25, '#FFD93D');
@@ -2535,7 +2465,6 @@ export class EmojiRenderer {
       ctx.stroke();
       drawSparkles(ctx, cx, cy, size, 6);
     } else if (genTier >= 4) {
-      // Gold border + sparkles for T4
       roundRect(ctx, pad, pad, size - pad * 2, size - pad * 2, cr);
       ctx.strokeStyle = '#FFD700';
       ctx.lineWidth = size * 0.045;
@@ -2546,149 +2475,60 @@ export class EmojiRenderer {
       ctx.stroke();
       drawSparkles(ctx, cx, cy, size, 4);
     } else if (genTier >= 3) {
-      // Gold border for T3
       roundRect(ctx, pad, pad, size - pad * 2, size - pad * 2, cr);
       ctx.strokeStyle = '#FFD700';
       ctx.lineWidth = size * 0.04;
       ctx.stroke();
-      roundRect(ctx, pad + size * 0.03, pad + size * 0.03, size - pad * 2 - size * 0.06, size - pad * 2 - size * 0.06, cr - size * 0.02);
-      ctx.strokeStyle = 'rgba(255,255,255,0.35)';
-      ctx.lineWidth = size * 0.02;
-      ctx.stroke();
     } else if (genTier >= 2) {
-      // Silver border for T2
       roundRect(ctx, pad, pad, size - pad * 2, size - pad * 2, cr);
       ctx.strokeStyle = '#C0C0C0';
       ctx.lineWidth = size * 0.04;
       ctx.stroke();
-      roundRect(ctx, pad + size * 0.03, pad + size * 0.03, size - pad * 2 - size * 0.06, size - pad * 2 - size * 0.06, cr - size * 0.02);
-      ctx.strokeStyle = 'rgba(255,255,255,0.35)';
-      ctx.lineWidth = size * 0.02;
-      ctx.stroke();
     } else {
-      // Standard double border for T1
       roundRect(ctx, pad, pad, size - pad * 2, size - pad * 2, cr);
       ctx.strokeStyle = colors.to;
       ctx.lineWidth = size * 0.04;
       ctx.stroke();
-      roundRect(ctx, pad + size * 0.03, pad + size * 0.03, size - pad * 2 - size * 0.06, size - pad * 2 - size * 0.06, cr - size * 0.02);
-      ctx.strokeStyle = 'rgba(255,255,255,0.35)';
-      ctx.lineWidth = size * 0.02;
-      ctx.stroke();
     }
 
-    // Draw chain plush body shape as the generator icon -- VOLUMETRIC
-    const plushR = size * 0.22;
-    const plushY = cy + size * 0.02;
+    // === Large chain-themed source icon (replaces plush body) ===
+    const iconSize = size * 0.6;
+    const iconY = cy + size * 0.02;
 
-    // Contact shadow beneath generator plush
-    drawContactShadow(ctx, cx, plushY, plushR, plushY + plushR * 0.12);
+    // Drop shadow beneath the source icon
+    drawContactShadow(ctx, cx, iconY, iconSize * 0.3, iconY + iconSize * 0.28);
 
-    // AO at base (clipped)
+    // Draw the generator source icon
+    const genIconConfig = getGeneratorIconConfig(chainId, genTier);
     ctx.save();
-    EmojiRenderer.drawPlushBody(ctx, cx, plushY, plushR, chainId);
+    genIconConfig.draw(ctx, cx, iconY, iconSize, genTier, genIconConfig.color, genIconConfig.accent);
+    ctx.restore();
+
+    // Warm ambient overlay
+    ctx.save();
+    roundRect(ctx, pad, pad, size - pad * 2, size - pad * 2, cr);
     ctx.clip();
-    drawAmbientOcclusion(ctx, cx, plushY, plushR);
+    drawWarmAmbient(ctx, cx, cy, size * 0.35);
     ctx.restore();
 
-    // Directional body gradient
-    const genDarkShadow = darkenColor(colors.to, 0.15);
-    const plushGrad = ctx.createRadialGradient(
-      cx - plushR * 0.35, plushY - plushR * 0.35, plushR * 0.05,
-      cx, plushY, plushR
-    );
-    plushGrad.addColorStop(0, '#FFFFFF');
-    plushGrad.addColorStop(0.3, colors.from);
-    plushGrad.addColorStop(0.7, colors.to);
-    plushGrad.addColorStop(1.0, genDarkShadow);
-    ctx.fillStyle = plushGrad;
-    EmojiRenderer.drawPlushBody(ctx, cx, plushY, plushR, chainId);
-    ctx.fill();
-
-    // Fabric texture (clipped)
-    ctx.save();
-    EmojiRenderer.drawPlushBody(ctx, cx, plushY, plushR, chainId);
-    ctx.clip();
-    applyFabricTexture(ctx, cx, plushY, plushR);
-    ctx.restore();
-
-    // Warm ambient (clipped)
-    ctx.save();
-    EmojiRenderer.drawPlushBody(ctx, cx, plushY, plushR, chainId);
-    ctx.clip();
-    drawWarmAmbient(ctx, cx, plushY, plushR);
-    ctx.restore();
-
-    // SSS (clipped)
-    ctx.save();
-    EmojiRenderer.drawPlushBody(ctx, cx, plushY, plushR, chainId);
-    ctx.clip();
-    drawSubSurfaceScatter(ctx, cx, plushY, plushR);
-    ctx.restore();
-
-    // Stitching
-    drawStitching(
-      ctx, cx, plushY, plushR,
-      (c, x, y, r, cId) => EmojiRenderer.drawPlushBody(c, x, y, r, cId),
-      chainId, colors.to, size
-    );
-
-    // Rim light
-    drawGradientRimLight(ctx, cx, plushY, plushR);
-
-    // Body outline (softer)
-    ctx.strokeStyle = colors.to + '60';
-    ctx.lineWidth = size * 0.008;
-    EmojiRenderer.drawPlushBody(ctx, cx, plushY, plushR, chainId);
-    ctx.stroke();
-
-    // Specular highlight
-    drawSpecularHighlight(ctx, cx, plushY, plushR, 0.6);
-
-    // Cute face on the plush - higher tiers get happy eyes
-    const isHappy = genTier >= 4;
-    drawCuteEyes(ctx, cx, plushY - plushR * 0.05, size * 0.55, isHappy);
-    drawBlush(ctx, cx, plushY - plushR * 0.05, size * 0.55);
-    drawSmile(ctx, cx, plushY - plushR * 0.05, size * 0.55);
-
-    // Draw a miniature chain icon on the generator plush belly
-    const genIconSize = size * 0.18;
-    const genIconY = plushY + plushR * 0.45;
-    // Get the highest-tier icon config for this chain
-    const maxTierMap: Record<string, number> = {
-      flower: 8, butterfly: 6, fruit: 7, crystal: 5, nature: 6,
-      star: 6, tea: 7, shell: 6, sweet: 8, love: 6, cosmic: 7, cafe: 7,
-    };
-    const highTier = maxTierMap[chainId] || 5;
-    const iconConfig = getItemIconConfig(chainId, highTier);
-    ctx.save();
-    ctx.globalAlpha = 0.7;
-    iconConfig.draw(ctx, cx, genIconY, genIconSize, highTier, iconConfig.color, iconConfig.accent);
-    ctx.restore();
-
-    // Sparkle accents around the plush - more sparkles for higher tiers
-    ctx.fillStyle = `rgba(255,255,255,${0.5 + genTier * 0.1})`;
-    const sparklePositions = [
-      { x: cx - plushR * 1.3, y: plushY - plushR * 0.8 },
-      { x: cx + plushR * 1.3, y: plushY - plushR * 0.6 },
-      { x: cx - plushR * 1.1, y: plushY + plushR * 0.6 },
-    ];
-    // Add extra sparkle positions for higher tiers
-    if (genTier >= 3) {
-      sparklePositions.push({ x: cx + plushR * 1.0, y: plushY + plushR * 0.8 });
-    }
-    if (genTier >= 4) {
-      sparklePositions.push({ x: cx, y: plushY - plushR * 1.3 });
-    }
-    for (const sp of sparklePositions) {
-      const sr = size * (0.02 + genTier * 0.003);
-      ctx.beginPath();
-      ctx.moveTo(sp.x, sp.y - sr * 2);
-      ctx.quadraticCurveTo(sp.x + sr * 0.3, sp.y - sr * 0.3, sp.x + sr * 2, sp.y);
-      ctx.quadraticCurveTo(sp.x + sr * 0.3, sp.y + sr * 0.3, sp.x, sp.y + sr * 2);
-      ctx.quadraticCurveTo(sp.x - sr * 0.3, sp.y + sr * 0.3, sp.x - sr * 2, sp.y);
-      ctx.quadraticCurveTo(sp.x - sr * 0.3, sp.y - sr * 0.3, sp.x, sp.y - sr * 2);
-      ctx.fill();
+    // Sparkle accents for higher tiers
+    if (genTier >= 2) {
+      ctx.fillStyle = `rgba(255,255,255,${0.5 + genTier * 0.1})`;
+      const sparkleR = size * 0.3;
+      const sparkleCount = Math.min(genTier, 5);
+      for (let i = 0; i < sparkleCount; i++) {
+        const angle = (i / sparkleCount) * Math.PI * 2 - Math.PI / 4;
+        const sx = cx + Math.cos(angle) * sparkleR;
+        const sy = iconY + Math.sin(angle) * sparkleR;
+        const sr = size * (0.02 + genTier * 0.003);
+        ctx.beginPath();
+        ctx.moveTo(sx, sy - sr * 2);
+        ctx.quadraticCurveTo(sx + sr * 0.3, sy - sr * 0.3, sx + sr * 2, sy);
+        ctx.quadraticCurveTo(sx + sr * 0.3, sy + sr * 0.3, sx, sy + sr * 2);
+        ctx.quadraticCurveTo(sx - sr * 0.3, sy + sr * 0.3, sx - sr * 2, sy);
+        ctx.quadraticCurveTo(sx - sr * 0.3, sy - sr * 0.3, sx, sy - sr * 2);
+        ctx.fill();
+      }
     }
 
     // "+" badge (rose pink circle with white plus)
@@ -2702,7 +2542,6 @@ export class EmojiRenderer {
     ctx.strokeStyle = 'rgba(255,255,255,0.5)';
     ctx.lineWidth = size * 0.015;
     ctx.stroke();
-    // Draw "+" as canvas paths instead of text for consistency
     ctx.strokeStyle = '#FFFFFF';
     ctx.lineWidth = size * 0.025;
     ctx.lineCap = 'round';

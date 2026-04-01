@@ -195,7 +195,7 @@ export class SettingsScene extends Phaser.Scene {
     shareBg.fillStyle(0xF48FB1, 1);
     shareBg.fillRoundedRect(s(20), y, btnW, btnH, btnH / 2);
 
-    this.add.text(s(20) + btnW / 2, y + btnH / 2, '\uD83D\uDCF8 Share Garden Card', {
+    this.add.text(s(20) + btnW / 2, y + btnH / 2, 'Share Garden Card', {
       fontSize: fs(14), color: TEXT.WHITE, fontFamily: FONT, fontStyle: '600',
     }).setOrigin(0.5);
 

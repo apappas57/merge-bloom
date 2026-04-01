@@ -47,8 +47,8 @@ export class CollectionScene extends Phaser.Scene {
     const tabW = s(90);
     const tabH = s(30);
 
-    const itemsTab = this.createTab(width / 2 - tabW - s(4), tabY, tabW, tabH, '📖 Items', this.tab === 'items');
-    const badgesTab = this.createTab(width / 2 + s(4), tabY, tabW, tabH, '🎀 Badges', this.tab === 'badges');
+    const itemsTab = this.createTab(width / 2 - tabW - s(4), tabY, tabW, tabH, 'Items', this.tab === 'items');
+    const badgesTab = this.createTab(width / 2 + s(4), tabY, tabW, tabH, 'Badges', this.tab === 'badges');
 
     itemsTab.zone.on('pointerdown', () => { this.tab = 'items'; this.renderContent(save); itemsTab.setActive(true); badgesTab.setActive(false); });
     badgesTab.zone.on('pointerdown', () => { this.tab = 'badges'; this.renderContent(save); itemsTab.setActive(false); badgesTab.setActive(true); });
@@ -135,12 +135,22 @@ export class CollectionScene extends Phaser.Scene {
         this.contentContainer.add(bg);
 
         if (isFound) {
-          const emoji = this.add.text(ix + itemSize / 2, iconsY + itemSize / 2, item.emoji, { fontSize: fs(18) }).setOrigin(0.5);
-          this.contentContainer.add(emoji);
+          // Use rendered texture if available, fallback to name initial
+          const texKey = `${chain.id}_${item.tier}`;
+          if (this.textures.exists(texKey)) {
+            const img = this.add.image(ix + itemSize / 2, iconsY + itemSize / 2, texKey);
+            img.setDisplaySize(itemSize - s(4), itemSize - s(4));
+            this.contentContainer.add(img);
+          } else {
+            const initial = this.add.text(ix + itemSize / 2, iconsY + itemSize / 2, item.name.charAt(0), {
+              fontSize: fs(16), color: TEXT.PRIMARY, fontFamily: FONT, fontStyle: '700',
+            }).setOrigin(0.5);
+            this.contentContainer.add(initial);
+          }
 
           // Make tappable for lore
           const zone = this.add.zone(ix + itemSize / 2, iconsY + itemSize / 2, itemSize, itemSize).setInteractive();
-          zone.on('pointerdown', () => this.showLore(chain.id, item.tier, item.emoji, item.name));
+          zone.on('pointerdown', () => this.showLore(chain.id, item.tier, item.name, item.name));
           this.contentContainer.add(zone);
         } else {
           const q = this.add.text(ix + itemSize / 2, iconsY + itemSize / 2, '?', {
@@ -185,8 +195,20 @@ export class CollectionScene extends Phaser.Scene {
       this.contentContainer.add(bg);
 
       if (isEarned) {
-        const emoji = this.add.text(bx + badgeSize / 2, by + badgeSize / 2 - s(4), ach.emoji, { fontSize: fs(22) }).setOrigin(0.5);
-        this.contentContainer.add(emoji);
+        // Badge icon: canvas-drawn rosette
+        const badgeG = this.add.graphics();
+        const bcx = bx + badgeSize / 2, bcy = by + badgeSize / 2 - s(4);
+        const br = badgeSize * 0.28;
+        badgeG.fillStyle(0xD4B8E8, 1);
+        for (let pi = 0; pi < 8; pi++) {
+          const pa = (pi / 8) * Math.PI * 2;
+          badgeG.fillCircle(bcx + Math.cos(pa) * br * 0.7, bcy + Math.sin(pa) * br * 0.7, br * 0.4);
+        }
+        badgeG.fillStyle(0xFFD700, 1);
+        badgeG.fillCircle(bcx, bcy, br * 0.5);
+        badgeG.fillStyle(0xFFFFFF, 0.4);
+        badgeG.fillCircle(bcx - br * 0.1, bcy - br * 0.15, br * 0.15);
+        this.contentContainer.add(badgeG);
 
         const name = this.add.text(bx + badgeSize / 2, by + badgeSize + s(2), ach.name, {
           fontSize: fs(7), color: TEXT.PRIMARY, fontFamily: FONT_BODY, align: 'center',
@@ -194,8 +216,17 @@ export class CollectionScene extends Phaser.Scene {
         }).setOrigin(0.5, 0);
         this.contentContainer.add(name);
       } else {
-        const lock = this.add.text(bx + badgeSize / 2, by + badgeSize / 2, '🔒', { fontSize: fs(16) }).setOrigin(0.5);
-        this.contentContainer.add(lock);
+        // Lock icon (canvas-drawn)
+        const lockG = this.add.graphics();
+        const lcx = bx + badgeSize / 2, lcy = by + badgeSize / 2;
+        const lr = s(7);
+        lockG.fillStyle(0xD4B8E8, 0.6);
+        lockG.fillRoundedRect(lcx - lr, lcy - lr * 0.2, lr * 2, lr * 1.5, s(2));
+        lockG.lineStyle(s(2), 0xD4B8E8, 0.6);
+        lockG.beginPath();
+        lockG.arc(lcx, lcy - lr * 0.5, lr * 0.55, Math.PI, 0, false);
+        lockG.strokePath();
+        this.contentContainer.add(lockG);
 
         const name = this.add.text(bx + badgeSize / 2, by + badgeSize + s(2), '???', {
           fontSize: fs(7), color: TEXT.SECONDARY, fontFamily: FONT_BODY,
@@ -223,7 +254,17 @@ export class CollectionScene extends Phaser.Scene {
     card.lineStyle(s(1.5), COLORS.CELL_BORDER, 0.4);
     card.strokeRoundedRect(cx, cy, cardW, cardH, s(20));
 
-    const emojiText = this.add.text(width / 2, cy + s(30), emoji, { fontSize: fs(36) }).setOrigin(0.5).setDepth(202);
+    // Use rendered texture for lore card, fallback to text initial
+    let emojiObj: Phaser.GameObjects.GameObject;
+    const loreTex = `${chainId}_${tier}`;
+    if (this.textures.exists(loreTex)) {
+      const img = this.add.image(width / 2, cy + s(30), loreTex).setDisplaySize(s(40), s(40)).setDepth(202);
+      emojiObj = img;
+    } else {
+      emojiObj = this.add.text(width / 2, cy + s(30), name.charAt(0), {
+        fontSize: fs(32), color: TEXT.PRIMARY, fontFamily: FONT, fontStyle: '700',
+      }).setOrigin(0.5).setDepth(202);
+    }
     const nameText = this.add.text(width / 2, cy + s(65), name, {
       fontSize: fs(16), color: TEXT.PRIMARY, fontFamily: FONT, fontStyle: '700',
     }).setOrigin(0.5).setDepth(202);
@@ -240,7 +281,7 @@ export class CollectionScene extends Phaser.Scene {
     // Tap anywhere to close
     const closeZone = this.add.zone(width / 2, height / 2, width, height).setInteractive().setDepth(199);
     closeZone.on('pointerdown', () => {
-      [overlay, card, emojiText, nameText, loreText, tierLabel, closeZone].forEach(o => o.destroy());
+      [overlay, card, emojiObj, nameText, loreText, tierLabel, closeZone].forEach(o => o.destroy());
     });
   }
 

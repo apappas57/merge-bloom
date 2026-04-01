@@ -126,6 +126,7 @@ export class GameScene extends Phaser.Scene {
     this.events.on('shop-buy-generator', this.onBuyGenerator, this);
     this.events.on('storage-retrieve', this.onStorageRetrieve, this);
     this.events.on('claim-order', this.onClaimOrder, this);
+    this.events.on('claim-order-item', this.onClaimOrderItem, this);
     this.events.on('item-preview', this.showChainPreview, this);
     this.events.on('daily-challenge-complete', (reward: { xp: number; coins: number }) => {
       this.addXP(reward.xp);
@@ -568,22 +569,28 @@ export class GameScene extends Phaser.Scene {
   }
 
   private createAmbientSparkles(width: number, height: number): void {
-    const sparkles = ['💕', '✨', '🌸', '💗', '⭐', '🎀', '💖'];
+    // Canvas-drawn shape sparkles (hearts, circles, blossoms)
+    const sparkleColors = [0xFF6B9D, 0xFFD93D, 0xD4A5FF, 0x87CEEB, 0xE8A4C8, 0xF48FB1, 0xA8E6CF];
+    const sparkleShapes = ['heart', 'circle', 'blossom', 'diamond'] as const;
 
-    // Original emoji sparkles (slightly fewer to make room for star graphics)
     for (let i = 0; i < 4; i++) {
-      const e = sparkles[Phaser.Math.Between(0, sparkles.length - 1)];
+      const g = this.add.graphics().setDepth(0).setAlpha(0.08);
+      const color = sparkleColors[Phaser.Math.Between(0, sparkleColors.length - 1)];
+      const shape = sparkleShapes[Phaser.Math.Between(0, sparkleShapes.length - 1)];
+      const r = s(Phaser.Math.Between(3, 6));
+      this.drawSparkleShape(g, 0, 0, r, color, shape);
+
       const x = Phaser.Math.Between(0, width);
       const y = Phaser.Math.Between(SIZES.TOP_BAR, height - SIZES.BOTTOM_BAR);
-      const t = this.add.text(x, y, e, { fontSize: fs(Phaser.Math.Between(8, 14)) })
-        .setOrigin(0.5).setAlpha(0.08).setDepth(0);
+      g.setPosition(x, y);
+
       this.tweens.add({
-        targets: t, y: y - s(Phaser.Math.Between(40, 100)), alpha: 0,
+        targets: g, y: y - s(Phaser.Math.Between(40, 100)), alpha: 0,
         duration: Phaser.Math.Between(5000, 10000), delay: Phaser.Math.Between(0, 5000),
         repeat: -1,
         onRepeat: () => {
-          t.setPosition(Phaser.Math.Between(0, width), Phaser.Math.Between(SIZES.TOP_BAR, height - SIZES.BOTTOM_BAR));
-          t.setAlpha(0.08);
+          g.setPosition(Phaser.Math.Between(0, width), Phaser.Math.Between(SIZES.TOP_BAR, height - SIZES.BOTTOM_BAR));
+          g.setAlpha(0.08);
         },
       });
     }
@@ -883,28 +890,8 @@ export class GameScene extends Phaser.Scene {
       this.mascot.reactToMerge(result.newItem.tier);
       this.checkAchievements(result.newItem.chainId, result.newItem.tier);
 
-      // Check if this new item fulfills an order — if so, consume it
-      const orderMatch = this.orderSystem.findMatchingOrder(result.newItem.chainId, result.newItem.tier);
-      if (orderMatch) {
-        // Consume the item from the board
-        this.items.delete(newItem.data_.id);
-        this.board.setOccupied(newItem.data_.col, newItem.data_.row, null);
-
-        // Fly item to top of screen (toward order bar) then destroy
-        this.tweens.add({
-          targets: newItem, y: s(60), alpha: 0, scaleX: 0.3, scaleY: 0.3,
-          duration: 400, ease: 'Power2',
-          onComplete: () => newItem.destroy(),
-        });
-
-        const completed = this.orderSystem.fulfillItem(orderMatch.orderIdx, orderMatch.slotIdx);
-        if (completed) {
-          // Auto-claim immediately — no visible "complete" state needed
-          this.onClaimOrder(orderMatch.orderIdx);
-        } else {
-          this.updateUI();
-        }
-      }
+      // Orders are NOT auto-consumed. The UI will highlight fulfillable orders
+      // and the player must tap the order card to claim items one at a time.
 
       const c1 = this.questSystem.onItemCreated(result.newItem.chainId, result.newItem.tier);
       const c2 = this.questSystem.onMerge();
@@ -1066,24 +1053,29 @@ export class GameScene extends Phaser.Scene {
     this.addXP(reward.xp);
     const { width, height } = this.scale;
 
-    // Hearts instead of generic confetti
+    // Canvas-drawn heart particles
     for (let i = 0; i < 8; i++) {
-      const h = this.add.text(
-        width / 2 + Phaser.Math.Between(-s(80), s(80)),
-        height / 2 + s(20), '💕', { fontSize: fs(Phaser.Math.Between(12, 20)) }
-      ).setOrigin(0.5).setDepth(3001);
+      const hg = this.add.graphics().setDepth(3001);
+      const hx = width / 2 + Phaser.Math.Between(-s(80), s(80));
+      const hy = height / 2 + s(20);
+      const hr = s(Phaser.Math.Between(4, 7));
+      hg.setPosition(hx, hy);
+      hg.fillStyle(0xFF6B9D, 0.9);
+      hg.fillCircle(-hr * 0.3, -hr * 0.15, hr * 0.45);
+      hg.fillCircle(hr * 0.3, -hr * 0.15, hr * 0.45);
+      hg.fillTriangle(-hr * 0.65, 0, hr * 0.65, 0, 0, hr * 0.7);
       this.tweens.add({
-        targets: h, y: h.y - s(Phaser.Math.Between(60, 120)), alpha: 0,
-        duration: 1200, delay: i * 80, onComplete: () => h.destroy(),
+        targets: hg, y: hy - s(Phaser.Math.Between(60, 120)), alpha: 0,
+        duration: 1200, delay: i * 80, onComplete: () => hg.destroy(),
       });
     }
 
-    const banner = this.add.text(width / 2, height / 2, `✅ ${quest.def.description}`, {
+    const banner = this.add.text(width / 2, height / 2, quest.def.description, {
       fontSize: fs(17), color: TEXT.PRIMARY, fontFamily: FONT, fontStyle: '600',
       backgroundColor: 'rgba(255,240,245,0.95)', padding: { x: s(16), y: s(12) },
     }).setOrigin(0.5).setDepth(3000);
 
-    const rewardTxt = this.add.text(width / 2, height / 2 + s(35), `+${reward.gems} 💎  +${reward.xp} ⭐`, {
+    const rewardTxt = this.add.text(width / 2, height / 2 + s(35), `+${reward.gems} gems  +${reward.xp} XP`, {
       fontSize: fs(14), color: TEXT.MINT, fontFamily: FONT, fontStyle: '600',
       backgroundColor: 'rgba(255,240,245,0.95)', padding: { x: s(12), y: s(8) },
     }).setOrigin(0.5).setDepth(3000);
@@ -1205,7 +1197,7 @@ export class GameScene extends Phaser.Scene {
     placeBg.fillStyle(0xFF9CAD, 1);
     placeBg.fillRoundedRect(width / 2 + gap / 2, cardY + cardH - s(48), btnW, btnH, btnH / 2);
 
-    const placeText = this.add.text(width / 2 + btnW / 2 + gap / 2, cardY + cardH - s(32), '🌸 Place', {
+    const placeText = this.add.text(width / 2 + btnW / 2 + gap / 2, cardY + cardH - s(32), 'Place', {
       fontSize: fs(12), color: TEXT.WHITE, fontFamily: FONT, fontStyle: '600',
     }).setOrigin(0.5).setDepth(4003);
 
@@ -1320,7 +1312,7 @@ export class GameScene extends Phaser.Scene {
     const { width, height } = this.scale;
     const coinReward = rewards.find(r => r.type === 'coins');
     if (coinReward) {
-      const ct = this.add.text(width / 2, height / 2, `+${coinReward.amount} 🪙`, {
+      const ct = this.add.text(width / 2, height / 2, `+${coinReward.amount} coins`, {
         fontSize: fs(24), color: TEXT.GOLD, fontFamily: FONT, fontStyle: '700',
         stroke: '#FFFFFF', strokeThickness: s(3),
       }).setOrigin(0.5).setDepth(3000).setScale(0);
@@ -1332,15 +1324,20 @@ export class GameScene extends Phaser.Scene {
       });
     }
 
-    // Hearts
+    // Canvas-drawn heart particles
     for (let i = 0; i < 6; i++) {
-      const h = this.add.text(
-        width / 2 + Phaser.Math.Between(-s(60), s(60)),
-        height / 2, '💕', { fontSize: fs(Phaser.Math.Between(12, 18)) }
-      ).setOrigin(0.5).setDepth(3001);
+      const hg = this.add.graphics().setDepth(3001);
+      const hx = width / 2 + Phaser.Math.Between(-s(60), s(60));
+      const hy = height / 2;
+      const hr = s(Phaser.Math.Between(4, 6));
+      hg.setPosition(hx, hy);
+      hg.fillStyle(0xFF6B9D, 0.9);
+      hg.fillCircle(-hr * 0.3, -hr * 0.15, hr * 0.45);
+      hg.fillCircle(hr * 0.3, -hr * 0.15, hr * 0.45);
+      hg.fillTriangle(-hr * 0.65, 0, hr * 0.65, 0, 0, hr * 0.7);
       this.tweens.add({
-        targets: h, y: h.y - s(Phaser.Math.Between(50, 100)), alpha: 0,
-        duration: 1000, delay: i * 60, onComplete: () => h.destroy(),
+        targets: hg, y: hy - s(Phaser.Math.Between(50, 100)), alpha: 0,
+        duration: 1000, delay: i * 60, onComplete: () => hg.destroy(),
       });
     }
 
@@ -1350,6 +1347,58 @@ export class GameScene extends Phaser.Scene {
     this.saveGame();
     // Check story beats after order celebration settles
     this.time.delayedCall(2000, () => this.checkStoryBeats());
+  }
+
+  /**
+   * Handle tap on an order card in the UI — find the first matching board item,
+   * animate it flying to the order bar, fulfill one slot, and check completion.
+   */
+  private onClaimOrderItem(orderIdx: number): void {
+    const orders = this.orderSystem.getActiveOrders();
+    const order = orders[orderIdx];
+    if (!order || order.completed) return;
+
+    // Find the first unfulfilled item slot and a matching board item
+    for (let si = 0; si < order.def.items.length; si++) {
+      const req = order.def.items[si];
+      if (order.progress[si] >= req.quantity) continue;
+
+      // Search board items for a match
+      let matchItem: MergeItem | null = null;
+      this.items.forEach(item => {
+        if (!matchItem && item.data_.chainId === req.chainId && item.data_.tier === req.tier) {
+          matchItem = item;
+        }
+      });
+
+      if (!matchItem) continue;
+
+      // Found a match — consume it from the board
+      const mi = matchItem as MergeItem;
+      this.items.delete(mi.data_.id);
+      this.board.setOccupied(mi.data_.col, mi.data_.row, null);
+      mi.disableInteractive();
+
+      // Animate item flying to order bar
+      this.tweens.add({
+        targets: mi, y: s(60), alpha: 0, scaleX: 0.3, scaleY: 0.3,
+        duration: 400, ease: 'Power2',
+        onComplete: () => mi.destroy(),
+      });
+
+      this.sound_.merge(req.tier);
+
+      const completed = this.orderSystem.fulfillItem(orderIdx, si);
+      if (completed) {
+        this.time.delayedCall(450, () => this.onClaimOrder(orderIdx));
+      } else {
+        this.updateUI();
+      }
+      this.saveGame();
+      return; // Only consume one item per tap
+    }
+
+    // No matching item found on board — nothing happens
   }
 
   private checkAchievements(newChainId?: string, newTier?: number): void {
@@ -1411,11 +1460,19 @@ export class GameScene extends Phaser.Scene {
   }
 
   private updateUI(): void {
+    // Build a lightweight map of board items for order matching
+    const boardItemMap = new Map<string, { chainId: string; tier: number }>();
+    this.items.forEach((item, id) => {
+      boardItemMap.set(id, { chainId: item.data_.chainId, tier: item.data_.tier });
+    });
+    const boardMatches = this.orderSystem.findBoardMatches(boardItemMap);
+
     this.scene.get('UIScene').events.emit('update-ui', {
       gems: this.gems, coins: this.orderSystem.coins, level: this.playerLevel,
       xp: this.playerXP, xpToNext: this.xpToNext,
       quests: this.questSystem.getActiveQuests(),
       orders: this.orderSystem.getActiveOrders(),
+      boardMatches,
     });
   }
 
@@ -1540,14 +1597,22 @@ export class GameScene extends Phaser.Scene {
         });
       }
 
-      // Item emoji
-      const emoji = this.add.text(centerX, rowY - s(2), item.emoji, {
-        fontSize: fs(isCurrent ? 18 : 15),
-      }).setOrigin(0.5);
-      container.add(emoji);
+      // Item icon: use rendered texture if available
+      const previewTexKey = `${itemData.chainId}_${item.tier}`;
+      if (this.textures.exists(previewTexKey)) {
+        const previewImg = this.add.image(centerX, rowY - s(2), previewTexKey);
+        const displaySize = isCurrent ? s(20) : s(16);
+        previewImg.setDisplaySize(displaySize, displaySize);
+        container.add(previewImg);
+      } else {
+        const itemInitial = this.add.text(centerX, rowY - s(2), item.name.charAt(0), {
+          fontSize: fs(isCurrent ? 16 : 13), color: TEXT.PRIMARY, fontFamily: FONT, fontStyle: '700',
+        }).setOrigin(0.5);
+        container.add(itemInitial);
+      }
 
-      // Tier label or star marker
-      const label = isCurrent ? `T${item.tier} ★` : isMax ? `T${item.tier} ✨` : `T${item.tier}`;
+      // Tier label
+      const label = isCurrent ? `T${item.tier}` : `T${item.tier}`;
       const labelColor = isCurrent ? TEXT.ACCENT : isMax ? TEXT.GOLD : TEXT.SECONDARY;
       const tierText = this.add.text(centerX, rowY + s(14), label, {
         fontSize: fs(7), color: labelColor, fontFamily: FONT_BODY, fontStyle: isCurrent ? '700' : '400',
@@ -2011,8 +2076,17 @@ export class GameScene extends Phaser.Scene {
       { fontSize: fs(12), color: TEXT.SECONDARY, fontFamily: FONT_BODY, align: 'center', lineSpacing: s(4) }
     ).setOrigin(0.5);
     container.add(msg);
-    const sparkle = this.add.text(width / 2, cardY + s(105), '🌸', { fontSize: fs(20) }).setOrigin(0.5);
-    container.add(sparkle);
+    // Canvas-drawn blossom sparkle
+    const sparkleG = this.add.graphics();
+    const spX = width / 2, spY = cardY + s(105), spR = s(8);
+    sparkleG.fillStyle(0xF8BBD0, 0.8);
+    for (let pi = 0; pi < 5; pi++) {
+      const pa = (pi / 5) * Math.PI * 2 - Math.PI / 2;
+      sparkleG.fillEllipse(spX + Math.cos(pa) * spR * 0.4, spY + Math.sin(pa) * spR * 0.4, spR * 0.45, spR * 0.3);
+    }
+    sparkleG.fillStyle(0xFFD54F, 1);
+    sparkleG.fillCircle(spX, spY, spR * 0.12);
+    container.add(sparkleG);
     container.setAlpha(0);
     container.y = s(10);
     this.tweens.add({
@@ -2028,6 +2102,51 @@ export class GameScene extends Phaser.Scene {
     });
     this.mascot.react('happy');
     this.mascot.showSpeech('I kept working! 🌸', 3000);
+  }
+
+  /** Draw a canvas sparkle shape for ambient/celebration effects */
+  private drawSparkleShape(g: Phaser.GameObjects.Graphics, cx: number, cy: number, r: number, color: number, shape: string): void {
+    g.fillStyle(color, 1);
+    switch (shape) {
+      case 'heart':
+        g.fillCircle(cx - r * 0.3, cy - r * 0.15, r * 0.45);
+        g.fillCircle(cx + r * 0.3, cy - r * 0.15, r * 0.45);
+        g.fillTriangle(cx - r * 0.65, cy, cx + r * 0.65, cy, cx, cy + r * 0.7);
+        break;
+      case 'circle':
+        g.fillCircle(cx, cy, r * 0.6);
+        g.fillStyle(0xFFFFFF, 0.35);
+        g.fillCircle(cx - r * 0.15, cy - r * 0.15, r * 0.2);
+        break;
+      case 'blossom':
+        for (let i = 0; i < 5; i++) {
+          const a = (i / 5) * Math.PI * 2 - Math.PI / 2;
+          g.fillEllipse(cx + Math.cos(a) * r * 0.35, cy + Math.sin(a) * r * 0.35, r * 0.35, r * 0.2);
+        }
+        g.fillStyle(0xFFD54F, 1);
+        g.fillCircle(cx, cy, r * 0.1);
+        break;
+      case 'diamond':
+        g.beginPath();
+        g.moveTo(cx, cy - r); g.lineTo(cx + r * 0.6, cy);
+        g.lineTo(cx, cy + r); g.lineTo(cx - r * 0.6, cy);
+        g.closePath(); g.fillPath();
+        break;
+      default: {
+        // 4-point star fallback
+        g.beginPath();
+        g.moveTo(cx, cy - r);
+        g.lineTo(cx + r * 0.3, cy - r * 0.3);
+        g.lineTo(cx + r, cy);
+        g.lineTo(cx + r * 0.3, cy + r * 0.3);
+        g.lineTo(cx, cy + r);
+        g.lineTo(cx - r * 0.3, cy + r * 0.3);
+        g.lineTo(cx - r, cy);
+        g.lineTo(cx - r * 0.3, cy - r * 0.3);
+        g.closePath(); g.fillPath();
+        break;
+      }
+    }
   }
 
   public async generateGardenCard(): Promise<Blob> {

@@ -119,8 +119,22 @@ export class Mascot extends Phaser.GameObjects.Container {
     this.drawMouth('smile');
     this.add(this.mouth);
 
-    // Flower on ear instead of on top
-    this.flower = scene.add.text(sz * 0.45, -sz * 0.75, '🌸', { fontSize: fs(8) }).setOrigin(0.5);
+    // Flower on ear (canvas-drawn cherry blossom)
+    const flowerGfx = scene.add.graphics();
+    const flX = sz * 0.45, flY = -sz * 0.75, flR = sz * 0.22;
+    flowerGfx.fillStyle(0xF8BBD0, 0.9);
+    for (let pi = 0; pi < 5; pi++) {
+      const pa = (pi / 5) * Math.PI * 2 - Math.PI / 2;
+      flowerGfx.fillEllipse(
+        flX + Math.cos(pa) * flR * 0.4,
+        flY + Math.sin(pa) * flR * 0.4,
+        flR * 0.45, flR * 0.3
+      );
+    }
+    flowerGfx.fillStyle(0xFFD54F, 1);
+    flowerGfx.fillCircle(flX, flY, flR * 0.15);
+    this.flower = scene.add.text(0, 0, '', { fontSize: fs(1) }).setAlpha(0); // kept for tween compat
+    this.add(flowerGfx);
     this.add(this.flower);
 
     this.setDepth(50);
@@ -217,17 +231,22 @@ export class Mascot extends Phaser.GameObjects.Container {
         targets: this, y: this.y - s(15), duration: 200,
         yoyo: true, ease: 'Power2',
       });
-      // Spawn hearts
+      // Spawn canvas-drawn hearts
       for (let i = 0; i < 3; i++) {
-        const heart = this.scene.add.text(
-          this.x + Phaser.Math.Between(-s(20), s(20)),
-          this.y - s(20),
-          '💕', { fontSize: fs(12) }
-        ).setOrigin(0.5).setDepth(51);
+        const hg = this.scene.add.graphics().setDepth(51);
+        const hx = this.x + Phaser.Math.Between(-s(20), s(20));
+        const hy = this.y - s(20);
+        const hr = s(5);
+        hg.setPosition(hx, hy);
+        hg.fillStyle(0xFF6B9D, 0.9);
+        // Heart shape using two circles + triangle (Phaser-compatible)
+        hg.fillCircle(-hr * 0.3, -hr * 0.15, hr * 0.45);
+        hg.fillCircle(hr * 0.3, -hr * 0.15, hr * 0.45);
+        hg.fillTriangle(-hr * 0.65, 0, hr * 0.65, 0, 0, hr * 0.7);
         this.scene.tweens.add({
-          targets: heart, y: heart.y - s(30), alpha: 0,
+          targets: hg, y: hy - s(30), alpha: 0,
           duration: 800, delay: i * 150,
-          onComplete: () => heart.destroy(),
+          onComplete: () => hg.destroy(),
         });
       }
     } else if (mood === 'worried') {
@@ -291,10 +310,11 @@ export class Mascot extends Phaser.GameObjects.Container {
     this.leftEye.setScale(1, 0.1);
     this.rightEye.setScale(1, 0.1);
 
-    // Zzz — add to THIS container so it moves with the mascot
+    // Zzz — canvas-drawn, add to THIS container so it moves with the mascot
     const sz = this.size;
-    const zzz = this.scene.add.text(sz * 0.7, -sz * 0.6, '💤', { fontSize: fs(10) })
-      .setOrigin(0.5).setAlpha(0);
+    const zzz = this.scene.add.text(sz * 0.7, -sz * 0.6, 'z', {
+      fontSize: fs(10), color: '#B07A9E', fontFamily: FONT, fontStyle: '700',
+    }).setOrigin(0.5).setAlpha(0);
     this.add(zzz);
     this.scene.tweens.add({
       targets: zzz, alpha: 0.7, y: -sz * 0.9,

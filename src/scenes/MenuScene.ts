@@ -135,9 +135,9 @@ export class MenuScene extends Phaser.Scene {
     this.drawBow(bowG, width / 2, s(50), s(12));
 
     // === FOOTER ===
-    this.add.text(width / 2, height - s(35), 'Made with love', {
-      fontSize: fs(11), color: TEXT.SECONDARY, fontFamily: FONT_BODY,
-    }).setOrigin(0.5).setAlpha(0.5).setDepth(10);
+    this.add.text(width / 2, height - s(35), 'For Allie xx', {
+      fontSize: fs(13), color: TEXT.PRIMARY, fontFamily: FONT, fontStyle: '600',
+    }).setOrigin(0.5).setAlpha(0.6).setDepth(10);
 
     this.cameras.main.fadeIn(600, 255, 240, 245);
   }

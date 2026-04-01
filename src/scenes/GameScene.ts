@@ -194,8 +194,29 @@ export class GameScene extends Phaser.Scene {
   private createTrashZone(width: number, height: number): void {
     const trashY = height - SIZES.BOTTOM_BAR - s(38);
     const trashX = width - s(32);
-    const trashIcon = this.add.text(trashX, trashY, '🗑️', { fontSize: fs(16) })
-      .setOrigin(0.5).setAlpha(0.3).setDepth(4);
+    // Canvas-drawn trash can icon
+    const trashIcon = this.add.graphics().setAlpha(0.3).setDepth(4);
+    const tSz = s(8);
+    trashIcon.fillStyle(0x9B7EAB, 1);
+    // Lid
+    trashIcon.fillRect(trashX - tSz * 0.8, trashY - tSz * 0.6, tSz * 1.6, tSz * 0.25);
+    trashIcon.fillRect(trashX - tSz * 0.3, trashY - tSz * 0.85, tSz * 0.6, tSz * 0.3);
+    // Body (tapered)
+    trashIcon.beginPath();
+    trashIcon.moveTo(trashX - tSz * 0.7, trashY - tSz * 0.3);
+    trashIcon.lineTo(trashX + tSz * 0.7, trashY - tSz * 0.3);
+    trashIcon.lineTo(trashX + tSz * 0.55, trashY + tSz * 0.7);
+    trashIcon.lineTo(trashX - tSz * 0.55, trashY + tSz * 0.7);
+    trashIcon.closePath();
+    trashIcon.fillPath();
+    // Lines
+    trashIcon.lineStyle(s(0.5), 0xFFFFFF, 0.4);
+    trashIcon.beginPath();
+    trashIcon.moveTo(trashX - tSz * 0.2, trashY - tSz * 0.15);
+    trashIcon.lineTo(trashX - tSz * 0.15, trashY + tSz * 0.55);
+    trashIcon.moveTo(trashX + tSz * 0.2, trashY - tSz * 0.15);
+    trashIcon.lineTo(trashX + tSz * 0.15, trashY + tSz * 0.55);
+    trashIcon.strokePath();
     const trashLabel = this.add.text(trashX, trashY + s(14), 'Trash', {
       fontSize: fs(7), color: TEXT.SECONDARY, fontFamily: FONT_BODY,
     }).setOrigin(0.5).setAlpha(0.3).setDepth(4);
@@ -379,11 +400,11 @@ export class GameScene extends Phaser.Scene {
       preview.setAlpha(0.6);
       container.add(preview);
     } else {
-      // Fallback to emoji text
-      const emoji = this.add.text(0, 0, nextItem.emoji, {
-        fontSize: fs(14),
+      // Fallback to name initial
+      const initial = this.add.text(0, 0, nextItem.name.charAt(0), {
+        fontSize: fs(12), color: TEXT.PRIMARY, fontFamily: FONT, fontStyle: '700',
       }).setOrigin(0.5).setAlpha(0.6);
-      container.add(emoji);
+      container.add(initial);
     }
 
     // Small "+" indicator
@@ -1104,7 +1125,7 @@ export class GameScene extends Phaser.Scene {
   private onLevelUp(): void {
     this.sound_.levelUp();
     const { width, height } = this.scale;
-    const txt = this.add.text(width / 2, height / 2 - s(60), `🎉 Level ${this.playerLevel}!`, {
+    const txt = this.add.text(width / 2, height / 2 - s(60), `Level ${this.playerLevel}!`, {
       fontSize: fs(34), color: TEXT.ACCENT, fontFamily: FONT, fontStyle: '700',
       stroke: '#FFFFFF', strokeThickness: s(4),
     }).setOrigin(0.5).setDepth(3000).setScale(0);
@@ -1165,10 +1186,17 @@ export class GameScene extends Phaser.Scene {
     card.lineStyle(s(1.5), 0xF8BBD0, 0.5);
     card.strokeRoundedRect(cardX, cardY, cardW, cardH, r);
 
-    // Item emoji large
-    const emojiText = this.add.text(width / 2, cardY + s(30), emoji, {
-      fontSize: fs(36),
-    }).setOrigin(0.5).setDepth(4002);
+    // Item icon large (use rendered texture)
+    let emojiText: Phaser.GameObjects.GameObject;
+    const gardenTexKey = `${chainId}_${tier}`;
+    if (this.textures.exists(gardenTexKey)) {
+      emojiText = this.add.image(width / 2, cardY + s(30), gardenTexKey)
+        .setDisplaySize(s(40), s(40)).setDepth(4002);
+    } else {
+      emojiText = this.add.text(width / 2, cardY + s(30), name.charAt(0), {
+        fontSize: fs(30), color: TEXT.PRIMARY, fontFamily: FONT, fontStyle: '700',
+      }).setOrigin(0.5).setDepth(4002);
+    }
 
     // Title
     const title = this.add.text(width / 2, cardY + s(65), `Place ${name} in your garden?`, {
@@ -1430,8 +1458,19 @@ export class GameScene extends Phaser.Scene {
     bg.strokeRoundedRect(toastX, toastY, toastW, toastH, toastH / 2);
     container.add(bg);
 
-    const emoji = this.add.text(toastX + s(18), toastY + toastH / 2, ach.emoji, { fontSize: fs(20) }).setOrigin(0, 0.5);
-    container.add(emoji);
+    // Canvas-drawn badge rosette icon
+    const badgeG = this.add.graphics();
+    const bIconX = toastX + s(26), bIconY = toastY + toastH / 2, bIconR = s(10);
+    badgeG.fillStyle(0xD4B8E8, 1);
+    for (let pi = 0; pi < 8; pi++) {
+      const pa = (pi / 8) * Math.PI * 2;
+      badgeG.fillCircle(bIconX + Math.cos(pa) * bIconR * 0.6, bIconY + Math.sin(pa) * bIconR * 0.6, bIconR * 0.35);
+    }
+    badgeG.fillStyle(0xFFD700, 1);
+    badgeG.fillCircle(bIconX, bIconY, bIconR * 0.4);
+    badgeG.fillStyle(0xFFFFFF, 0.4);
+    badgeG.fillCircle(bIconX - bIconR * 0.1, bIconY - bIconR * 0.12, bIconR * 0.12);
+    container.add(badgeG);
 
     const title = this.add.text(toastX + s(48), toastY + s(12), ach.name, {
       fontSize: fs(12), color: TEXT.PRIMARY, fontFamily: FONT, fontStyle: '700',
@@ -1705,17 +1744,16 @@ export class GameScene extends Phaser.Scene {
     card.strokeRoundedRect(cardX, cardY, cardW, cardH, r);
     container.add(card);
 
-    // Banner title
-    const bannerEmoji = reward.special ? '🎊' : reward.type === 'gems' ? '💎' : '🪙';
-    const title = this.add.text(width / 2, cardY + s(25), `${bannerEmoji} Day ${streak} Reward! ${bannerEmoji}`, {
+    // Banner title (no emoji)
+    const title = this.add.text(width / 2, cardY + s(25), `Day ${streak} Reward!`, {
       fontSize: fs(18), color: TEXT.PRIMARY, fontFamily: FONT, fontStyle: '700',
     }).setOrigin(0.5);
     container.add(title);
 
     // Reward amount
-    const rewardIcon = reward.type === 'gems' ? '💎' : '🪙';
+    const rewardLabel = reward.type === 'gems' ? 'gems' : 'coins';
     const rewardColor = reward.type === 'gems' ? '#D4A5FF' : '#FFD700';
-    const amountText = this.add.text(width / 2, cardY + s(70), `+${reward.amount} ${rewardIcon}`, {
+    const amountText = this.add.text(width / 2, cardY + s(70), `+${reward.amount} ${rewardLabel}`, {
       fontSize: fs(32), color: rewardColor, fontFamily: FONT, fontStyle: '700',
       stroke: '#FFFFFF', strokeThickness: s(3),
     }).setOrigin(0.5).setScale(0);
@@ -1793,23 +1831,38 @@ export class GameScene extends Phaser.Scene {
       // Update login data
       this.loginData = SaveSystem.claimDailyReward(this.loginData, streak);
 
-      // Fly animation for reward
-      const flyIcon = reward.type === 'gems' ? '💎' : '🪙';
+      // Fly animation for reward (canvas-drawn gems/coins)
       for (let i = 0; i < 6; i++) {
-        const gem = this.add.text(
-          width / 2 + Phaser.Math.Between(-s(40), s(40)),
-          cardY + s(70),
-          flyIcon, { fontSize: fs(14) }
-        ).setOrigin(0.5).setDepth(6001);
+        const flyG = this.add.graphics().setDepth(6001);
+        const flyX = width / 2 + Phaser.Math.Between(-s(40), s(40));
+        const flyY = cardY + s(70);
+        flyG.setPosition(flyX, flyY);
+        if (reward.type === 'gems') {
+          // Small diamond
+          const gr = s(5);
+          flyG.fillStyle(0x87CEEB, 1);
+          flyG.beginPath();
+          flyG.moveTo(0, -gr); flyG.lineTo(gr * 0.8, -gr * 0.2);
+          flyG.lineTo(gr * 0.5, gr); flyG.lineTo(-gr * 0.5, gr);
+          flyG.lineTo(-gr * 0.8, -gr * 0.2);
+          flyG.closePath(); flyG.fillPath();
+        } else {
+          // Small coin
+          const cr = s(5);
+          flyG.fillStyle(0xFFD700, 1);
+          flyG.fillCircle(0, 0, cr);
+          flyG.fillStyle(0xFFFFFF, 0.35);
+          flyG.fillCircle(-cr * 0.2, -cr * 0.2, cr * 0.3);
+        }
         this.tweens.add({
-          targets: gem,
+          targets: flyG,
           x: reward.type === 'gems' ? width - s(60) : s(60),
           y: SIZES.TOP_BAR / 2,
           alpha: 0, scaleX: 0.3, scaleY: 0.3,
           duration: 600 + i * 80,
           delay: i * 60,
           ease: 'Power2',
-          onComplete: () => gem.destroy(),
+          onComplete: () => flyG.destroy(),
         });
       }
 
@@ -1872,7 +1925,7 @@ export class GameScene extends Phaser.Scene {
 
     const char = CHARACTERS.find(c => c.id === beat.characterId);
     const charName = char?.name || '???';
-    const charEmoji = char?.emoji || '🌸';
+    const charInitial = char?.name?.charAt(0) || '?';
 
     const { width, height } = this.scale;
     const storyContainer = this.add.container(0, 0).setDepth(5500);
@@ -1913,11 +1966,15 @@ export class GameScene extends Phaser.Scene {
       portrait.setDisplaySize(portraitSize, portraitSize);
       storyContainer.add(portrait);
     } else {
-      // Fallback: emoji
-      const emojiText = this.add.text(portraitX, portraitY, charEmoji, {
-        fontSize: fs(22),
+      // Fallback: character initial in a colored circle
+      const fallbackG = this.add.graphics();
+      fallbackG.fillStyle(0xF8BBD0, 0.8);
+      fallbackG.fillCircle(portraitX, portraitY, portraitSize / 2);
+      storyContainer.add(fallbackG);
+      const initialText = this.add.text(portraitX, portraitY, charInitial, {
+        fontSize: fs(18), color: TEXT.PRIMARY, fontFamily: FONT, fontStyle: '700',
       }).setOrigin(0.5);
-      storyContainer.add(emojiText);
+      storyContainer.add(initialText);
     }
 
     // Character name
@@ -1942,8 +1999,8 @@ export class GameScene extends Phaser.Scene {
     // Reward display (if any)
     if (beat.reward) {
       const rewardParts: string[] = [];
-      if (beat.reward.coins) rewardParts.push(`+${beat.reward.coins} 🪙`);
-      if (beat.reward.gems) rewardParts.push(`+${beat.reward.gems} 💎`);
+      if (beat.reward.coins) rewardParts.push(`+${beat.reward.coins} coins`);
+      if (beat.reward.gems) rewardParts.push(`+${beat.reward.gems} gems`);
       const rewardStr = rewardParts.join('  ');
       const rewardText = this.add.text(
         cardX + cardW - s(12),

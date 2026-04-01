@@ -31,7 +31,7 @@ const PLACEMENT_SLOTS: { x: number; y: number; label: string }[] = [
 export class GardenDecorationManager {
   private scene: Phaser.Scene;
   private decorations: GardenDecoData[] = [];
-  private sprites: Phaser.GameObjects.Text[] = [];
+  private sprites: Phaser.GameObjects.GameObject[] = [];
   private boardArea: { x: number; y: number; w: number; h: number };
 
   constructor(scene: Phaser.Scene, boardArea: { x: number; y: number; w: number; h: number }) {
@@ -58,9 +58,19 @@ export class GardenDecorationManager {
     const x = deco.x * width;
     const y = deco.y * height;
 
-    const sprite = this.scene.add.text(x, y, deco.emoji, {
-      fontSize: fs(24),
-    }).setOrigin(0.5).setAlpha(0.35).setDepth(1);
+    // Use rendered texture if available, fallback to name initial
+    const texKey = `${deco.chainId}_${deco.tier}`;
+    let sprite: Phaser.GameObjects.GameObject;
+    if (this.scene.textures.exists(texKey)) {
+      const img = this.scene.add.image(x, y, texKey)
+        .setDisplaySize(s(28), s(28)).setAlpha(0.35).setDepth(1);
+      sprite = img;
+    } else {
+      const txt = this.scene.add.text(x, y, deco.name.charAt(0), {
+        fontSize: fs(20), color: '#B07A9E', fontFamily: 'system-ui', fontStyle: '700',
+      }).setOrigin(0.5).setAlpha(0.35).setDepth(1);
+      sprite = txt;
+    }
 
     // Gentle float animation
     this.scene.tweens.add({

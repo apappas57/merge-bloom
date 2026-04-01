@@ -31,7 +31,14 @@ export class PreloadScene extends Phaser.Scene {
     );
 
     // Render at 2x the display size for extra crispness on 3x Retina
-    EmojiRenderer.generateTextures(this, list, SIZES.ITEM_SIZE * 2);
+    console.log(`[Preload] Generating ${list.length} textures at size ${SIZES.ITEM_SIZE * 2}...`);
+    const t0 = performance.now();
+    try {
+      EmojiRenderer.generateTextures(this, list, SIZES.ITEM_SIZE * 2);
+      console.log(`[Preload] Textures done in ${(performance.now() - t0).toFixed(0)}ms`);
+    } catch (e) {
+      console.error('[Preload] TEXTURE GENERATION FAILED:', e);
+    }
 
     // Character portraits -- large for crisp rendering in order cards
     CharacterRenderer.generateTextures(
@@ -40,6 +47,10 @@ export class PreloadScene extends Phaser.Scene {
       s(48)
     );
 
-    this.time.delayedCall(200, () => this.scene.start('MenuScene'));
+    console.log('[Preload] Characters done. Starting MenuScene in 200ms...');
+    this.time.delayedCall(200, () => {
+      console.log('[Preload] Transitioning to MenuScene NOW');
+      this.scene.start('MenuScene');
+    });
   }
 }

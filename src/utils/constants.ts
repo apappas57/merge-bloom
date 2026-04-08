@@ -16,11 +16,15 @@ export function s(v: number): number {
  * iPhone 16 Pro Dynamic Island = ~59pt. PWA standalone mode exposes this.
  * We detect via CSS env() at runtime but use a sensible default.
  */
+interface NavigatorStandalone extends Navigator {
+  standalone?: boolean;
+}
+
 function getSafeAreaTop(): number {
   // In standalone PWA mode, the status bar area is part of our viewport
   // Use a generous default for iPhone 14+ Dynamic Island
   const isStandalone = window.matchMedia?.('(display-mode: standalone)').matches
-    || (navigator as any).standalone === true;
+    || (navigator as NavigatorStandalone).standalone === true;
   return isStandalone ? s(50) : s(20);
 }
 

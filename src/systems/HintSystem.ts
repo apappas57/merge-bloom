@@ -10,12 +10,15 @@ export class HintSystem {
   private scene: Phaser.Scene;
   private board: Board;
   private items: Map<string, MergeItem>;
-  private lastInteraction: number = Date.now();
+  private _lastInteraction: number = Date.now();
   private hintActive = false;
   private hintTweens: Phaser.Tweens.Tween[] = [];
   private hintGfx: Phaser.GameObjects.Graphics[] = [];
   private checkTimer: Phaser.Time.TimerEvent;
   private hintDelay = 10000; // 10 seconds
+
+  // FIX 3: Cache mergeable pair result to avoid O(n²) search every 2 seconds
+  private cachedPair: [MergeItem, MergeItem] | null | undefined = undefined; // undefined = cache invalid
 
   constructor(scene: Phaser.Scene, board: Board, items: Map<string, MergeItem>) {
     this.scene = scene;
@@ -27,6 +30,11 @@ export class HintSystem {
     scene.events.on('item-dropped', this.resetTimer, this);
     scene.events.on('generator-tapped', this.resetTimer, this);
 
+    // Invalidate cache when board state changes
+    scene.events.on('item-dropped', this.invalidateCache, this);
+    scene.events.on('item-created', this.invalidateCache, this);
+    scene.events.on('item-destroyed', this.invalidateCache, this);
+
     // Check periodically
     this.checkTimer = scene.time.addEvent({
       delay: 2000,
@@ -35,16 +43,25 @@ export class HintSystem {
     });
   }
 
+  /** Public getter for last interaction timestamp */
+  get lastInteractionTime(): number {
+    return this._lastInteraction;
+  }
+
   resetTimer(): void {
-    this.lastInteraction = Date.now();
+    this._lastInteraction = Date.now();
     if (this.hintActive) this.clearHints();
+  }
+
+  private invalidateCache(): void {
+    this.cachedPair = undefined;
   }
 
   private check(): void {
     if (this.hintActive) return;
-    if (Date.now() - this.lastInteraction < this.hintDelay) return;
+    if (Date.now() - this._lastInteraction < this.hintDelay) return;
 
-    // Find a mergeable pair
+    // Find a mergeable pair (uses cache if valid)
     const pair = this.findMergeablePair();
     if (pair) {
       this.showHint(pair[0], pair[1]);
@@ -52,6 +69,9 @@ export class HintSystem {
   }
 
   private findMergeablePair(): [MergeItem, MergeItem] | null {
+    // Return cached result if cache is valid
+    if (this.cachedPair !== undefined) return this.cachedPair;
+
     const itemList = Array.from(this.items.values());
 
     for (let i = 0; i < itemList.length; i++) {
@@ -59,10 +79,12 @@ export class HintSystem {
         const a = itemList[i];
         const b = itemList[j];
         if (a.data_.chainId === b.data_.chainId && a.data_.tier === b.data_.tier) {
-          return [a, b];
+          this.cachedPair = [a, b];
+          return this.cachedPair;
         }
       }
     }
+    this.cachedPair = null;
     return null;
   }
 
@@ -109,5 +131,8 @@ export class HintSystem {
     this.scene.input.off('pointerdown', this.resetTimer, this);
     this.scene.events.off('item-dropped', this.resetTimer, this);
     this.scene.events.off('generator-tapped', this.resetTimer, this);
+    this.scene.events.off('item-dropped', this.invalidateCache, this);
+    this.scene.events.off('item-created', this.invalidateCache, this);
+    this.scene.events.off('item-destroyed', this.invalidateCache, this);
   }
 }

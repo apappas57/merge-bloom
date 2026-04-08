@@ -3,8 +3,8 @@ import { Generator } from '../objects/Generator';
 import { getNextInChain, isMaxTier, GeneratorTierDef, getGenTierDef } from '../data/chains';
 import { FONT, fs, s } from '../utils/constants';
 
-// Chain-specific particle colors
-const CHAIN_PARTICLES: Record<string, number[]> = {
+// Chain-specific particle colors (exported for use in celebration effects)
+export const CHAIN_PARTICLES: Record<string, number[]> = {
   flower: [0xFF9CAD, 0xFFB3D9, 0xA8E6CF, 0xFFD0E1],
   butterfly: [0xA8D8EA, 0xFFB3D9, 0xC8A8E9, 0xA8E6CF, 0xFFEAA7],
   fruit: [0xFFB347, 0xFFD700, 0xFF6B6B, 0xA8E6CF],
@@ -65,7 +65,7 @@ export class MergeSystem {
     return true;
   }
 
-  async executeMerge(dropped: MergeItem, target: MergeItem): Promise<MergeResult> {
+  async executeMerge(dropped: MergeItem, target: MergeItem, comboMultiplier = 1): Promise<MergeResult> {
     const next = getNextInChain(dropped.data_.chainId, dropped.data_.tier);
     if (!next) return { success: false };
 
@@ -90,16 +90,17 @@ export class MergeSystem {
     }
 
     // Phase 4 (300-500ms): Ring of particles + chain-specific shapes
-    this.createParticles(midX, midY, tier, chainId);
+    this.createParticles(midX, midY, tier, chainId, comboMultiplier);
 
     // Expanding ring at merge point
     this.createMergeRing(midX, midY, tier, chainId);
 
-    // Camera zoom pulse (subtle 2% for 200ms)
+    // Camera zoom pulse (subtle 2% for 200ms, scales with combo)
     const cam = this.scene.cameras.main;
     const baseZoom = cam.zoom;
+    const zoomPulse = 1.02 + (comboMultiplier - 1) * 0.005;
     this.scene.tweens.add({
-      targets: cam, zoom: baseZoom * 1.02,
+      targets: cam, zoom: baseZoom * zoomPulse,
       duration: 100, ease: 'Sine.easeOut',
       onComplete: () => {
         this.scene.tweens.add({
@@ -109,10 +110,11 @@ export class MergeSystem {
       }
     });
 
-    // Screen shake for tier 4+
-    if (tier >= 4) {
-      const intensity = s(Math.min(tier - 3, 5));
-      cam.shake(100, intensity / 1000);
+    // Screen shake for tier 4+ (scales with combo)
+    if (tier >= 4 || comboMultiplier > 1) {
+      const baseIntensity = tier >= 4 ? s(Math.min(tier - 3, 5)) : s(1);
+      const intensity = baseIntensity * Math.min(comboMultiplier, 3);
+      cam.shake(100 + comboMultiplier * 20, intensity / 1000);
     }
 
     return {
@@ -271,10 +273,10 @@ export class MergeSystem {
     }
   }
 
-  private createParticles(x: number, y: number, tier: number, chainId: string): void {
+  private createParticles(x: number, y: number, tier: number, chainId: string, comboMultiplier = 1): void {
     const colors = CHAIN_PARTICLES[chainId] || [0xFF9CAD, 0xA8E6CF, 0xA8D8EA, 0xFFD700];
     const holoColors = [0xFF6B9D, 0xFFD93D, 0x6BCB77, 0x4D96FF, 0xD4A5FF];
-    const count = 10 + tier * 3;
+    const count = Math.round((10 + tier * 3) * Math.min(comboMultiplier, 3));
     const chainShape = CHAIN_SHAPES[chainId] || 'circle';
 
     // Ring of particles exploding outward in a clean circle

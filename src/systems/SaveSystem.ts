@@ -8,6 +8,16 @@ export interface LoginData {
   lastClaimedDate: string; // YYYY-MM-DD of last claimed reward
 }
 
+/** Generator save shape before v4 migration (missing genTier) */
+interface LegacyGenerator {
+  genId: string;
+  genTier?: number;
+  col: number;
+  row: number;
+  itemId: string;
+  lastAutoProduceTime?: number;
+}
+
 export interface SaveData {
   version: number;
   timestamp: number;
@@ -43,6 +53,7 @@ export interface SaveData {
 }
 
 const SAVE_KEY = 'm3rg3r_save';
+const SAVE_BACKUP_KEY = 'm3rg3r_save_backup';
 const SAVE_VERSION = 8;
 
 /** v4 -> v5: character ID renames */
@@ -62,12 +73,33 @@ export class SaveSystem {
     }
   }
 
+  /** Validate that essential fields exist after migration */
+  private static validate(data: SaveData): boolean {
+    if (!data.player || typeof data.player.level !== 'number') return false;
+    if (!data.board || !Array.isArray(data.board.items) || !Array.isArray(data.board.generators)) return false;
+    if (!data.quests || !Array.isArray(data.quests.active) || !Array.isArray(data.quests.completed)) return false;
+    if (!Array.isArray(data.collection)) return false;
+    return true;
+  }
+
   static load(): SaveData | null {
     try {
       const raw = localStorage.getItem(SAVE_KEY);
       if (!raw) return null;
       const data = JSON.parse(raw) as SaveData;
       if (data.version < 1) return null;
+
+      const needsMigration = data.version < SAVE_VERSION;
+
+      // Backup save before migration
+      if (needsMigration) {
+        try {
+          localStorage.setItem(SAVE_BACKUP_KEY, raw);
+        } catch (e) {
+          console.warn('[SaveSystem] Backup before migration failed:', e);
+        }
+      }
+
       // Migrate
       if (!data.storage) data.storage = [null, null, null, null];
       if (!data.achievements) data.achievements = [];
@@ -75,9 +107,9 @@ export class SaveSystem {
 
       // v3 -> v4 migration: add genTier to generators
       if (data.version < 4) {
-        data.board.generators = data.board.generators.map(g => ({
+        data.board.generators = (data.board.generators as LegacyGenerator[]).map(g => ({
           ...g,
-          genTier: (g as Record<string, unknown>).genTier as number ?? 1,
+          genTier: g.genTier ?? 1,
         }));
         data.version = 4;
       }
@@ -115,17 +147,44 @@ export class SaveSystem {
       // v7 -> v8 migration: add lastAutoProduceTime to generators
       if (data.version < 8) {
         const now = Date.now();
-        data.board.generators = data.board.generators.map(g => ({
+        data.board.generators = (data.board.generators as LegacyGenerator[]).map(g => ({
           ...g,
-          lastAutoProduceTime: (g as Record<string, unknown>).lastAutoProduceTime as number ?? now,
+          genTier: g.genTier ?? 1,
+          lastAutoProduceTime: g.lastAutoProduceTime ?? now,
         }));
         data.version = 8;
       }
 
+      // Validate after migration
+      if (!SaveSystem.validate(data)) {
+        console.error('[SaveSystem] Validation failed after migration. Attempting backup restore.');
+        if (needsMigration) {
+          return SaveSystem.restoreFromBackup();
+        }
+        return null;
+      }
+
       return data;
-    } catch {
-      return null;
+    } catch (e) {
+      console.error('[SaveSystem] Load failed:', e);
+      return SaveSystem.restoreFromBackup();
     }
+  }
+
+  /** Attempt to restore from pre-migration backup */
+  private static restoreFromBackup(): SaveData | null {
+    try {
+      const backupRaw = localStorage.getItem(SAVE_BACKUP_KEY);
+      if (!backupRaw) return null;
+      const backup = JSON.parse(backupRaw) as SaveData;
+      if (SaveSystem.validate(backup)) {
+        console.warn('[SaveSystem] Restored from pre-migration backup (v' + backup.version + ').');
+        return backup;
+      }
+    } catch (e) {
+      console.error('[SaveSystem] Backup restore also failed:', e);
+    }
+    return null;
   }
 
   static getDefault(): SaveData {

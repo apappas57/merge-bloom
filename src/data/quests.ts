@@ -56,4 +56,32 @@ export const QUEST_POOL: QuestDef[] = [
   { id: 'q37', description: 'Brew an Espresso ☕', type: 'create', chainId: 'cafe', targetTier: 2, targetCount: 1, rewardGems: 60, rewardXP: 120, level: 5 },
   { id: 'q38', description: 'Stack some Pancakes 🥞', type: 'create', chainId: 'cafe', targetTier: 5, targetCount: 1, rewardGems: 150, rewardXP: 350, level: 5 },
   { id: 'q39', description: 'Open a Bakery 🏪', type: 'create', chainId: 'cafe', targetTier: 7, targetCount: 1, rewardGems: 300, rewardXP: 700, level: 5 },
+
+  // === L10-L20 QUESTS ===
+
+  // Create quests (10)
+  { id: 'q40', description: 'Create a Peacock 🦚', type: 'create', chainId: 'butterfly', targetTier: 6, targetCount: 1, rewardGems: 150, rewardXP: 350, level: 10 },
+  { id: 'q41', description: 'Build a Cottage 🏡 (again)', type: 'create', chainId: 'nature', targetTier: 6, targetCount: 1, rewardGems: 180, rewardXP: 400, level: 11 },
+  { id: 'q42', description: 'Craft a Hibiscus 🌺', type: 'create', chainId: 'flower', targetTier: 7, targetCount: 1, rewardGems: 200, rewardXP: 500, level: 12 },
+  { id: 'q43', description: 'Forge a Crown 👑 of Light', type: 'create', chainId: 'crystal', targetTier: 5, targetCount: 1, rewardGems: 220, rewardXP: 550, level: 13 },
+  { id: 'q44', description: 'Bake a Birthday Cake 🎂', type: 'create', chainId: 'sweet', targetTier: 7, targetCount: 1, rewardGems: 250, rewardXP: 600, level: 14 },
+  { id: 'q45', description: 'Build Candy Castle 🏰 (again)', type: 'create', chainId: 'sweet', targetTier: 8, targetCount: 1, rewardGems: 300, rewardXP: 800, level: 15 },
+  { id: 'q46', description: 'Brew a Tea Set 🫖', type: 'create', chainId: 'tea', targetTier: 6, targetCount: 1, rewardGems: 280, rewardXP: 700, level: 16 },
+  { id: 'q47', description: 'Find Eternal Love 💞 (again)', type: 'create', chainId: 'love', targetTier: 6, targetCount: 1, rewardGems: 350, rewardXP: 900, level: 17 },
+  { id: 'q48', description: 'Discover a Nebula 🌌', type: 'create', chainId: 'cosmic', targetTier: 6, targetCount: 1, rewardGems: 400, rewardXP: 1000, level: 18 },
+  { id: 'q49', description: 'Launch a Rocket Ship 🚀 (again)', type: 'create', chainId: 'cosmic', targetTier: 7, targetCount: 1, rewardGems: 500, rewardXP: 1500, level: 20 },
+
+  // Merge count milestones (5)
+  { id: 'q50', description: 'Merge 500 items', type: 'merge_count', targetCount: 500, rewardGems: 200, rewardXP: 500, level: 10 },
+  { id: 'q51', description: 'Merge 1,000 items', type: 'merge_count', targetCount: 1000, rewardGems: 250, rewardXP: 700, level: 12 },
+  { id: 'q52', description: 'Merge 2,000 items', type: 'merge_count', targetCount: 2000, rewardGems: 300, rewardXP: 900, level: 14 },
+  { id: 'q53', description: 'Merge 3,000 items', type: 'merge_count', targetCount: 3000, rewardGems: 400, rewardXP: 1100, level: 17 },
+  { id: 'q54', description: 'Merge 5,000 items', type: 'merge_count', targetCount: 5000, rewardGems: 500, rewardXP: 1500, level: 20 },
+
+  // Collect quests -- create high-tier items from specific chains (5)
+  { id: 'q55', description: 'Create a Mermaid 🧜‍♀️ from the deep', type: 'create', chainId: 'shell', targetTier: 6, targetCount: 1, rewardGems: 200, rewardXP: 500, level: 11 },
+  { id: 'q56', description: 'Reach the Rainbow 🌈 (again)', type: 'create', chainId: 'star', targetTier: 6, targetCount: 1, rewardGems: 250, rewardXP: 600, level: 13 },
+  { id: 'q57', description: 'Create a Peach 🍑', type: 'create', chainId: 'fruit', targetTier: 6, targetCount: 1, rewardGems: 200, rewardXP: 500, level: 15 },
+  { id: 'q58', description: 'Build a Tea House 🏠 (again)', type: 'create', chainId: 'tea', targetTier: 7, targetCount: 1, rewardGems: 350, rewardXP: 900, level: 16 },
+  { id: 'q59', description: 'Create a Chocolate Bar 🍫', type: 'create', chainId: 'sweet', targetTier: 6, targetCount: 1, rewardGems: 250, rewardXP: 600, level: 19 },
 ];

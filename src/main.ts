@@ -12,7 +12,10 @@ import { COLORS, DPR } from './utils/constants';
 
 // Build version stamp -- check via console: window.__M3RG3R_BUILD
 declare const __BUILD_TIME__: string;
-(window as any).__M3RG3R_BUILD = __BUILD_TIME__;
+declare global {
+  interface Window { __M3RG3R_BUILD: string; }
+}
+window.__M3RG3R_BUILD = __BUILD_TIME__;
 console.log(`[m3rg3r] Build: ${__BUILD_TIME__}`);
 
 // Use dvh for true mobile viewport, fallback to innerHeight

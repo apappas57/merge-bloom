@@ -61,6 +61,12 @@ export class GameScene extends Phaser.Scene {
   // ─── Merge preview on drag ───
   private mergePreviewContainer: Phaser.GameObjects.Container | null = null;
 
+  // ─── Combo system ───
+  private comboCount = 0;
+  private lastMergeTime = 0;
+  private readonly COMBO_WINDOW = 2500;
+  private comboTimer: Phaser.Time.TimerEvent | null = null;
+
   // ─── Tutorial state ───
   private tutorialActive = false;
 
@@ -80,9 +86,11 @@ export class GameScene extends Phaser.Scene {
   // Priority: mascot=1, quest=2, order=3, story=4, level=5 (higher = more important)
   private popupQueue: Array<{ type: string; priority: number; show: () => void }> = [];
   private popupActive = false;
+  private popupActiveTimestamp = 0;
   private lastPopupDismissTime = 0;
   private static readonly POPUP_MIN_GAP = 3000; // 3 seconds between popups
   private static readonly POPUP_MAX_QUEUED = 5; // Drop low-priority if queue grows
+  private static readonly POPUP_TIMEOUT = 8000; // Force reset stuck popups after 8 seconds
 
   constructor() { super('GameScene'); }
 
@@ -160,6 +168,9 @@ export class GameScene extends Phaser.Scene {
     document.addEventListener('visibilitychange', visHandler);
     this.events.once('shutdown', () => document.removeEventListener('visibilitychange', visHandler));
 
+    // Periodic popup timeout check (catches stuck popups)
+    this.time.addEvent({ delay: 2000, loop: true, callback: () => this.processPopupQueue() });
+
     // Mascot greeting (reduced to 2s for routine messages)
     this.time.delayedCall(1500, () => {
       const greetings = ['Welcome back!', 'Let\'s garden!', 'Hi there!', 'Ready to merge?'];
@@ -170,7 +181,7 @@ export class GameScene extends Phaser.Scene {
     this.time.addEvent({
       delay: 5000, loop: true,
       callback: () => {
-        if (Date.now() - (this.hintSystem as any).lastInteraction > 30000) {
+        if (Date.now() - this.hintSystem.lastInteractionTime > 30000) {
           this.mascot.goToSleep();
         }
       }
@@ -974,7 +985,28 @@ export class GameScene extends Phaser.Scene {
     this.isMerging = true;
     this.items.delete(item1.data_.id);
     this.items.delete(item2.data_.id);
-    const result = await this.mergeSystem.executeMerge(item1, item2);
+
+    // Combo tracking
+    const now = Date.now();
+    if (now - this.lastMergeTime < this.COMBO_WINDOW) {
+      this.comboCount++;
+    } else {
+      this.comboCount = 1;
+    }
+    this.lastMergeTime = now;
+    const comboMultiplier = this.comboCount;
+
+    // Reset combo timer
+    if (this.comboTimer) { this.comboTimer.remove(false); this.comboTimer = null; }
+    this.comboTimer = this.time.delayedCall(this.COMBO_WINDOW, () => {
+      if (this.comboCount > 1) {
+        this.sound_.comboBreak();
+      }
+      this.comboCount = 0;
+      this.comboTimer = null;
+    });
+
+    const result = await this.mergeSystem.executeMerge(item1, item2, comboMultiplier);
     this.isMerging = false;
     if (result.success && result.newItem) {
       const newItem = this.createItem(result.newItem);
@@ -982,6 +1014,11 @@ export class GameScene extends Phaser.Scene {
       this.sound_.merge(result.newItem.tier);
       this.totalMerges++;
       this.addXP(result.xpGained || 0);
+
+      // Show combo text if combo > 1
+      if (comboMultiplier > 1) {
+        this.showComboText(newItem.x, newItem.y, comboMultiplier);
+      }
       this.gems = Math.min(this.gems + (result.gemsGained || 0), 999999);
       const cur = this.collection.get(result.newItem.chainId) || 0;
       const isNewDiscovery = result.newItem.tier > cur;
@@ -1025,6 +1062,49 @@ export class GameScene extends Phaser.Scene {
       this.updateUI();
       this.saveGame();
     }
+  }
+
+  /** Show combo multiplier text with bouncy scale-in and float-up fade */
+  private showComboText(x: number, y: number, combo: number): void {
+    // Color scales with combo level
+    let color: string;
+    if (combo >= 5) {
+      // Rainbow-ish cycle for 5x+
+      const rainbow = ['#FF6B6B', '#FFD93D', '#6BCB77', '#4D96FF', '#D4A5FF'];
+      color = rainbow[(combo - 5) % rainbow.length];
+    } else if (combo >= 3) {
+      color = '#EC407A'; // rose
+    } else {
+      color = '#FFD700'; // gold
+    }
+
+    const txt = this.add.text(x, y - s(40), `${combo}x COMBO!`, {
+      fontSize: fs(20 + Math.min(combo, 5) * 2),
+      color,
+      fontFamily: FONT,
+      fontStyle: '700',
+      stroke: '#FFFFFF',
+      strokeThickness: s(3),
+      shadow: { offsetX: 0, offsetY: s(2), color: 'rgba(92,84,112,0.3)', blur: s(4), fill: true },
+    }).setOrigin(0.5).setDepth(2005).setScale(0);
+
+    // Bouncy scale-in
+    this.tweens.add({
+      targets: txt, scaleX: 1.3, scaleY: 1.3, duration: 150, ease: 'Back.easeOut',
+      onComplete: () => {
+        // Float upward with alpha fade
+        this.tweens.add({
+          targets: txt, y: y - s(100), alpha: 0, scaleX: 1, scaleY: 1,
+          duration: 1200, ease: 'Power2',
+          onComplete: () => txt.destroy(),
+        });
+      }
+    });
+
+    // Camera shake increases with combo level
+    const cam = this.cameras.main;
+    const shakeIntensity = s(1 + combo * 0.5);
+    cam.shake(80 + combo * 15, shakeIntensity / 1000);
   }
 
   private handleGenTap(_gen: Generator, cell: CellData, spawnTier?: number): void {
@@ -1249,20 +1329,90 @@ export class GameScene extends Phaser.Scene {
 
   private showLevelUpPopup(level: number): void {
     const { width, height } = this.scale;
-    const txt = this.add.text(width / 2, height / 2 - s(60), `Level ${level}!`, {
-      fontSize: fs(34), color: TEXT.ACCENT, fontFamily: FONT, fontStyle: '700',
+
+    // Full-screen white flash
+    const lvlFlash = this.add.graphics().setDepth(2999);
+    lvlFlash.fillStyle(0xFFFFFF, 0.7);
+    lvlFlash.fillRect(0, 0, width, height);
+    this.tweens.add({
+      targets: lvlFlash, alpha: 0, duration: 400,
+      onComplete: () => lvlFlash.destroy(),
+    });
+
+    // Camera shake
+    this.cameras.main.shake(300, 0.015);
+
+    // "LEVEL UP!" text with gold color and bouncy scale
+    const levelUpTxt = this.add.text(width / 2, height / 2 - s(80), 'LEVEL UP!', {
+      fontSize: fs(40), color: '#FFD700', fontFamily: FONT, fontStyle: '700',
+      stroke: '#FFFFFF', strokeThickness: s(5),
+      shadow: { offsetX: 0, offsetY: s(2), color: 'rgba(92,84,112,0.4)', blur: s(6), fill: true },
+    }).setOrigin(0.5).setDepth(3000).setScale(0);
+
+    this.tweens.add({
+      targets: levelUpTxt, scaleX: 1.2, scaleY: 1.2, duration: 350, ease: 'Back.easeOut',
+      onComplete: () => {
+        this.tweens.add({
+          targets: levelUpTxt, scaleX: 1, scaleY: 1, duration: 150,
+          onComplete: () => {
+            this.tweens.add({
+              targets: levelUpTxt, y: `-=${s(40)}`, alpha: 0, delay: 2000, duration: 800,
+              onComplete: () => levelUpTxt.destroy(),
+            });
+          }
+        });
+      }
+    });
+
+    // Level number text below "LEVEL UP!"
+    const levelTxt = this.add.text(width / 2, height / 2 - s(40), `Level ${level}`, {
+      fontSize: fs(28), color: TEXT.ACCENT, fontFamily: FONT, fontStyle: '700',
       stroke: '#FFFFFF', strokeThickness: s(4),
     }).setOrigin(0.5).setDepth(3000).setScale(0);
 
     this.tweens.add({
-      targets: txt, scaleX: 1, scaleY: 1, duration: 400, ease: 'Back.easeOut',
+      targets: levelTxt, scaleX: 1, scaleY: 1, duration: 400, delay: 150, ease: 'Back.easeOut',
       onComplete: () => {
         this.tweens.add({
-          targets: txt, y: `-=${s(40)}`, alpha: 0, delay: 2000, duration: 800,
-          onComplete: () => { txt.destroy(); this.onPopupDismissed(); },
+          targets: levelTxt, y: `-=${s(40)}`, alpha: 0, delay: 2000, duration: 800,
+          onComplete: () => { levelTxt.destroy(); this.onPopupDismissed(); },
         });
       }
     });
+
+    // Ring of 12 gold star particles bursting outward from center
+    const starCenterY = height / 2 - s(60);
+    for (let i = 0; i < 12; i++) {
+      const starGfx = this.add.graphics().setDepth(3001);
+      const starSz = s(Phaser.Math.Between(5, 8));
+      starGfx.fillStyle(0xFFD700, 0.95);
+      starGfx.beginPath();
+      for (let j = 0; j < 5; j++) {
+        const outerA = (j / 5) * Math.PI * 2 - Math.PI / 2;
+        const innerA = ((j + 0.5) / 5) * Math.PI * 2 - Math.PI / 2;
+        if (j === 0) starGfx.moveTo(Math.cos(outerA) * starSz, Math.sin(outerA) * starSz);
+        else starGfx.lineTo(Math.cos(outerA) * starSz, Math.sin(outerA) * starSz);
+        starGfx.lineTo(Math.cos(innerA) * starSz * 0.4, Math.sin(innerA) * starSz * 0.4);
+      }
+      starGfx.closePath();
+      starGfx.fillPath();
+      starGfx.setPosition(width / 2, starCenterY);
+
+      const burstAngle = (i / 12) * Math.PI * 2;
+      const burstDist = s(60 + Phaser.Math.Between(0, 30));
+      this.tweens.add({
+        targets: starGfx,
+        x: width / 2 + Math.cos(burstAngle) * burstDist,
+        y: starCenterY + Math.sin(burstAngle) * burstDist,
+        alpha: 0, scaleX: 0, scaleY: 0,
+        rotation: Phaser.Math.FloatBetween(-1.5, 1.5),
+        duration: 600 + Phaser.Math.Between(0, 200),
+        delay: Phaser.Math.Between(0, 100),
+        ease: 'Power2',
+        onComplete: () => starGfx.destroy(),
+      });
+    }
+
     this.createConfetti();
     this.mascot.react('excited');
     this.mascot.showSpeech(`Level ${level}!`, 2000);
@@ -1529,9 +1679,30 @@ export class GameScene extends Phaser.Scene {
   private showOrderCompletePopup(rewards: { type: string; amount: number }[]): void {
     const { width, height } = this.scale;
     const coinReward = rewards.find(r => r.type === 'coins');
+    const gemReward = rewards.find(r => r.type === 'gems');
+
+    // Camera shake
+    this.cameras.main.shake(200, 0.01);
+
+    // White screen flash
+    const flash = this.add.graphics().setDepth(2999);
+    flash.fillStyle(0xFFFFFF, 0.6);
+    flash.fillRect(0, 0, width, height);
+    this.tweens.add({
+      targets: flash, alpha: 0, duration: 300,
+      onComplete: () => flash.destroy(),
+    });
+
+    // Floating reward text
+    let popupDismissed = false;
+    const dismissPopup = () => {
+      if (popupDismissed) return;
+      popupDismissed = true;
+      this.onPopupDismissed();
+    };
 
     if (coinReward) {
-      const ct = this.add.text(width / 2, height / 2, `+${coinReward.amount} coins`, {
+      const ct = this.add.text(width / 2, height / 2 - s(10), `+${coinReward.amount} coins`, {
         fontSize: fs(24), color: TEXT.GOLD, fontFamily: FONT, fontStyle: '700',
         stroke: '#FFFFFF', strokeThickness: s(3),
       }).setOrigin(0.5).setDepth(3000).setScale(0);
@@ -1540,29 +1711,56 @@ export class GameScene extends Phaser.Scene {
         onComplete: () => {
           this.tweens.add({
             targets: ct, y: `-=${s(50)}`, alpha: 0, delay: 1000, duration: 600,
-            onComplete: () => { ct.destroy(); this.onPopupDismissed(); },
+            onComplete: () => { ct.destroy(); dismissPopup(); },
           });
         }
       });
-    } else {
-      // No coin reward -- dismiss popup state after a brief moment
-      this.time.delayedCall(1500, () => this.onPopupDismissed());
     }
 
-    // Canvas-drawn heart particles
-    for (let i = 0; i < 6; i++) {
-      const hg = this.add.graphics().setDepth(3001);
-      const hx = width / 2 + Phaser.Math.Between(-s(60), s(60));
-      const hy = height / 2;
-      const hr = s(Phaser.Math.Between(4, 6));
-      hg.setPosition(hx, hy);
-      hg.fillStyle(0xFF6B9D, 0.9);
-      hg.fillCircle(-hr * 0.3, -hr * 0.15, hr * 0.45);
-      hg.fillCircle(hr * 0.3, -hr * 0.15, hr * 0.45);
-      hg.fillTriangle(-hr * 0.65, 0, hr * 0.65, 0, 0, hr * 0.7);
+    if (gemReward) {
+      const gt = this.add.text(width / 2, height / 2 + s(20), `+${gemReward.amount} gems`, {
+        fontSize: fs(20), color: TEXT.ACCENT, fontFamily: FONT, fontStyle: '700',
+        stroke: '#FFFFFF', strokeThickness: s(3),
+      }).setOrigin(0.5).setDepth(3000).setScale(0);
       this.tweens.add({
-        targets: hg, y: hy - s(Phaser.Math.Between(50, 100)), alpha: 0,
-        duration: 1000, delay: i * 60, onComplete: () => hg.destroy(),
+        targets: gt, scaleX: 1, scaleY: 1, duration: 300, delay: 100, ease: 'Back.easeOut',
+        onComplete: () => {
+          this.tweens.add({
+            targets: gt, y: `-=${s(50)}`, alpha: 0, delay: 1000, duration: 600,
+            onComplete: () => { gt.destroy(); if (!coinReward) dismissPopup(); },
+          });
+        }
+      });
+    }
+
+    if (!coinReward && !gemReward) {
+      this.time.delayedCall(1500, () => dismissPopup());
+    }
+
+    // Confetti burst: 30 particles with radial explosion and gravity
+    const confettiColors = [0xFF9CAD, 0xFFB3D9, 0xA8D8EA, 0xA8E6CF, 0xFFECB3, 0xC8A8E9];
+    for (let i = 0; i < 30; i++) {
+      const p = this.add.graphics().setDepth(3001);
+      const color = confettiColors[Phaser.Math.Between(0, confettiColors.length - 1)];
+      const pSize = s(Phaser.Math.Between(3, 6));
+      p.fillStyle(color, 0.95);
+      p.fillCircle(0, 0, pSize);
+      p.setPosition(width / 2, height / 2);
+
+      const angle = (i / 30) * Math.PI * 2;
+      const dist = s(40 + Phaser.Math.Between(0, 40));
+      const targetX = width / 2 + Math.cos(angle) * dist;
+      const targetY = height / 2 + Math.sin(angle) * dist + s(80);
+
+      this.tweens.add({
+        targets: p,
+        x: targetX, y: targetY,
+        alpha: 0, scaleX: 0, scaleY: 0,
+        rotation: Phaser.Math.FloatBetween(-2, 2),
+        duration: 800 + Phaser.Math.Between(0, 300),
+        delay: Phaser.Math.Between(0, 80),
+        ease: 'Power2',
+        onComplete: () => p.destroy(),
       });
     }
 
@@ -2312,6 +2510,15 @@ export class GameScene extends Phaser.Scene {
    * and enough time has passed since the last one dismissed.
    */
   private processPopupQueue(): void {
+    // Timeout failsafe: force reset if a popup has been active too long
+    if (this.popupActive && this.popupActiveTimestamp > 0) {
+      if (Date.now() - this.popupActiveTimestamp > GameScene.POPUP_TIMEOUT) {
+        console.warn('[GameScene] Popup stuck for >' + GameScene.POPUP_TIMEOUT + 'ms, force resetting.');
+        this.popupActive = false;
+        this.popupActiveTimestamp = 0;
+      }
+    }
+
     if (this.popupActive || this.popupQueue.length === 0) return;
 
     const elapsed = Date.now() - this.lastPopupDismissTime;
@@ -2327,6 +2534,7 @@ export class GameScene extends Phaser.Scene {
     if (!next) return;
 
     this.popupActive = true;
+    this.popupActiveTimestamp = Date.now();
     next.show();
   }
 
@@ -2335,6 +2543,7 @@ export class GameScene extends Phaser.Scene {
    */
   private onPopupDismissed(): void {
     this.popupActive = false;
+    this.popupActiveTimestamp = 0;
     this.lastPopupDismissTime = Date.now();
     // Schedule next popup after the minimum gap
     if (this.popupQueue.length > 0) {

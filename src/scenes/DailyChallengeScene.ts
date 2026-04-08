@@ -76,16 +76,17 @@ export class DailyChallengeScene extends Phaser.Scene {
     closeBtn.on('pointerdown', () => this.exitScene());
 
     // Create board — smaller, centered
-    // Override SIZES temporarily for the challenge board
+    // Temporarily override SIZES for the challenge board layout
     const savedTopBar = SIZES.TOP_BAR;
     const savedOrderBar = SIZES.ORDER_BAR;
-    (SIZES as any).TOP_BAR = headerH;
-    (SIZES as any).ORDER_BAR = 0;
+    const mutableSizes = SIZES as { TOP_BAR: number; ORDER_BAR: number };
+    mutableSizes.TOP_BAR = headerH;
+    mutableSizes.ORDER_BAR = 0;
 
     this.board = new Board(this, this.challenge.cols, this.challenge.rows);
 
-    (SIZES as any).TOP_BAR = savedTopBar;
-    (SIZES as any).ORDER_BAR = savedOrderBar;
+    mutableSizes.TOP_BAR = savedTopBar;
+    mutableSizes.ORDER_BAR = savedOrderBar;
 
     this.mergeSystem = new MergeSystem(this);
 

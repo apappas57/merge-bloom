@@ -412,6 +412,13 @@ export class SoundManager {
     source.stop(now + duration + 0.01);
   }
 
+  /** Combo break: descending "wah" (pitch drop with quick decay) */
+  comboBreak(): void {
+    this.playTone(440, 0.12, 'sine', 0.3, 0.005);
+    setTimeout(() => this.playTone(330, 0.1, 'sine', 0.2, 0.005), 50);
+    setTimeout(() => this.playTone(220, 0.08, 'sine', 0.1, 0.005), 100);
+  }
+
   /** Board full: gentle "bonk" (low tone + quick noise) */
   boardFull(): void {
     this.playTone(180, 0.12, 'triangle', 0.4, 0.005);

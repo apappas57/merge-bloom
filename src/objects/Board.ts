@@ -224,12 +224,17 @@ export class Board {
 
   getCellAt(worldX: number, worldY: number): CellData | null {
     const half = this.cellSize / 2;
-    for (let row = 0; row < this.rows; row++)
-      for (let col = 0; col < this.cols; col++) {
-        const cell = this.cells[row][col];
-        if (worldX >= cell.x - half && worldX <= cell.x + half &&
-            worldY >= cell.y - half && worldY <= cell.y + half) return cell;
+    // Direct coordinate calculation: O(1) instead of O(n²)
+    const col = Math.floor((worldX - this.offsetX + half) / (this.cellSize + this.gap));
+    const row = Math.floor((worldY - this.offsetY + half) / (this.cellSize + this.gap));
+
+    if (row >= 0 && row < this.rows && col >= 0 && col < this.cols) {
+      const cell = this.cells[row][col];
+      if (worldX >= cell.x - half && worldX <= cell.x + half &&
+          worldY >= cell.y - half && worldY <= cell.y + half) {
+        return cell;
       }
+    }
     return null;
   }
 

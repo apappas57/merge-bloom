@@ -26,6 +26,9 @@ export class MergeItem extends Phaser.GameObjects.Container {
   private longPressTimer: Phaser.Time.TimerEvent | null = null;
   private pointerStartX = 0;
   private pointerStartY = 0;
+  private idleTween: Phaser.Tweens.Tween | null = null;
+  private shimmerTween: Phaser.Tweens.Tween | null = null;
+  private idleBaseY = 0;
 
   constructor(scene: Phaser.Scene, board: Board, data: MergeItemData) {
     const cell = board.getCell(data.col, data.row)!;
@@ -56,6 +59,25 @@ export class MergeItem extends Phaser.GameObjects.Container {
 
     board.setOccupied(data.col, data.row, data.id);
     scene.add.existing(this);
+
+    // Idle bob animation -- stagger by position to avoid synchronized bobbing
+    this.idleBaseY = this.y;
+    const stagger = ((data.col * 7 + data.row * 13) % 10) / 10;
+    scene.time.delayedCall(stagger * 1800, () => {
+      if (!this.scene) return;
+      this.idleTween = this.scene.tweens.add({
+        targets: this, y: this.y - s(3),
+        duration: 1800, yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
+      });
+    });
+
+    // Tier 5+ items get additional slow shimmer (alpha pulse on highlight overlay)
+    if (data.tier >= 5 && this.glowGfx) {
+      this.shimmerTween = scene.tweens.add({
+        targets: this.glowGfx, alpha: 0.6,
+        duration: 2400, yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
+      });
+    }
   }
 
   private addGlow(): void {
@@ -116,6 +138,7 @@ export class MergeItem extends Phaser.GameObjects.Container {
 
     this.on('dragstart', () => {
       this.cancelLongPress();
+      this.stopIdleTween();
       this.origCol_ = this.data_.col;
       this.origRow_ = this.data_.row;
       this.setDepth(1000);
@@ -158,6 +181,8 @@ export class MergeItem extends Phaser.GameObjects.Container {
       const cell = this.board.getCellAt(this.x, this.y);
       if (cell && !cell.locked) { this.scene.events.emit('item-dropped', this, cell); }
       else { this.returnToOriginal(); }
+      // Resume idle bob after drop
+      this.resumeIdleTween();
     });
 
     this.on('pointerup', () => {
@@ -197,6 +222,30 @@ export class MergeItem extends Phaser.GameObjects.Container {
     }
   }
 
+  /** Stop idle bob tween (called on drag start) */
+  private stopIdleTween(): void {
+    if (this.idleTween) {
+      this.idleTween.stop();
+      this.idleTween = null;
+    }
+  }
+
+  /** Resume idle bob tween after drop */
+  private resumeIdleTween(): void {
+    if (this.idleTween || !this.scene) return;
+    this.idleBaseY = this.y;
+    this.idleTween = this.scene.tweens.add({
+      targets: this, y: this.y - s(3),
+      duration: 1800, yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
+    });
+  }
+
+  /** Clean up all tweens to prevent memory leaks */
+  private destroyTweens(): void {
+    if (this.idleTween) { this.idleTween.stop(); this.idleTween = null; }
+    if (this.shimmerTween) { this.shimmerTween.stop(); this.shimmerTween = null; }
+  }
+
   returnToOriginal(): void {
     const cell = this.board.getCell(this.origCol_, this.origRow_);
     if (cell) {
@@ -221,6 +270,8 @@ export class MergeItem extends Phaser.GameObjects.Container {
   playMergeAway(): Promise<void> {
     return new Promise(resolve => {
       this.board.setOccupied(this.data_.col, this.data_.row, null);
+      this.removeAllListeners();
+      this.destroyTweens();
       this.disableInteractive();
       this.scene.tweens.add({
         targets: this, scaleX: 0, scaleY: 0, alpha: 0,
@@ -246,6 +297,11 @@ export class MergeItem extends Phaser.GameObjects.Container {
         this.scene.tweens.add({ targets: this, scaleX: 1, scaleY: 1, duration: 150, ease: 'Bounce.easeOut' });
       }
     });
+  }
+
+  override destroy(fromScene?: boolean): void {
+    this.destroyTweens();
+    super.destroy(fromScene);
   }
 
   getData(): MergeItemData { return { ...this.data_ }; }

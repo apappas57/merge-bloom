@@ -19,6 +19,7 @@ export class Mascot extends Phaser.GameObjects.Container {
   private idleTimer = 0;
   private blinkTimer: Phaser.Time.TimerEvent | null = null;
   private size: number;
+  private _zzzText: Phaser.GameObjects.Text | null = null;
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
     super(scene, x, y);
@@ -320,7 +321,7 @@ export class Mascot extends Phaser.GameObjects.Container {
       targets: zzz, alpha: 0.7, y: -sz * 0.9,
       duration: 1200, yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
     });
-    (this as any)._zzzText = zzz;
+    this._zzzText = zzz;
   }
 
   wakeUp(): void {
@@ -330,11 +331,10 @@ export class Mascot extends Phaser.GameObjects.Container {
     this.leftEye.setScale(1, 1);
     this.rightEye.setScale(1, 1);
 
-    const zzz = (this as any)._zzzText;
-    if (zzz) {
-      this.scene.tweens.killTweensOf(zzz);
-      zzz.destroy();
-      (this as any)._zzzText = null;
+    if (this._zzzText) {
+      this.scene.tweens.killTweensOf(this._zzzText);
+      this._zzzText.destroy();
+      this._zzzText = null;
     }
   }
 

@@ -28,7 +28,6 @@ export class MergeItem extends Phaser.GameObjects.Container {
   private pointerStartY = 0;
   private idleTween: Phaser.Tweens.Tween | null = null;
   private shimmerTween: Phaser.Tweens.Tween | null = null;
-  private idleBaseY = 0;
 
   constructor(scene: Phaser.Scene, board: Board, data: MergeItemData) {
     const cell = board.getCell(data.col, data.row)!;
@@ -60,24 +59,15 @@ export class MergeItem extends Phaser.GameObjects.Container {
     board.setOccupied(data.col, data.row, data.id);
     scene.add.existing(this);
 
-    // Idle bob animation -- stagger by position to avoid synchronized bobbing
-    this.idleBaseY = this.y;
+    // Subtle breathing animation -- scale pulse instead of y-bob to avoid grid drift
     const stagger = ((data.col * 7 + data.row * 13) % 10) / 10;
-    scene.time.delayedCall(stagger * 1800, () => {
+    scene.time.delayedCall(stagger * 2400, () => {
       if (!this.scene) return;
       this.idleTween = this.scene.tweens.add({
-        targets: this, y: this.y - s(3),
-        duration: 1800, yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
-      });
-    });
-
-    // Tier 5+ items get additional slow shimmer (alpha pulse on highlight overlay)
-    if (data.tier >= 5 && this.glowGfx) {
-      this.shimmerTween = scene.tweens.add({
-        targets: this.glowGfx, alpha: 0.6,
+        targets: this.sprite, scaleX: 1.02, scaleY: 1.02,
         duration: 2400, yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
       });
-    }
+    });
   }
 
   private addGlow(): void {
@@ -222,21 +212,21 @@ export class MergeItem extends Phaser.GameObjects.Container {
     }
   }
 
-  /** Stop idle bob tween (called on drag start) */
+  /** Stop idle breathing (called on drag start) */
   private stopIdleTween(): void {
     if (this.idleTween) {
       this.idleTween.stop();
       this.idleTween = null;
+      this.sprite.setScale(1);
     }
   }
 
-  /** Resume idle bob tween after drop */
+  /** Resume idle breathing after drop */
   private resumeIdleTween(): void {
     if (this.idleTween || !this.scene) return;
-    this.idleBaseY = this.y;
     this.idleTween = this.scene.tweens.add({
-      targets: this, y: this.y - s(3),
-      duration: 1800, yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
+      targets: this.sprite, scaleX: 1.02, scaleY: 1.02,
+      duration: 2400, yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
     });
   }
 

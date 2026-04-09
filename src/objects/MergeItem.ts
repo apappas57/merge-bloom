@@ -47,8 +47,7 @@ export class MergeItem extends Phaser.GameObjects.Container {
     this.sprite.setDisplaySize(SIZES.ITEM_SIZE, SIZES.ITEM_SIZE);
     this.add(this.sprite);
 
-    // Holographic shimmer overlay for T7+ items
-    if (data.tier >= 7) this.addHoloShimmer();
+    // Holo shimmer disabled -- all items static for now
 
     // No tier number — the card frame indicates tier visually
 
@@ -64,12 +63,9 @@ export class MergeItem extends Phaser.GameObjects.Container {
 
   private addGlow(): void {
     this.glowGfx.clear();
-    this.glowGfx.fillStyle(COLORS.ACCENT_ROSE, 0.2);
+    this.glowGfx.fillStyle(COLORS.ACCENT_ROSE, 0.25);
     this.glowGfx.fillCircle(0, 0, SIZES.ITEM_SIZE / 2 + s(6));
-    this.scene.tweens.add({
-      targets: this.glowGfx, alpha: 0.4,
-      duration: 1200, yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
-    });
+    // Static glow -- no pulsing animation
   }
 
   /** Animated holographic shimmer band that sweeps across T7+ items */
@@ -79,12 +75,15 @@ export class MergeItem extends Phaser.GameObjects.Container {
     const half = SIZES.ITEM_SIZE / 2;
     let phase = 0;
 
+    // PERF: Pre-allocate color array outside the timer callback
+    const holoColors = [0xFF6B9D, 0xFFD93D, 0x6BCB77, 0x4D96FF, 0xD4A5FF];
+    // PERF: Reduce shimmer frequency from 120ms to 200ms (5fps is still smooth for a subtle effect)
     this.scene.time.addEvent({
-      delay: 120,
+      delay: 200,
       loop: true,
       callback: () => {
         if (!this.holoShimmerGfx || !this.scene) return;
-        phase += 0.08;
+        phase += 0.13; // Adjusted to compensate for slower tick rate
         if (phase > Math.PI * 2) phase -= Math.PI * 2;
 
         this.holoShimmerGfx.clear();
@@ -93,14 +92,13 @@ export class MergeItem extends Phaser.GameObjects.Container {
         const bandW = s(6);
         // Use a shifting hue based on phase for holographic color cycling
         const hueShift = (phase / (Math.PI * 2));
-        const colors = [0xFF6B9D, 0xFFD93D, 0x6BCB77, 0x4D96FF, 0xD4A5FF];
-        const colorIdx = Math.floor(hueShift * colors.length) % colors.length;
-        this.holoShimmerGfx.fillStyle(colors[colorIdx], 0.12 + Math.sin(phase) * 0.06);
+        const colorIdx = Math.floor(hueShift * holoColors.length) % holoColors.length;
+        this.holoShimmerGfx.fillStyle(holoColors[colorIdx], 0.12 + Math.sin(phase) * 0.06);
         this.holoShimmerGfx.fillRect(bandX - bandW / 2, -half, bandW, half * 2);
 
         // Secondary thinner band offset
         const band2X = Math.sin(phase + Math.PI) * half * 1.5;
-        this.holoShimmerGfx.fillStyle(colors[(colorIdx + 2) % colors.length], 0.08);
+        this.holoShimmerGfx.fillStyle(holoColors[(colorIdx + 2) % holoColors.length], 0.08);
         this.holoShimmerGfx.fillRect(band2X - bandW / 4, -half, bandW / 2, half * 2);
       }
     });

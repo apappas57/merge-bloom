@@ -3050,7 +3050,7 @@ function drawPlushieMouth(
 
 // --- T1 Seedling: Tiny pale green plushie, small leaf sprouting from top of head ---
 function drawPlushieSeedlingIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, _tier: number, _color: string, _accent: string): void {
-  const r = size * 0.32;
+  const r = size * 0.35;
   const bodyCy = cy + r * 0.15;
 
   // Soft ground shadow
@@ -3091,7 +3091,7 @@ function drawPlushieSeedlingIcon(ctx: CanvasRenderingContext2D, cx: number, cy: 
 
 // --- T2 Sprout: Slightly bigger soft green body, two leaves on head like ears ---
 function drawPlushieSproutIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, _tier: number, _color: string, _accent: string): void {
-  const r = size * 0.34;
+  const r = size * 0.35;
   const bodyCy = cy + r * 0.1;
 
   // Soft ground shadow
@@ -3133,7 +3133,7 @@ function drawPlushieSproutIcon(ctx: CanvasRenderingContext2D, cx: number, cy: nu
 
 // --- T3 Clover: Medium green body, three-leaf clover hat on top ---
 function drawPlushieCloverIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, tier: number, _color: string, _accent: string): void {
-  const r = size * 0.34;
+  const r = size * 0.35;
   const bodyCy = cy + r * 0.1;
 
   // Soft ground shadow
@@ -3187,7 +3187,7 @@ function drawPlushieCloverIcon(ctx: CanvasRenderingContext2D, cx: number, cy: nu
 
 // --- T4 Tulip: Pastel pink plushie body, the tulip IS the character with petal-shaped top ---
 function drawPlushieTulipIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, tier: number, _color: string, _accent: string): void {
-  const r = size * 0.33;
+  const r = size * 0.35;
   const bodyCy = cy + r * 0.15;
 
   // Soft ground shadow
@@ -3246,7 +3246,7 @@ function drawPlushieTulipIcon(ctx: CanvasRenderingContext2D, cx: number, cy: num
 
 // --- T5 Rose: Rich pink plushie body with small rose crown/tiara on head ---
 function drawPlushieRoseIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, tier: number, _color: string, _accent: string): void {
-  const r = size * 0.34;
+  const r = size * 0.35;
   const bodyCy = cy + r * 0.1;
 
   // Soft ground shadow
@@ -3305,7 +3305,7 @@ function drawPlushieRoseIcon(ctx: CanvasRenderingContext2D, cx: number, cy: numb
 
 // --- T6 Cherry Blossom: Soft pink body with petal shapes, petals floating around ---
 function drawPlushieBlossomIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, tier: number, _color: string, _accent: string): void {
-  const r = size * 0.34;
+  const r = size * 0.35;
   const bodyCy = cy + r * 0.1;
 
   // Soft ground shadow
@@ -3381,7 +3381,7 @@ function drawPlushieBlossomIcon(ctx: CanvasRenderingContext2D, cx: number, cy: n
 
 // --- T7 Hibiscus: Vibrant coral-pink body, large flower blooming from top of head ---
 function drawPlushieHibiscusIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, tier: number, _color: string, _accent: string): void {
-  const r = size * 0.34;
+  const r = size * 0.35;
   const bodyCy = cy + r * 0.15;
 
   // Soft ground shadow
@@ -3467,7 +3467,7 @@ function drawPlushieHibiscusIcon(ctx: CanvasRenderingContext2D, cx: number, cy: 
 
 // --- T8 Bouquet: Largest body, pastel rainbow gradient, multiple flowers from head, gold glow ---
 function drawPlushieBouquetIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, tier: number, _color: string, _accent: string): void {
-  const r = size * 0.36;
+  const r = size * 0.35;
   const bodyCy = cy + r * 0.12;
 
   // Golden glow aura behind everything

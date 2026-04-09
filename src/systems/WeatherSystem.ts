@@ -54,7 +54,8 @@ export class WeatherSystem {
     this.tweenRefs = [];
     this.particles.forEach((p) => p.destroy());
     this.particles = [];
-    this.particleTweenMap.clear(); // PERF: Clean up tween tracking map
+    this.particleTweenMap.clear(); // PERF: Clean up tween tracking maps
+    this.fireflyTweens.clear();
   }
 
   /** Southern Hemisphere (Melbourne) seasons */
@@ -222,6 +223,13 @@ export class WeatherSystem {
     const drift = (Math.random() - 0.5) * width * 0.15;
     const startX = g.x;
 
+    // PERF: Remove old tween ref for this particle before creating a new one
+    const oldTween = this.particleTweenMap.get(g);
+    if (oldTween) {
+      const idx = this.tweenRefs.indexOf(oldTween);
+      if (idx >= 0) this.tweenRefs[idx] = this.tweenRefs[this.tweenRefs.length - 1], this.tweenRefs.pop();
+    }
+
     const tween = this.scene.tweens.add({
       targets: g,
       y: top - s(10),
@@ -236,6 +244,7 @@ export class WeatherSystem {
         this.animateFloatingUp(g, width, top, bottom, baseAlpha);
       },
     });
+    this.particleTweenMap.set(g, tween);
     this.tweenRefs.push(tween);
   }
 
@@ -311,6 +320,10 @@ export class WeatherSystem {
     }
   }
 
+  // PERF: Track firefly tweens separately so we can clean up on recycle
+  // Uses a dedicated key per firefly (the Graphics object) with a list of active tweens
+  private fireflyTweens: Map<Phaser.GameObjects.Graphics, Phaser.Tweens.Tween[]> = new Map();
+
   /** Firefly: blink alpha in and out, with very slow random drift */
   private animateFirefly(
     g: Phaser.GameObjects.Graphics,
@@ -318,6 +331,16 @@ export class WeatherSystem {
     top: number,
     bottom: number,
   ): void {
+    // PERF: Clean up old firefly tweens before creating new ones
+    const oldTweens = this.fireflyTweens.get(g);
+    if (oldTweens) {
+      for (const ot of oldTweens) {
+        const idx = this.tweenRefs.indexOf(ot);
+        if (idx >= 0) this.tweenRefs[idx] = this.tweenRefs[this.tweenRefs.length - 1], this.tweenRefs.pop();
+      }
+    }
+    const tracked: Phaser.Tweens.Tween[] = [];
+
     const blinkDuration = this.randRange(2000, 3000);
     const driftX = (Math.random() - 0.5) * s(40);
     const driftY = (Math.random() - 0.5) * s(30);
@@ -341,9 +364,11 @@ export class WeatherSystem {
             this.animateFirefly(g, width, top, bottom);
           },
         });
+        tracked.push(fadeOut);
         this.tweenRefs.push(fadeOut);
       },
     });
+    tracked.push(fadeIn);
     this.tweenRefs.push(fadeIn);
 
     // Slow random drift (independent of blink)
@@ -357,7 +382,9 @@ export class WeatherSystem {
       duration: cycleDuration,
       ease: 'Sine.easeInOut',
     });
+    tracked.push(drift);
     this.tweenRefs.push(drift);
+    this.fireflyTweens.set(g, tracked);
   }
 }
 

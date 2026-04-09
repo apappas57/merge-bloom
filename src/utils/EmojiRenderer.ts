@@ -1982,14 +1982,14 @@ interface IconConfig {
 function getItemIconConfig(chainId: string, tier: number): IconConfig {
   const configs: Record<string, IconConfig[]> = {
     flower: [
-      { draw: drawKawaiiSeedlingIcon, color: '#4CAF50', accent: '#81C784' },    // t1 Seedling (sleepy face)
-      { draw: drawKawaiiSproutIcon, color: '#66BB6A', accent: '#A5D6A7' },      // t2 Sprout (shy face)
-      { draw: drawKawaiiBudIcon, color: '#2E7D32', accent: '#66BB6A' },          // t3 Bud (happy face)
-      { draw: drawKawaiiTulipIcon, color: '#EC407A', accent: '#F48FB1' },        // t4 Tulip (excited face)
-      { draw: drawKawaiiRoseIcon, color: '#E91E63', accent: '#F06292' },         // t5 Rose (sparkle eyes)
-      { draw: drawKawaiiBlossomIcon, color: '#F8BBD0', accent: '#FCE4EC' },      // t6 Cherry Blossom (proud)
-      { draw: drawKawaiiHibiscusIcon, color: '#E91E63', accent: '#FF5252' },     // t7 Hibiscus (sparkle + companions)
-      { draw: drawKawaiiParadiseIcon, color: '#AD1457', accent: '#EC407A' },     // t8 Paradise (sparkle + crown)
+      { draw: drawPlushieSeedlingIcon, color: '#B8E6A0', accent: '#6B9E50' },    // t1 Seedling plushie
+      { draw: drawPlushieSproutIcon, color: '#A5D89A', accent: '#5DA048' },      // t2 Sprout plushie
+      { draw: drawPlushieCloverIcon, color: '#7DC96F', accent: '#3D8A2E' },      // t3 Clover plushie
+      { draw: drawPlushieTulipIcon, color: '#FFB5C5', accent: '#E8688A' },       // t4 Tulip plushie
+      { draw: drawPlushieRoseIcon, color: '#FF8CAD', accent: '#D14068' },        // t5 Rose plushie
+      { draw: drawPlushieBlossomIcon, color: '#FFB7C5', accent: '#FFE0E8' },     // t6 Cherry Blossom plushie
+      { draw: drawPlushieHibiscusIcon, color: '#FF6B8A', accent: '#FF3D6B' },    // t7 Hibiscus plushie
+      { draw: drawPlushieBouquetIcon, color: '#FFD0E1', accent: '#FFD700' },     // t8 Bouquet plushie
     ],
     butterfly: [
       { draw: drawEggIcon, color: '#BCAAA4', accent: '#EFEBE9' },            // t1 Egg
@@ -2889,590 +2889,713 @@ function drawKawaiiFace(
 }
 
 // ============================================================
-// KAWAII FLOWER CHAIN ICON FUNCTIONS
-// Each tier has a unique personality expressed through face + form.
+// PLUSHIE FLOWER CHAIN ICON FUNCTIONS
+// Each tier is a round squishy plushie CHARACTER with 3D depth.
+// The flower identity is an accessory/feature on the character.
+// Inspired by Molang, Sumikko Gurashi -- puffy toy aesthetic.
 // ============================================================
 
-// --- T1 Seedling: tiny round seed "waking up" with sleepy face ---
-function drawKawaiiSeedlingIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, tier: number, color: string, accent: string): void {
-  const r = size * 0.4;
+// --- Shared plushie rendering helpers (flower chain only) ---
 
-  // Soil mound at base
-  const soilGrad = ctx.createRadialGradient(cx, cy + r * 0.55, 0, cx, cy + r * 0.55, r * 0.45);
-  soilGrad.addColorStop(0, '#8D6E63');
-  soilGrad.addColorStop(1, '#5D4037');
-  ctx.fillStyle = soilGrad;
-  ctx.beginPath();
-  ctx.ellipse(cx, cy + r * 0.55, r * 0.45, r * 0.15, 0, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Seed body (round, plump)
-  const seedGrad = ctx.createRadialGradient(cx - r * 0.1, cy - r * 0.1, 0, cx, cy, r * 0.42);
-  seedGrad.addColorStop(0, accent);
-  seedGrad.addColorStop(0.6, color);
-  seedGrad.addColorStop(1, darkenColor(color, 0.12));
-  ctx.fillStyle = seedGrad;
-  ctx.beginPath();
-  ctx.ellipse(cx, cy, r * 0.35, r * 0.38, 0, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Tiny sprout on top
-  ctx.strokeStyle = '#66BB6A';
-  ctx.lineWidth = size * 0.03;
-  ctx.lineCap = 'round';
-  ctx.beginPath();
-  ctx.moveTo(cx, cy - r * 0.35);
-  ctx.quadraticCurveTo(cx + r * 0.08, cy - r * 0.55, cx + r * 0.02, cy - r * 0.65);
-  ctx.stroke();
-  // Tiny leaf at tip
-  ctx.fillStyle = '#81C784';
-  ctx.beginPath();
-  ctx.ellipse(cx + r * 0.02, cy - r * 0.68, r * 0.08, r * 0.04, -0.3, 0, Math.PI * 2);
-  ctx.fill();
-
-  addHighlight(ctx, cx - r * 0.1, cy - r * 0.15, r * 0.35);
-
-  // Kawaii face -- sleepy, just waking up
-  const faceSize = r * 0.55;
-  drawKawaiiFace(ctx, cx, cy + r * 0.02, faceSize, 'sleepy', { blushOpacity: 0.25 });
-}
-
-// --- T2 Sprout: small sprout with shy face peeking from leaves ---
-function drawKawaiiSproutIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, tier: number, color: string, accent: string): void {
-  const r = size * 0.4;
-
-  // Stem
-  ctx.strokeStyle = darkenColor(color, 0.1);
-  ctx.lineWidth = size * 0.04;
-  ctx.lineCap = 'round';
-  ctx.beginPath();
-  ctx.moveTo(cx, cy + r * 0.1);
-  ctx.quadraticCurveTo(cx + r * 0.05, cy + r * 0.45, cx, cy + r * 0.7);
-  ctx.stroke();
-
-  // Soil mound
-  const soilGrad = ctx.createRadialGradient(cx, cy + r * 0.75, 0, cx, cy + r * 0.75, r * 0.35);
-  soilGrad.addColorStop(0, '#8D6E63');
-  soilGrad.addColorStop(1, '#5D4037');
-  ctx.fillStyle = soilGrad;
-  ctx.beginPath();
-  ctx.ellipse(cx, cy + r * 0.75, r * 0.35, r * 0.12, 0, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Round face body (green, plump)
-  const bodyGrad = ctx.createRadialGradient(cx - r * 0.1, cy - r * 0.15, 0, cx, cy, r * 0.4);
-  bodyGrad.addColorStop(0, accent);
-  bodyGrad.addColorStop(0.7, color);
-  bodyGrad.addColorStop(1, darkenColor(color, 0.1));
+/** Draw a puffy 3D plushie body with multi-layer gradients */
+function drawPlushieBody(
+  ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number,
+  baseColor: string, highlightColor: string, shadowColor: string
+): void {
+  // 1. Base body with 3D radial gradient (light from top-left)
+  const bodyGrad = ctx.createRadialGradient(cx - r * 0.2, cy - r * 0.2, r * 0.1, cx, cy, r);
+  bodyGrad.addColorStop(0, highlightColor);
+  bodyGrad.addColorStop(0.6, baseColor);
+  bodyGrad.addColorStop(1, shadowColor);
   ctx.fillStyle = bodyGrad;
   ctx.beginPath();
-  ctx.arc(cx, cy - r * 0.05, r * 0.35, 0, Math.PI * 2);
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
   ctx.fill();
 
-  // Two leaves framing the face
-  [-1, 1].forEach(dir => {
-    const leafGrad = ctx.createLinearGradient(cx + dir * r * 0.1, cy - r * 0.3, cx + dir * r * 0.5, cy);
-    leafGrad.addColorStop(0, accent);
-    leafGrad.addColorStop(1, color);
-    ctx.fillStyle = leafGrad;
-    ctx.save();
-    ctx.translate(cx, cy - r * 0.05);
-    ctx.rotate(dir * 0.6);
-    ctx.beginPath();
-    ctx.ellipse(dir * r * 0.3, -r * 0.15, r * 0.18, r * 0.28, dir * 0.2, 0, Math.PI * 2);
-    ctx.fill();
-    // Leaf vein
-    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
-    ctx.lineWidth = size * 0.012;
-    ctx.beginPath();
-    ctx.moveTo(dir * r * 0.15, -r * 0.05);
-    ctx.lineTo(dir * r * 0.4, -r * 0.25);
-    ctx.stroke();
-    ctx.restore();
-  });
+  // 2. Specular highlight (top-left shiny spot)
+  const specGrad = ctx.createRadialGradient(cx - r * 0.3, cy - r * 0.3, 0, cx - r * 0.3, cy - r * 0.3, r * 0.5);
+  specGrad.addColorStop(0, 'rgba(255,255,255,0.45)');
+  specGrad.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = specGrad;
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.fill();
 
-  addHighlight(ctx, cx - r * 0.1, cy - r * 0.2, r * 0.35);
-
-  // Kawaii face -- shy, peeking out
-  const faceSize = r * 0.55;
-  drawKawaiiFace(ctx, cx, cy - r * 0.03, faceSize, 'shy', { blushOpacity: 0.4 });
+  // 3. Rim light (subtle bright arc on upper edge)
+  ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+  ctx.lineWidth = r * 0.06;
+  ctx.beginPath();
+  ctx.arc(cx, cy, r * 0.95, -Math.PI * 0.7, -Math.PI * 0.2);
+  ctx.stroke();
 }
 
-// --- T3 Bud: flower bud with happy face, petals frame face like hair ---
-function drawKawaiiBudIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, tier: number, color: string, accent: string): void {
-  const r = size * 0.4;
+/** Draw big shiny Molang-style eyes */
+function drawPlushieEyes(
+  ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number,
+  style: 'normal' | 'wide' | 'gentle' | 'sparkle' = 'normal'
+): void {
+  const eyeSpacing = r * 0.32;
+  const eyeR = r * 0.14;
 
+  for (const side of [-1, 1]) {
+    const ex = cx + side * eyeSpacing;
+    const ey = cy - r * 0.05;
+
+    if (style === 'sparkle') {
+      // Star-shaped sparkle eyes
+      ctx.fillStyle = '#2C1810';
+      ctx.beginPath();
+      for (let i = 0; i < 8; i++) {
+        const angle = (i / 8) * Math.PI * 2 - Math.PI / 2;
+        const sr = i % 2 === 0 ? eyeR * 1.1 : eyeR * 0.4;
+        const px = ex + Math.cos(angle) * sr;
+        const py = ey + Math.sin(angle) * sr;
+        i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+      }
+      ctx.closePath();
+      ctx.fill();
+      // Bright reflection
+      ctx.fillStyle = '#FFFFFF';
+      ctx.beginPath();
+      ctx.arc(ex + eyeR * 0.2, ey - eyeR * 0.3, eyeR * 0.3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(ex - eyeR * 0.2, ey + eyeR * 0.2, eyeR * 0.15, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      // White of eye
+      ctx.fillStyle = '#FFFFFF';
+      ctx.beginPath();
+      const vStretch = style === 'wide' ? 1.2 : style === 'gentle' ? 1.0 : 1.1;
+      ctx.ellipse(ex, ey, eyeR, eyeR * vStretch, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Dark pupil (large, fills most of eye)
+      ctx.fillStyle = '#2C1810';
+      ctx.beginPath();
+      ctx.arc(ex, ey + eyeR * 0.1, eyeR * 0.72, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Primary reflection dot (top-right)
+      ctx.fillStyle = '#FFFFFF';
+      ctx.beginPath();
+      ctx.arc(ex + eyeR * 0.22, ey - eyeR * 0.22, eyeR * 0.28, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Secondary smaller reflection (bottom-left)
+      ctx.fillStyle = 'rgba(255,255,255,0.7)';
+      ctx.beginPath();
+      ctx.arc(ex - eyeR * 0.15, ey + eyeR * 0.3, eyeR * 0.12, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+}
+
+/** Draw rosy cheek blush on plushie */
+function drawPlushieBlush(
+  ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number,
+  opacity: number = 0.3
+): void {
+  const blushY = cy + r * 0.15;
+  ctx.save();
+  ctx.globalAlpha = opacity;
+  for (const side of [-1, 1]) {
+    const bx = cx + side * r * 0.42;
+    ctx.fillStyle = 'rgba(255,150,150,1)';
+    ctx.beginPath();
+    ctx.ellipse(bx, blushY, r * 0.14, r * 0.09, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+/** Draw a tiny plushie mouth */
+function drawPlushieMouth(
+  ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number,
+  style: 'smile' | 'dot' | 'open' | 'cat' = 'smile'
+): void {
+  const my = cy + r * 0.22;
+  ctx.strokeStyle = '#5D3A2E';
+  ctx.lineWidth = r * 0.04;
+  ctx.lineCap = 'round';
+
+  if (style === 'dot') {
+    ctx.fillStyle = '#5D3A2E';
+    ctx.beginPath();
+    ctx.arc(cx, my, r * 0.03, 0, Math.PI * 2);
+    ctx.fill();
+  } else if (style === 'open') {
+    ctx.fillStyle = '#FF8FA3';
+    ctx.beginPath();
+    ctx.ellipse(cx, my, r * 0.08, r * 0.06, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#5D3A2E';
+    ctx.beginPath();
+    ctx.ellipse(cx, my, r * 0.08, r * 0.06, 0, 0, Math.PI * 2);
+    ctx.stroke();
+  } else if (style === 'cat') {
+    // w-shaped cat mouth
+    ctx.beginPath();
+    ctx.moveTo(cx - r * 0.08, my);
+    ctx.quadraticCurveTo(cx - r * 0.04, my + r * 0.05, cx, my);
+    ctx.quadraticCurveTo(cx + r * 0.04, my + r * 0.05, cx + r * 0.08, my);
+    ctx.stroke();
+  } else {
+    // Simple curved smile
+    ctx.beginPath();
+    ctx.arc(cx, my - r * 0.03, r * 0.07, Math.PI * 0.15, Math.PI * 0.85);
+    ctx.stroke();
+  }
+}
+
+// --- T1 Seedling: Tiny pale green plushie, small leaf sprouting from top of head ---
+function drawPlushieSeedlingIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, _tier: number, _color: string, _accent: string): void {
+  const r = size * 0.32;
+  const bodyCy = cy + r * 0.15;
+
+  // Soft ground shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.06)';
+  ctx.beginPath();
+  ctx.ellipse(cx, bodyCy + r * 1.05, r * 0.7, r * 0.12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Plushie body
+  drawPlushieBody(ctx, cx, bodyCy, r, '#B8E6A0', '#D4F5C4', '#8BC672');
+
+  // Small leaf sprouting from top of head
+  ctx.save();
+  ctx.translate(cx + r * 0.05, bodyCy - r * 0.9);
   // Stem
-  ctx.strokeStyle = '#4CAF50';
-  ctx.lineWidth = size * 0.035;
+  ctx.strokeStyle = '#6B9E50';
+  ctx.lineWidth = r * 0.08;
   ctx.lineCap = 'round';
   ctx.beginPath();
-  ctx.moveTo(cx, cy + r * 0.25);
-  ctx.quadraticCurveTo(cx + r * 0.06, cy + r * 0.55, cx - r * 0.02, cy + r * 0.8);
+  ctx.moveTo(0, r * 0.15);
+  ctx.quadraticCurveTo(r * 0.05, -r * 0.1, -r * 0.02, -r * 0.25);
+  ctx.stroke();
+  // Leaf
+  const leafGrad = ctx.createRadialGradient(-r * 0.02, -r * 0.3, 0, 0, -r * 0.2, r * 0.2);
+  leafGrad.addColorStop(0, '#A8E49C');
+  leafGrad.addColorStop(1, '#6B9E50');
+  ctx.fillStyle = leafGrad;
+  ctx.beginPath();
+  ctx.ellipse(-r * 0.02, -r * 0.32, r * 0.14, r * 0.08, -0.3, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // Face
+  drawPlushieEyes(ctx, cx, bodyCy, r, 'wide');
+  drawPlushieMouth(ctx, cx, bodyCy, r, 'dot');
+  drawPlushieBlush(ctx, cx, bodyCy, r, 0.25);
+}
+
+// --- T2 Sprout: Slightly bigger soft green body, two leaves on head like ears ---
+function drawPlushieSproutIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, _tier: number, _color: string, _accent: string): void {
+  const r = size * 0.34;
+  const bodyCy = cy + r * 0.1;
+
+  // Soft ground shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.06)';
+  ctx.beginPath();
+  ctx.ellipse(cx, bodyCy + r * 1.05, r * 0.72, r * 0.12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Plushie body
+  drawPlushieBody(ctx, cx, bodyCy, r, '#A5D89A', '#C8F0BC', '#7BBF68');
+
+  // Two leaf "ears" on top of head
+  for (const side of [-1, 1]) {
+    ctx.save();
+    ctx.translate(cx + side * r * 0.35, bodyCy - r * 0.8);
+    ctx.rotate(side * 0.35);
+    const earGrad = ctx.createLinearGradient(0, r * 0.15, 0, -r * 0.3);
+    earGrad.addColorStop(0, '#7BBF68');
+    earGrad.addColorStop(1, '#C8F0BC');
+    ctx.fillStyle = earGrad;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, r * 0.15, r * 0.28, side * 0.2, 0, Math.PI * 2);
+    ctx.fill();
+    // Leaf vein
+    ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+    ctx.lineWidth = r * 0.03;
+    ctx.beginPath();
+    ctx.moveTo(0, r * 0.15);
+    ctx.lineTo(0, -r * 0.2);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // Face
+  drawPlushieEyes(ctx, cx, bodyCy, r, 'normal');
+  drawPlushieMouth(ctx, cx, bodyCy, r, 'smile');
+  drawPlushieBlush(ctx, cx, bodyCy, r, 0.35);
+}
+
+// --- T3 Clover: Medium green body, three-leaf clover hat on top ---
+function drawPlushieCloverIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, tier: number, _color: string, _accent: string): void {
+  const r = size * 0.34;
+  const bodyCy = cy + r * 0.1;
+
+  // Soft ground shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.07)';
+  ctx.beginPath();
+  ctx.ellipse(cx, bodyCy + r * 1.05, r * 0.72, r * 0.12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Plushie body
+  drawPlushieBody(ctx, cx, bodyCy, r, '#7DC96F', '#A8E49C', '#5AAF48');
+
+  // Clover stem on top of head
+  ctx.strokeStyle = '#3D8A2E';
+  ctx.lineWidth = r * 0.06;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(cx, bodyCy - r * 0.85);
+  ctx.lineTo(cx, bodyCy - r * 1.15);
   ctx.stroke();
 
-  // Small leaves on stem
-  ctx.fillStyle = '#66BB6A';
+  // Three clover leaves arranged in a trefoil
+  const cloverCy = bodyCy - r * 1.25;
+  const cloverR = r * 0.18;
+  const cloverAngles = [
+    -Math.PI / 2,
+    -Math.PI / 2 + (Math.PI * 2 / 3),
+    -Math.PI / 2 - (Math.PI * 2 / 3),
+  ];
+  cloverAngles.forEach(angle => {
+    const lx = cx + Math.cos(angle) * cloverR * 0.6;
+    const ly = cloverCy + Math.sin(angle) * cloverR * 0.6;
+    const cloverGrad = ctx.createRadialGradient(lx, ly, 0, lx, ly, cloverR);
+    cloverGrad.addColorStop(0, '#A8E49C');
+    cloverGrad.addColorStop(1, '#3D8A2E');
+    ctx.fillStyle = cloverGrad;
+    ctx.beginPath();
+    ctx.arc(lx - cloverR * 0.3, ly - cloverR * 0.1, cloverR * 0.45, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(lx + cloverR * 0.3, ly - cloverR * 0.1, cloverR * 0.45, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  addTierSparkles(ctx, cx, cy, r, tier);
+
+  // Face -- proud expression
+  drawPlushieEyes(ctx, cx, bodyCy, r, 'normal');
+  drawPlushieMouth(ctx, cx, bodyCy, r, 'cat');
+  drawPlushieBlush(ctx, cx, bodyCy, r, 0.3);
+}
+
+// --- T4 Tulip: Pastel pink plushie body, the tulip IS the character with petal-shaped top ---
+function drawPlushieTulipIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, tier: number, _color: string, _accent: string): void {
+  const r = size * 0.33;
+  const bodyCy = cy + r * 0.15;
+
+  // Soft ground shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.07)';
   ctx.beginPath();
-  ctx.ellipse(cx + r * 0.05, cy + r * 0.45, r * 0.14, r * 0.06, 0.5, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = '#4CAF50';
-  ctx.beginPath();
-  ctx.ellipse(cx - r * 0.07, cy + r * 0.6, r * 0.11, r * 0.05, -0.4, 0, Math.PI * 2);
+  ctx.ellipse(cx, bodyCy + r * 1.05, r * 0.72, r * 0.12, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // Bud petals (closed, framing face like hair) -- drawn behind body
-  const petalColors = [darkenColor(color, 0.05), color, accent];
-  for (let i = 0; i < 5; i++) {
-    const angle = (i / 5) * Math.PI * 2 - Math.PI / 2;
-    const px = cx + Math.cos(angle) * r * 0.15;
-    const py = (cy - r * 0.1) + Math.sin(angle) * r * 0.15;
-    const petalGrad = ctx.createRadialGradient(px, py, 0, px, py, r * 0.28);
-    petalGrad.addColorStop(0, petalColors[i % petalColors.length]);
-    petalGrad.addColorStop(1, darkenColor(color, 0.08));
-    ctx.fillStyle = petalGrad;
+  // Small green leaf "arms" behind body
+  for (const side of [-1, 1]) {
+    const armGrad = ctx.createLinearGradient(cx, bodyCy, cx + side * r * 0.8, bodyCy + r * 0.3);
+    armGrad.addColorStop(0, '#81C784');
+    armGrad.addColorStop(1, '#4CAF50');
+    ctx.fillStyle = armGrad;
     ctx.beginPath();
-    ctx.ellipse(px, py, r * 0.2, r * 0.28, angle + Math.PI / 2, 0, Math.PI * 2);
+    ctx.ellipse(cx + side * r * 0.6, bodyCy + r * 0.4, r * 0.22, r * 0.08, side * 0.5, 0, Math.PI * 2);
     ctx.fill();
   }
 
-  // Face area (round center)
-  const faceGrad = ctx.createRadialGradient(cx - r * 0.05, cy - r * 0.15, 0, cx, cy - r * 0.05, r * 0.25);
-  faceGrad.addColorStop(0, '#FFF9C4');
-  faceGrad.addColorStop(0.7, '#FFEE58');
-  faceGrad.addColorStop(1, '#FFD600');
-  ctx.fillStyle = faceGrad;
+  // Plushie body (pastel pink tulip)
+  drawPlushieBody(ctx, cx, bodyCy, r, '#FFB5C5', '#FFD4DE', '#F28EA5');
+
+  // Petal-shaped top of head (3 petals curving upward)
+  const petalAngles = [-0.5, 0, 0.5];
+  petalAngles.forEach(angle => {
+    ctx.save();
+    ctx.translate(cx, bodyCy - r * 0.7);
+    ctx.rotate(angle);
+    const petalGrad = ctx.createLinearGradient(0, r * 0.2, 0, -r * 0.5);
+    petalGrad.addColorStop(0, '#FFB5C5');
+    petalGrad.addColorStop(0.5, '#FFD4DE');
+    petalGrad.addColorStop(1, '#E8688A');
+    ctx.fillStyle = petalGrad;
+    ctx.beginPath();
+    ctx.ellipse(0, -r * 0.15, r * 0.2, r * 0.35, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  });
+
+  // Re-draw top of body to blend petals into body seamlessly
+  const blendGrad = ctx.createRadialGradient(cx, bodyCy - r * 0.4, 0, cx, bodyCy - r * 0.4, r * 0.5);
+  blendGrad.addColorStop(0, '#FFB5C5');
+  blendGrad.addColorStop(1, 'rgba(255,181,197,0)');
+  ctx.fillStyle = blendGrad;
   ctx.beginPath();
-  ctx.arc(cx, cy - r * 0.05, r * 0.22, 0, Math.PI * 2);
+  ctx.arc(cx, bodyCy - r * 0.4, r * 0.5, 0, Math.PI * 2);
   ctx.fill();
 
-  addHighlight(ctx, cx - r * 0.08, cy - r * 0.15, r * 0.22);
   addTierSparkles(ctx, cx, cy, r, tier);
 
-  // Kawaii face -- happy, looking up
-  const faceSize = r * 0.4;
-  drawKawaiiFace(ctx, cx, cy - r * 0.05, faceSize, 'happy');
+  // Face -- elegant gentle eyes
+  drawPlushieEyes(ctx, cx, bodyCy, r, 'gentle');
+  drawPlushieMouth(ctx, cx, bodyCy, r, 'smile');
+  drawPlushieBlush(ctx, cx, bodyCy, r, 0.35);
 }
 
-// --- T4 Tulip: open flower with excited face, petals like a crown ---
-function drawKawaiiTulipIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, tier: number, color: string, accent: string): void {
-  const r = size * 0.4;
+// --- T5 Rose: Rich pink plushie body with small rose crown/tiara on head ---
+function drawPlushieRoseIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, tier: number, _color: string, _accent: string): void {
+  const r = size * 0.34;
+  const bodyCy = cy + r * 0.1;
 
-  // Stem
-  ctx.strokeStyle = '#4CAF50';
-  ctx.lineWidth = size * 0.035;
-  ctx.lineCap = 'round';
+  // Soft ground shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.08)';
   ctx.beginPath();
-  ctx.moveTo(cx, cy + r * 0.15);
-  ctx.quadraticCurveTo(cx + r * 0.08, cy + r * 0.5, cx - r * 0.02, cy + r * 0.8);
-  ctx.stroke();
-
-  // Leaves on stem
-  ctx.fillStyle = '#66BB6A';
-  ctx.beginPath();
-  ctx.ellipse(cx + r * 0.05, cy + r * 0.4, r * 0.15, r * 0.06, 0.5, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = '#4CAF50';
-  ctx.beginPath();
-  ctx.ellipse(cx - r * 0.08, cy + r * 0.55, r * 0.12, r * 0.05, -0.4, 0, Math.PI * 2);
+  ctx.ellipse(cx, bodyCy + r * 1.05, r * 0.74, r * 0.13, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // Crown petals (spread open, above center)
-  const petalCount = 6;
-  for (let i = 0; i < petalCount; i++) {
-    const angle = (i / petalCount) * Math.PI * 2;
-    ctx.save();
-    ctx.translate(cx, cy - r * 0.1);
-    ctx.rotate(angle);
-    const grad = ctx.createLinearGradient(0, -r * 0.7, 0, -r * 0.1);
-    grad.addColorStop(0, accent);
-    grad.addColorStop(0.6, color);
-    grad.addColorStop(1, darkenColor(color, 0.12));
-    ctx.fillStyle = grad;
+  // Plushie body (rich pink)
+  drawPlushieBody(ctx, cx, bodyCy, r, '#FF8CAD', '#FFB8CC', '#E8607E');
+
+  // Rose crown/tiara on top of head -- small layered rose
+  const roseCx = cx;
+  const roseCy = bodyCy - r * 1.0;
+  const roseR = r * 0.28;
+
+  // Rose petals (spiral layers)
+  for (let layer = 0; layer < 2; layer++) {
+    const petalCount = layer === 0 ? 5 : 4;
+    const offset = layer * 0.3;
+    const layerR = roseR * (1 - layer * 0.25);
+    for (let i = 0; i < petalCount; i++) {
+      const angle = (i / petalCount) * Math.PI * 2 + offset;
+      const px = roseCx + Math.cos(angle) * layerR * 0.35;
+      const py = roseCy + Math.sin(angle) * layerR * 0.35;
+      const petalGrad = ctx.createRadialGradient(px, py, 0, px, py, layerR * 0.55);
+      petalGrad.addColorStop(0, layer === 0 ? '#FFB8CC' : '#FF8CAD');
+      petalGrad.addColorStop(1, '#D14068');
+      ctx.fillStyle = petalGrad;
+      ctx.beginPath();
+      ctx.ellipse(px, py, layerR * 0.4, layerR * 0.5, angle, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  // Rose center
+  ctx.fillStyle = '#D14068';
+  ctx.beginPath();
+  ctx.arc(roseCx, roseCy, roseR * 0.18, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Tiny leaf accents beside the rose
+  for (const side of [-1, 1]) {
+    ctx.fillStyle = '#6B9E50';
     ctx.beginPath();
-    ctx.ellipse(0, -r * 0.45, r * 0.2, r * 0.32, 0, 0, Math.PI * 2);
+    ctx.ellipse(roseCx + side * roseR * 0.7, roseCy + roseR * 0.15, roseR * 0.25, roseR * 0.12, side * 0.4, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  addTierSparkles(ctx, cx, cy, r, tier);
+
+  // Face -- confident sparkle eyes
+  drawPlushieEyes(ctx, cx, bodyCy, r, 'sparkle');
+  drawPlushieMouth(ctx, cx, bodyCy, r, 'cat');
+  drawPlushieBlush(ctx, cx, bodyCy, r, 0.4);
+}
+
+// --- T6 Cherry Blossom: Soft pink body with petal shapes, petals floating around ---
+function drawPlushieBlossomIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, tier: number, _color: string, _accent: string): void {
+  const r = size * 0.34;
+  const bodyCy = cy + r * 0.1;
+
+  // Soft ground shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.07)';
+  ctx.beginPath();
+  ctx.ellipse(cx, bodyCy + r * 1.05, r * 0.74, r * 0.12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Floating petals around the character (drawn behind body)
+  const floatingPetals = [
+    { x: cx - r * 1.0, y: bodyCy - r * 0.5, rot: 0.3, s: 0.6 },
+    { x: cx + r * 0.95, y: bodyCy - r * 0.3, rot: -0.5, s: 0.5 },
+    { x: cx - r * 0.7, y: bodyCy + r * 0.7, rot: 1.0, s: 0.45 },
+    { x: cx + r * 0.8, y: bodyCy + r * 0.6, rot: -0.8, s: 0.5 },
+    { x: cx + r * 0.1, y: bodyCy - r * 1.2, rot: 0.6, s: 0.4 },
+  ];
+  floatingPetals.forEach(p => {
+    ctx.save();
+    ctx.globalAlpha = 0.5;
+    ctx.translate(p.x, p.y);
+    ctx.rotate(p.rot);
+    const pg = ctx.createRadialGradient(0, 0, 0, 0, 0, r * 0.15 * p.s);
+    pg.addColorStop(0, '#FFE0E8');
+    pg.addColorStop(1, '#FFB7C5');
+    ctx.fillStyle = pg;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, r * 0.12 * p.s, r * 0.18 * p.s, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  });
+
+  // Plushie body (soft sakura pink)
+  drawPlushieBody(ctx, cx, bodyCy, r, '#FFB7C5', '#FFD8E2', '#F2899E');
+
+  // Petal-shaped "ears" / accents on sides of head
+  for (const side of [-1, 1]) {
+    ctx.save();
+    ctx.translate(cx + side * r * 0.55, bodyCy - r * 0.65);
+    ctx.rotate(side * 0.4);
+    const petalGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, r * 0.25);
+    petalGrad.addColorStop(0, '#FFE0E8');
+    petalGrad.addColorStop(1, '#FFB7C5');
+    ctx.fillStyle = petalGrad;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, r * 0.16, r * 0.22, side * 0.3, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // Small flower on top of head
+  const flowerCy = bodyCy - r * 0.95;
+  for (let i = 0; i < 5; i++) {
+    const angle = (i / 5) * Math.PI * 2 - Math.PI / 2;
+    const px = cx + Math.cos(angle) * r * 0.12;
+    const py = flowerCy + Math.sin(angle) * r * 0.12;
+    ctx.fillStyle = '#FFE0E8';
+    ctx.beginPath();
+    ctx.ellipse(px, py, r * 0.09, r * 0.12, angle, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.fillStyle = '#FFEB3B';
+  ctx.beginPath();
+  ctx.arc(cx, flowerCy, r * 0.06, 0, Math.PI * 2);
+  ctx.fill();
+
+  addTierSparkles(ctx, cx, cy, r, tier);
+
+  // Face -- gentle, serene eyes
+  drawPlushieEyes(ctx, cx, bodyCy, r, 'gentle');
+  drawPlushieMouth(ctx, cx, bodyCy, r, 'smile');
+  drawPlushieBlush(ctx, cx, bodyCy, r, 0.35);
+}
+
+// --- T7 Hibiscus: Vibrant coral-pink body, large flower blooming from top of head ---
+function drawPlushieHibiscusIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, tier: number, _color: string, _accent: string): void {
+  const r = size * 0.34;
+  const bodyCy = cy + r * 0.15;
+
+  // Soft ground shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.08)';
+  ctx.beginPath();
+  ctx.ellipse(cx, bodyCy + r * 1.05, r * 0.76, r * 0.13, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Plushie body (vibrant coral-pink)
+  drawPlushieBody(ctx, cx, bodyCy, r, '#FF6B8A', '#FF99AF', '#E84466');
+
+  // Large hibiscus flower blooming from top of head
+  const flowerCx = cx;
+  const flowerCy = bodyCy - r * 0.85;
+  const flowerR = r * 0.45;
+
+  // Outer petals (5 large)
+  for (let i = 0; i < 5; i++) {
+    const angle = (i / 5) * Math.PI * 2 - Math.PI / 2;
+    const px = flowerCx + Math.cos(angle) * flowerR * 0.35;
+    const py = flowerCy + Math.sin(angle) * flowerR * 0.35;
+    ctx.save();
+    ctx.translate(px, py);
+    ctx.rotate(angle + Math.PI / 2);
+    const petalGrad = ctx.createLinearGradient(0, -flowerR * 0.4, 0, flowerR * 0.4);
+    petalGrad.addColorStop(0, '#FF99AF');
+    petalGrad.addColorStop(0.5, '#FF6B8A');
+    petalGrad.addColorStop(1, '#FF3D6B');
+    ctx.fillStyle = petalGrad;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, flowerR * 0.3, flowerR * 0.5, 0, 0, Math.PI * 2);
     ctx.fill();
     // Petal vein
     ctx.strokeStyle = 'rgba(255,255,255,0.2)';
-    ctx.lineWidth = size * 0.008;
+    ctx.lineWidth = r * 0.02;
     ctx.beginPath();
-    ctx.moveTo(0, -r * 0.15);
-    ctx.lineTo(0, -r * 0.7);
+    ctx.moveTo(0, -flowerR * 0.35);
+    ctx.lineTo(0, flowerR * 0.35);
     ctx.stroke();
     ctx.restore();
   }
 
-  // Face center (warm yellow)
-  const centerGrad = ctx.createRadialGradient(cx, cy - r * 0.05, 0, cx, cy - r * 0.05, r * 0.22);
-  centerGrad.addColorStop(0, '#FFF176');
-  centerGrad.addColorStop(0.5, '#FFE082');
-  centerGrad.addColorStop(1, '#FFB300');
+  // Flower center
+  const centerGrad = ctx.createRadialGradient(flowerCx, flowerCy, 0, flowerCx, flowerCy, flowerR * 0.2);
+  centerGrad.addColorStop(0, '#FFEB3B');
+  centerGrad.addColorStop(1, '#FF9800');
   ctx.fillStyle = centerGrad;
   ctx.beginPath();
-  ctx.arc(cx, cy - r * 0.05, r * 0.2, 0, Math.PI * 2);
+  ctx.arc(flowerCx, flowerCy, flowerR * 0.15, 0, Math.PI * 2);
   ctx.fill();
 
-  addHighlight(ctx, cx - r * 0.06, cy - r * 0.15, r * 0.2);
+  // Stamen dots
+  for (let i = 0; i < 6; i++) {
+    const angle = (i / 6) * Math.PI * 2;
+    ctx.fillStyle = '#FFD54F';
+    ctx.beginPath();
+    ctx.arc(
+      flowerCx + Math.cos(angle) * flowerR * 0.1,
+      flowerCy + Math.sin(angle) * flowerR * 0.1,
+      r * 0.02, 0, Math.PI * 2
+    );
+    ctx.fill();
+  }
+
+  // Small leaf accents
+  for (const side of [-1, 1]) {
+    ctx.fillStyle = '#4CAF50';
+    ctx.beginPath();
+    ctx.ellipse(
+      flowerCx + side * flowerR * 0.6, flowerCy + flowerR * 0.35,
+      r * 0.12, r * 0.06, side * 0.6, 0, Math.PI * 2
+    );
+    ctx.fill();
+  }
+
   addTierSparkles(ctx, cx, cy, r, tier);
 
-  // Kawaii face -- excited!
-  const faceSize = r * 0.35;
-  drawKawaiiFace(ctx, cx, cy - r * 0.05, faceSize, 'excited');
+  // Face -- radiant sparkle eyes
+  drawPlushieEyes(ctx, cx, bodyCy, r, 'sparkle');
+  drawPlushieMouth(ctx, cx, bodyCy, r, 'open');
+  drawPlushieBlush(ctx, cx, bodyCy, r, 0.4);
 }
 
-// --- T5 Rose: full rose with sparkle eyes, leaves as arms ---
-function drawKawaiiRoseIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, tier: number, color: string, accent: string): void {
-  const r = size * 0.4;
+// --- T8 Bouquet: Largest body, pastel rainbow gradient, multiple flowers from head, gold glow ---
+function drawPlushieBouquetIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, tier: number, _color: string, _accent: string): void {
+  const r = size * 0.36;
+  const bodyCy = cy + r * 0.12;
 
-  // Stem
-  ctx.strokeStyle = '#4CAF50';
-  ctx.lineWidth = size * 0.035;
-  ctx.lineCap = 'round';
+  // Golden glow aura behind everything
+  const auraGrad = ctx.createRadialGradient(cx, bodyCy, r * 0.5, cx, bodyCy, r * 1.6);
+  auraGrad.addColorStop(0, 'rgba(255,215,0,0.18)');
+  auraGrad.addColorStop(0.5, 'rgba(255,215,0,0.08)');
+  auraGrad.addColorStop(1, 'rgba(255,215,0,0)');
+  ctx.fillStyle = auraGrad;
   ctx.beginPath();
-  ctx.moveTo(cx, cy + r * 0.15);
-  ctx.quadraticCurveTo(cx + r * 0.06, cy + r * 0.5, cx - r * 0.02, cy + r * 0.8);
+  ctx.arc(cx, bodyCy, r * 1.6, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Soft ground shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.08)';
+  ctx.beginPath();
+  ctx.ellipse(cx, bodyCy + r * 1.05, r * 0.78, r * 0.14, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Plushie body with pastel rainbow gradient (pink to lavender)
+  const bodyGrad = ctx.createLinearGradient(cx - r, bodyCy - r, cx + r, bodyCy + r);
+  bodyGrad.addColorStop(0, '#FFD0E1');
+  bodyGrad.addColorStop(0.35, '#FFE0E8');
+  bodyGrad.addColorStop(0.65, '#E0D4FF');
+  bodyGrad.addColorStop(1, '#D4E0FF');
+  ctx.fillStyle = bodyGrad;
+  ctx.beginPath();
+  ctx.arc(cx, bodyCy, r, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 3D depth overlay
+  const depthGrad = ctx.createRadialGradient(cx - r * 0.2, bodyCy - r * 0.2, r * 0.1, cx, bodyCy, r);
+  depthGrad.addColorStop(0, 'rgba(255,255,255,0.3)');
+  depthGrad.addColorStop(0.5, 'rgba(255,255,255,0)');
+  depthGrad.addColorStop(1, 'rgba(0,0,0,0.1)');
+  ctx.fillStyle = depthGrad;
+  ctx.beginPath();
+  ctx.arc(cx, bodyCy, r, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Specular highlight
+  const specGrad = ctx.createRadialGradient(cx - r * 0.3, bodyCy - r * 0.3, 0, cx - r * 0.3, bodyCy - r * 0.3, r * 0.5);
+  specGrad.addColorStop(0, 'rgba(255,255,255,0.5)');
+  specGrad.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = specGrad;
+  ctx.beginPath();
+  ctx.arc(cx, bodyCy, r, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Rim light
+  ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+  ctx.lineWidth = r * 0.06;
+  ctx.beginPath();
+  ctx.arc(cx, bodyCy, r * 0.95, -Math.PI * 0.7, -Math.PI * 0.2);
   ctx.stroke();
 
-  // "Arm" leaves (extending outward like waving)
-  [-1, 1].forEach(dir => {
-    ctx.save();
-    const leafGrad = ctx.createLinearGradient(cx, cy + r * 0.3, cx + dir * r * 0.6, cy + r * 0.1);
-    leafGrad.addColorStop(0, '#4CAF50');
-    leafGrad.addColorStop(1, '#81C784');
-    ctx.fillStyle = leafGrad;
-    ctx.beginPath();
-    ctx.ellipse(cx + dir * r * 0.35, cy + r * 0.35, r * 0.22, r * 0.07, dir * 0.4, 0, Math.PI * 2);
-    ctx.fill();
-    // Leaf vein
-    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
-    ctx.lineWidth = size * 0.008;
-    ctx.beginPath();
-    ctx.moveTo(cx + dir * r * 0.15, cy + r * 0.34);
-    ctx.lineTo(cx + dir * r * 0.52, cy + r * 0.32);
-    ctx.stroke();
-    ctx.restore();
-  });
-
-  // Rose petals (layered spiral)
-  const petalCount = 8;
-  for (let i = 0; i < petalCount; i++) {
-    const angle = (i / petalCount) * Math.PI * 2;
-    const layerOffset = (i % 2) * r * 0.04;
-    ctx.save();
-    ctx.translate(cx, cy - r * 0.08);
-    ctx.rotate(angle);
-    const grad = ctx.createLinearGradient(0, -r * 0.65, 0, -r * 0.1);
-    grad.addColorStop(0, accent);
-    grad.addColorStop(0.5, color);
-    grad.addColorStop(1, darkenColor(color, 0.15));
-    ctx.fillStyle = grad;
-    ctx.beginPath();
-    ctx.ellipse(0, -r * 0.4 - layerOffset, r * 0.2, r * 0.3, 0, 0, Math.PI * 2);
-    ctx.fill();
-    // Petal edge shadow
-    ctx.strokeStyle = 'rgba(0,0,0,0.06)';
-    ctx.lineWidth = size * 0.01;
-    ctx.beginPath();
-    ctx.ellipse(r * 0.02, -r * 0.39 - layerOffset, r * 0.2, r * 0.3, 0, -0.3, Math.PI * 0.8);
-    ctx.stroke();
-    ctx.restore();
-  }
-
-  // Face center
-  const centerGrad = ctx.createRadialGradient(cx, cy - r * 0.08, 0, cx, cy - r * 0.08, r * 0.2);
-  centerGrad.addColorStop(0, '#FFF9C4');
-  centerGrad.addColorStop(0.6, '#FFE082');
-  centerGrad.addColorStop(1, '#FFB300');
-  ctx.fillStyle = centerGrad;
-  ctx.beginPath();
-  ctx.arc(cx, cy - r * 0.08, r * 0.18, 0, Math.PI * 2);
-  ctx.fill();
-
-  addHighlight(ctx, cx - r * 0.06, cy - r * 0.18, r * 0.18);
-  addTierSparkles(ctx, cx, cy, r, tier);
-
-  // Kawaii face -- sparkle eyes, extra blush
-  const faceSize = r * 0.32;
-  drawKawaiiFace(ctx, cx, cy - r * 0.08, faceSize, 'sparkle', { blushOpacity: 0.45 });
-}
-
-// --- T6 Cherry Blossom (Bouquet): multiple flowers, main one has proud face ---
-function drawKawaiiBlossomIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, tier: number, color: string, accent: string): void {
-  const r = size * 0.4;
-
-  // Stem cluster
-  ctx.strokeStyle = '#4CAF50';
-  ctx.lineWidth = size * 0.03;
-  ctx.lineCap = 'round';
-  [-0.12, 0, 0.1].forEach(offset => {
-    ctx.beginPath();
-    ctx.moveTo(cx + r * offset, cy + r * 0.2);
-    ctx.quadraticCurveTo(cx + r * offset * 0.5, cy + r * 0.55, cx + r * offset * 0.3, cy + r * 0.8);
-    ctx.stroke();
-  });
-
-  // Background small flowers (no faces, just dots)
-  const smallPositions = [
-    { x: cx - r * 0.4, y: cy - r * 0.25 },
-    { x: cx + r * 0.4, y: cy - r * 0.2 },
-    { x: cx - r * 0.2, y: cy + r * 0.15 },
-    { x: cx + r * 0.25, y: cy + r * 0.1 },
+  // Multiple tiny flowers growing from head/around
+  const headFlowers = [
+    { x: cx - r * 0.35, y: bodyCy - r * 0.95, petals: 5, clr: '#FF8CAD', center: '#FFEB3B', s: 0.7 },
+    { x: cx + r * 0.35, y: bodyCy - r * 0.9, petals: 5, clr: '#FF6B8A', center: '#FFD54F', s: 0.65 },
+    { x: cx, y: bodyCy - r * 1.1, petals: 6, clr: '#FFB7C5', center: '#FFEB3B', s: 0.8 },
+    { x: cx - r * 0.55, y: bodyCy - r * 0.6, petals: 4, clr: '#E0D4FF', center: '#FFD54F', s: 0.5 },
+    { x: cx + r * 0.55, y: bodyCy - r * 0.55, petals: 4, clr: '#D4E0FF', center: '#FFEB3B', s: 0.45 },
   ];
-  smallPositions.forEach(pos => {
-    // Small petals
-    for (let i = 0; i < 5; i++) {
-      const angle = (i / 5) * Math.PI * 2;
-      ctx.fillStyle = accent;
+
+  headFlowers.forEach(f => {
+    const fR = r * 0.12 * f.s;
+    for (let i = 0; i < f.petals; i++) {
+      const angle = (i / f.petals) * Math.PI * 2 - Math.PI / 2;
+      const px = f.x + Math.cos(angle) * fR * 0.6;
+      const py = f.y + Math.sin(angle) * fR * 0.6;
+      const pg = ctx.createRadialGradient(px, py, 0, px, py, fR * 1.2);
+      pg.addColorStop(0, '#FFF0F5');
+      pg.addColorStop(1, f.clr);
+      ctx.fillStyle = pg;
       ctx.beginPath();
-      ctx.ellipse(
-        pos.x + Math.cos(angle) * r * 0.1,
-        pos.y + Math.sin(angle) * r * 0.1,
-        r * 0.07, r * 0.1, angle, 0, Math.PI * 2
-      );
+      ctx.ellipse(px, py, fR * 0.6, fR * 0.9, angle + Math.PI / 2, 0, Math.PI * 2);
       ctx.fill();
     }
-    // Center with tiny dot eyes
-    ctx.fillStyle = '#FFE082';
+    ctx.fillStyle = f.center;
     ctx.beginPath();
-    ctx.arc(pos.x, pos.y, r * 0.06, 0, Math.PI * 2);
-    ctx.fill();
-    // Tiny dot eyes
-    ctx.fillStyle = '#3D2B1F';
-    ctx.beginPath();
-    ctx.arc(pos.x - r * 0.025, pos.y - r * 0.01, r * 0.015, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(pos.x + r * 0.025, pos.y - r * 0.01, r * 0.015, 0, Math.PI * 2);
+    ctx.arc(f.x, f.y, fR * 0.4, 0, Math.PI * 2);
     ctx.fill();
   });
 
-  // Main flower (center, larger)
-  const mainPetals = 6;
-  for (let i = 0; i < mainPetals; i++) {
-    const angle = (i / mainPetals) * Math.PI * 2;
-    ctx.save();
-    ctx.translate(cx, cy - r * 0.08);
-    ctx.rotate(angle);
-    const grad = ctx.createLinearGradient(0, -r * 0.55, 0, -r * 0.1);
-    grad.addColorStop(0, accent);
-    grad.addColorStop(0.6, color);
-    grad.addColorStop(1, darkenColor(color, 0.1));
-    ctx.fillStyle = grad;
-    ctx.beginPath();
-    ctx.ellipse(0, -r * 0.35, r * 0.17, r * 0.27, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
-  }
-
-  // Main face center
-  const centerGrad = ctx.createRadialGradient(cx, cy - r * 0.08, 0, cx, cy - r * 0.08, r * 0.18);
-  centerGrad.addColorStop(0, '#FFF9C4');
-  centerGrad.addColorStop(0.7, '#FFE082');
-  centerGrad.addColorStop(1, '#FFB300');
-  ctx.fillStyle = centerGrad;
-  ctx.beginPath();
-  ctx.arc(cx, cy - r * 0.08, r * 0.16, 0, Math.PI * 2);
-  ctx.fill();
-
-  addHighlight(ctx, cx - r * 0.05, cy - r * 0.18, r * 0.16);
-  addTierSparkles(ctx, cx, cy, r, tier);
-
-  // Kawaii face -- happy/proud
-  const faceSize = r * 0.3;
-  drawKawaiiFace(ctx, cx, cy - r * 0.08, faceSize, 'happy', { blushOpacity: 0.35 });
-}
-
-// --- T7 Hibiscus: lush arrangement, lead flower sparkle eyes, companions have varied expressions ---
-function drawKawaiiHibiscusIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, tier: number, color: string, accent: string): void {
-  const r = size * 0.4;
-
-  // Background leaf mass
-  ctx.fillStyle = '#66BB6A';
-  ctx.beginPath();
-  ctx.ellipse(cx, cy + r * 0.1, r * 0.65, r * 0.45, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = '#4CAF50';
-  ctx.beginPath();
-  ctx.ellipse(cx - r * 0.1, cy + r * 0.15, r * 0.55, r * 0.4, 0.1, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Companion flowers (left and right)
-  const companions = [
-    { x: cx - r * 0.45, y: cy + r * 0.05, expr: 'happy' as KawaiiExpression },
-    { x: cx + r * 0.45, y: cy + r * 0.1, expr: 'shy' as KawaiiExpression },
+  // Small green leaves interspersed
+  const leafSpots = [
+    { x: cx - r * 0.65, y: bodyCy - r * 0.7, rot: -0.4 },
+    { x: cx + r * 0.65, y: bodyCy - r * 0.65, rot: 0.5 },
+    { x: cx, y: bodyCy - r * 1.3, rot: 0.1 },
   ];
-  companions.forEach(comp => {
-    // Small petals
-    for (let i = 0; i < 5; i++) {
-      const angle = (i / 5) * Math.PI * 2;
-      ctx.fillStyle = darkenColor(accent, 0.05);
-      ctx.beginPath();
-      ctx.ellipse(
-        comp.x + Math.cos(angle) * r * 0.1,
-        comp.y + Math.sin(angle) * r * 0.1,
-        r * 0.07, r * 0.1, angle, 0, Math.PI * 2
-      );
-      ctx.fill();
-    }
-    // Center
-    ctx.fillStyle = '#FFE082';
-    ctx.beginPath();
-    ctx.arc(comp.x, comp.y, r * 0.07, 0, Math.PI * 2);
-    ctx.fill();
-    // Mini face
-    const miniS = r * 0.12;
-    drawKawaiiFace(ctx, comp.x, comp.y, miniS, comp.expr, { blushOpacity: 0.25 });
-  });
-
-  // Main flower (center, large)
-  const mainPetals = 7;
-  for (let i = 0; i < mainPetals; i++) {
-    const angle = (i / mainPetals) * Math.PI * 2;
+  leafSpots.forEach(l => {
     ctx.save();
-    ctx.translate(cx, cy - r * 0.12);
-    ctx.rotate(angle);
-    const grad = ctx.createLinearGradient(0, -r * 0.65, 0, -r * 0.1);
-    grad.addColorStop(0, accent);
-    grad.addColorStop(0.5, color);
-    grad.addColorStop(1, darkenColor(color, 0.15));
-    ctx.fillStyle = grad;
+    ctx.translate(l.x, l.y);
+    ctx.rotate(l.rot);
+    ctx.fillStyle = '#81C784';
     ctx.beginPath();
-    ctx.ellipse(0, -r * 0.42, r * 0.2, r * 0.32, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, 0, r * 0.1, r * 0.05, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.restore();
-  }
+  });
 
-  // Main face center
-  const centerGrad = ctx.createRadialGradient(cx, cy - r * 0.12, 0, cx, cy - r * 0.12, r * 0.2);
-  centerGrad.addColorStop(0, '#FFF9C4');
-  centerGrad.addColorStop(0.6, '#FFE082');
-  centerGrad.addColorStop(1, '#FFB300');
-  ctx.fillStyle = centerGrad;
-  ctx.beginPath();
-  ctx.arc(cx, cy - r * 0.12, r * 0.18, 0, Math.PI * 2);
-  ctx.fill();
-
-  addHighlight(ctx, cx - r * 0.06, cy - r * 0.22, r * 0.18);
-  addTierSparkles(ctx, cx, cy, r, tier);
-
-  // Kawaii face -- sparkle eyes, lead flower
-  const faceSize = r * 0.32;
-  drawKawaiiFace(ctx, cx, cy - r * 0.12, faceSize, 'sparkle', { blushOpacity: 0.4 });
-}
-
-// --- T8 Paradise: full bloom paradise, main flower with sparkle eyes + tiny crown ---
-function drawKawaiiParadiseIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, tier: number, color: string, accent: string): void {
-  const r = size * 0.4;
-
-  // Lush background foliage
-  ctx.fillStyle = '#81C784';
-  ctx.beginPath();
-  ctx.ellipse(cx, cy + r * 0.05, r * 0.75, r * 0.55, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = '#66BB6A';
-  ctx.beginPath();
-  ctx.ellipse(cx + r * 0.05, cy + r * 0.1, r * 0.7, r * 0.5, -0.1, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Background small flowers with tiny faces
-  const bgFlowers = [
-    { x: cx - r * 0.5, y: cy - r * 0.15, expr: 'happy' as KawaiiExpression },
-    { x: cx + r * 0.5, y: cy - r * 0.1, expr: 'sleepy' as KawaiiExpression },
-    { x: cx - r * 0.35, y: cy + r * 0.3, expr: 'shy' as KawaiiExpression },
-    { x: cx + r * 0.4, y: cy + r * 0.25, expr: 'happy' as KawaiiExpression },
+  // Golden sparkle accents
+  const sparkleSpots = [
+    { x: cx - r * 0.9, y: bodyCy - r * 0.2 },
+    { x: cx + r * 0.85, y: bodyCy - r * 0.35 },
+    { x: cx - r * 0.2, y: bodyCy - r * 1.35 },
+    { x: cx + r * 0.5, y: bodyCy - r * 1.2 },
+    { x: cx - r * 0.7, y: bodyCy + r * 0.5 },
+    { x: cx + r * 0.75, y: bodyCy + r * 0.45 },
   ];
-  bgFlowers.forEach(f => {
-    for (let i = 0; i < 4; i++) {
-      const angle = (i / 4) * Math.PI * 2;
-      ctx.fillStyle = accent;
-      ctx.beginPath();
-      ctx.ellipse(
-        f.x + Math.cos(angle) * r * 0.08,
-        f.y + Math.sin(angle) * r * 0.08,
-        r * 0.055, r * 0.08, angle, 0, Math.PI * 2
-      );
-      ctx.fill();
-    }
-    ctx.fillStyle = '#FFE082';
+  ctx.fillStyle = 'rgba(255,215,0,0.7)';
+  sparkleSpots.forEach(sp => {
+    const sr = r * 0.06;
     ctx.beginPath();
-    ctx.arc(f.x, f.y, r * 0.05, 0, Math.PI * 2);
+    ctx.moveTo(sp.x, sp.y - sr * 2);
+    ctx.quadraticCurveTo(sp.x + sr * 0.3, sp.y - sr * 0.3, sp.x + sr * 2, sp.y);
+    ctx.quadraticCurveTo(sp.x + sr * 0.3, sp.y + sr * 0.3, sp.x, sp.y + sr * 2);
+    ctx.quadraticCurveTo(sp.x - sr * 0.3, sp.y + sr * 0.3, sp.x - sr * 2, sp.y);
+    ctx.quadraticCurveTo(sp.x - sr * 0.3, sp.y - sr * 0.3, sp.x, sp.y - sr * 2);
     ctx.fill();
-    // Tiny face
-    const miniS = r * 0.1;
-    drawKawaiiFace(ctx, f.x, f.y, miniS, f.expr, { blushOpacity: 0.2 });
   });
 
-  // Main flower -- the star of the show
-  const mainPetals = 8;
-  for (let i = 0; i < mainPetals; i++) {
-    const angle = (i / mainPetals) * Math.PI * 2;
-    const layerOffset = (i % 2) * r * 0.03;
-    ctx.save();
-    ctx.translate(cx, cy - r * 0.1);
-    ctx.rotate(angle);
-    const grad = ctx.createLinearGradient(0, -r * 0.7, 0, -r * 0.1);
-    grad.addColorStop(0, accent);
-    grad.addColorStop(0.4, color);
-    grad.addColorStop(1, darkenColor(color, 0.18));
-    ctx.fillStyle = grad;
-    ctx.beginPath();
-    ctx.ellipse(0, -r * 0.45 - layerOffset, r * 0.22, r * 0.34, 0, 0, Math.PI * 2);
-    ctx.fill();
-    // Petal shimmer
-    ctx.strokeStyle = 'rgba(255,255,255,0.15)';
-    ctx.lineWidth = size * 0.008;
-    ctx.beginPath();
-    ctx.moveTo(0, -r * 0.15);
-    ctx.lineTo(0, -r * 0.72);
-    ctx.stroke();
-    ctx.restore();
-  }
-
-  // Main face center
-  const centerGrad = ctx.createRadialGradient(cx, cy - r * 0.1, 0, cx, cy - r * 0.1, r * 0.22);
-  centerGrad.addColorStop(0, '#FFF9C4');
-  centerGrad.addColorStop(0.5, '#FFE082');
-  centerGrad.addColorStop(1, '#FFB300');
-  ctx.fillStyle = centerGrad;
-  ctx.beginPath();
-  ctx.arc(cx, cy - r * 0.1, r * 0.2, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Tiny crown on top
-  ctx.fillStyle = '#FFD700';
-  const crownCx = cx;
-  const crownCy = cy - r * 0.32;
-  const crownW = r * 0.2;
-  const crownH = r * 0.12;
-  ctx.beginPath();
-  ctx.moveTo(crownCx - crownW, crownCy + crownH);
-  ctx.lineTo(crownCx - crownW * 0.85, crownCy - crownH * 0.3);
-  ctx.lineTo(crownCx - crownW * 0.5, crownCy + crownH * 0.3);
-  ctx.lineTo(crownCx, crownCy - crownH);
-  ctx.lineTo(crownCx + crownW * 0.5, crownCy + crownH * 0.3);
-  ctx.lineTo(crownCx + crownW * 0.85, crownCy - crownH * 0.3);
-  ctx.lineTo(crownCx + crownW, crownCy + crownH);
-  ctx.closePath();
-  ctx.fill();
-  // Crown gems
-  ctx.fillStyle = '#FF4081';
-  ctx.beginPath();
-  ctx.arc(crownCx, crownCy - crownH * 0.3, r * 0.02, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = '#40C4FF';
-  ctx.beginPath();
-  ctx.arc(crownCx - crownW * 0.5, crownCy + crownH * 0.05, r * 0.015, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.arc(crownCx + crownW * 0.5, crownCy + crownH * 0.05, r * 0.015, 0, Math.PI * 2);
-  ctx.fill();
-
-  addHighlight(ctx, cx - r * 0.06, cy - r * 0.2, r * 0.2);
   addTierSparkles(ctx, cx, cy, r, tier);
 
-  // Kawaii face -- elaborate sparkle eyes, maximum blush
-  const faceSize = r * 0.35;
-  drawKawaiiFace(ctx, cx, cy - r * 0.1, faceSize, 'sparkle', { blushOpacity: 0.5 });
+  // Face -- ultimate sparkle eyes with maximum expression
+  drawPlushieEyes(ctx, cx, bodyCy, r, 'sparkle');
+  drawPlushieMouth(ctx, cx, bodyCy, r, 'open');
+  drawPlushieBlush(ctx, cx, bodyCy, r, 0.45);
 }
 
 // ============================================================

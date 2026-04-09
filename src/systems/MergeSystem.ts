@@ -53,6 +53,12 @@ export interface GeneratorMergeResult {
 export class MergeSystem {
   private scene: Phaser.Scene;
 
+  // PERF: Pre-allocated arrays moved to class level to avoid per-call allocation
+  private static readonly HOLO_COLORS = [0xFF6B9D, 0xFFD93D, 0x6BCB77, 0x4D96FF, 0xD4A5FF];
+  private static readonly DEFAULT_COLORS = [0xFF9CAD, 0xA8E6CF, 0xA8D8EA, 0xFFD700];
+  private static readonly MERGE_MSGS = ['Nice!', 'Great!', 'Amazing!', 'Incredible!', 'LEGENDARY!'];
+  private static readonly MERGE_MSG_COLORS = ['#FF9CAD', '#A8D8EA', '#C8A8E9', '#FFD700', '#FF6B6B'];
+
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
   }
@@ -274,8 +280,9 @@ export class MergeSystem {
   }
 
   private createParticles(x: number, y: number, tier: number, chainId: string, comboMultiplier = 1): void {
-    const colors = CHAIN_PARTICLES[chainId] || [0xFF9CAD, 0xA8E6CF, 0xA8D8EA, 0xFFD700];
-    const holoColors = [0xFF6B9D, 0xFFD93D, 0x6BCB77, 0x4D96FF, 0xD4A5FF];
+    // PERF: Use pre-allocated class-level arrays instead of per-call allocation
+    const colors = CHAIN_PARTICLES[chainId] || MergeSystem.DEFAULT_COLORS;
+    const holoColors = MergeSystem.HOLO_COLORS;
     const count = Math.round((10 + tier * 3) * Math.min(comboMultiplier, 3));
     const chainShape = CHAIN_SHAPES[chainId] || 'circle';
 
@@ -319,11 +326,9 @@ export class MergeSystem {
     }
 
     if (tier >= 3) {
-      const msgs = ['Nice!', 'Great!', 'Amazing!', 'Incredible!', 'LEGENDARY!'];
-      const msgColors = ['#FF9CAD', '#A8D8EA', '#C8A8E9', '#FFD700', '#FF6B6B'];
-      const idx = Math.min(tier - 3, msgs.length - 1);
-      const txt = this.scene.add.text(x, y - s(30), msgs[idx], {
-        fontSize: fs(18 + tier * 2), color: msgColors[idx],
+      const idx = Math.min(tier - 3, MergeSystem.MERGE_MSGS.length - 1);
+      const txt = this.scene.add.text(x, y - s(30), MergeSystem.MERGE_MSGS[idx], {
+        fontSize: fs(18 + tier * 2), color: MergeSystem.MERGE_MSG_COLORS[idx],
         fontFamily: FONT, fontStyle: '700',
         stroke: '#FFFFFF', strokeThickness: s(3),
         shadow: { offsetX: 0, offsetY: s(2), color: 'rgba(92,84,112,0.3)', blur: s(4), fill: true },

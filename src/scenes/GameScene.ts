@@ -196,6 +196,8 @@ export class GameScene extends Phaser.Scene {
       document.removeEventListener('visibilitychange', visHandler);
       this.sound_.stopAmbientMusic();
       this.weatherSystem.destroy();
+      // PERF: Flush pending save on shutdown so no data is lost
+      if (this.savePending) this.saveGameImmediate();
     });
 
     // Start ambient music
@@ -1897,13 +1899,14 @@ export class GameScene extends Phaser.Scene {
       const req = order.def.items[si];
       if (order.progress[si] >= req.quantity) continue;
 
-      // Search board items for a match
+      // PERF: Use for-of with early break instead of forEach (which can't break)
       let matchItem: MergeItem | null = null;
-      this.items.forEach(item => {
-        if (!matchItem && item.data_.chainId === req.chainId && item.data_.tier === req.tier) {
+      for (const item of this.items.values()) {
+        if (item.data_.chainId === req.chainId && item.data_.tier === req.tier) {
           matchItem = item;
+          break;
         }
-      });
+      }
 
       if (!matchItem) continue;
 

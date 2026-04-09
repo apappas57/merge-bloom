@@ -14,6 +14,10 @@ export interface Character {
   name: string;
   emoji: string;
   unlockLevel: number;
+  personality: string;
+  greetings: string[];
+  completions: string[];
+  idles: string[];
 }
 
 export interface OrderDef {
@@ -27,16 +31,266 @@ export interface OrderDef {
 }
 
 export const CHARACTERS: Character[] = [
-  { id: 'rosie', name: 'Rosie', emoji: '👩‍🌾', unlockLevel: 1 },
-  { id: 'lyra', name: 'Lyra', emoji: '🧚', unlockLevel: 1 },
-  { id: 'koji', name: 'Koji', emoji: '🧑‍🍳', unlockLevel: 2 },
-  { id: 'mizu', name: 'Mizu', emoji: '🧜‍♀️', unlockLevel: 3 },
-  { id: 'nyx', name: 'Nyx', emoji: '🧙‍♀️', unlockLevel: 4 },
-  { id: 'mochi', name: 'Mochi', emoji: '🐿️', unlockLevel: 1 },
-  { id: 'suki', name: 'Suki', emoji: '🦋', unlockLevel: 2 },
-  { id: 'ren', name: 'Ren', emoji: '🍁', unlockLevel: 4 },
-  { id: 'kira', name: 'Kira', emoji: '☀️', unlockLevel: 5 },
-  { id: 'vivi', name: 'Vivi', emoji: '🧁', unlockLevel: 6 },
+  {
+    id: 'rosie',
+    name: 'Rosie',
+    emoji: '👩‍🌾',
+    unlockLevel: 1,
+    personality: 'Warm gardener and mother figure, nurturing and gentle',
+    greetings: [
+      'The garden needs your touch today!',
+      "I've been saving a spot for this...",
+      'Ready to grow something beautiful?',
+      'Every bloom starts with a helping hand.',
+      "Come, let's make the garden smile!",
+    ],
+    completions: [
+      'Oh, it\'s perfect! Thank you!',
+      'The garden is happier already!',
+      'You have such a green thumb!',
+      'Better than I imagined!',
+      'This is going to look wonderful.',
+    ],
+    idles: [
+      'Take your time, dear.',
+      'The garden will wait for you.',
+      'No rush at all.',
+    ],
+  },
+  {
+    id: 'lyra',
+    name: 'Lyra',
+    emoji: '🧚',
+    unlockLevel: 1,
+    personality: 'Dreamy fairy who speaks in moonlight and wishes',
+    greetings: [
+      'The stars whispered your name...',
+      'I dreamt of this, and here you are!',
+      'A little magic is needed today.',
+      'The moonlight brought me a wish...',
+      'Can you feel it? Something sparkles.',
+    ],
+    completions: [
+      'It glows just like I imagined!',
+      'The fairy ring thanks you kindly.',
+      'Pure magic, through and through.',
+      'Even the fireflies are clapping!',
+      'A wish fulfilled... how lovely.',
+    ],
+    idles: [
+      'The moon is patient, and so am I.',
+      'I will hum while I wait...',
+      'Dreams take time to bloom.',
+    ],
+  },
+  {
+    id: 'koji',
+    name: 'Koji',
+    emoji: '🧑‍🍳',
+    unlockLevel: 2,
+    personality: 'Passionate chef, dramatic with cooking metaphors',
+    greetings: [
+      'The kitchen is calling! Let\'s go!',
+      'I have a recipe that needs YOU.',
+      'This dish will not cook itself!',
+      'Taste buds, prepare yourselves!',
+      'Today we create a masterpiece!',
+    ],
+    completions: [
+      'Chef\'s kiss! Absolutely perfect!',
+      'Now THAT is a five-star ingredient!',
+      'My taste buds are dancing!',
+      'This goes straight on the menu!',
+      'Brilliant! The flavor is unreal!',
+    ],
+    idles: [
+      'A good dish is worth waiting for.',
+      'I will prep while you gather...',
+      'The stove is warm. No rush.',
+    ],
+  },
+  {
+    id: 'mizu',
+    name: 'Mizu',
+    emoji: '🧜‍♀️',
+    unlockLevel: 3,
+    personality: 'Serene mermaid, calm and wise with ocean speech',
+    greetings: [
+      'The tide has brought a request...',
+      'The ocean sends its regards.',
+      'Will you dive in with me today?',
+      'Something stirs beneath the waves.',
+      'The coral reef has a wish...',
+    ],
+    completions: [
+      'Smooth as a calm sea. Thank you.',
+      'The ocean sings your praises.',
+      'Like a pearl, simply beautiful.',
+      'The waves carry my gratitude.',
+      'You move like water. Effortless.',
+    ],
+    idles: [
+      'The sea is never in a hurry.',
+      'I will drift here a while...',
+      'Still waters run deep.',
+    ],
+  },
+  {
+    id: 'nyx',
+    name: 'Nyx',
+    emoji: '🧙‍♀️',
+    unlockLevel: 4,
+    personality: 'Mysterious witch, deadpan but secretly caring',
+    greetings: [
+      'I need something. Don\'t ask why.',
+      'My cauldron requires ingredients.',
+      'You. Yes, you. I need a favor.',
+      'The spell won\'t cast itself.',
+      'Before you ask... yes, it\'s urgent.',
+    ],
+    completions: [
+      '...acceptable. Fine. It\'s great.',
+      'The spell worked. Don\'t look smug.',
+      'Hmph. You did well. Whatever.',
+      'Not bad. I mean... thank you.',
+      'Perfect. Tell no one I smiled.',
+    ],
+    idles: [
+      'I can wait. I have spells to read.',
+      '...still here.',
+      'The cauldron simmers. No rush.',
+    ],
+  },
+  {
+    id: 'mochi',
+    name: 'Mochi',
+    emoji: '🐿️',
+    unlockLevel: 1,
+    personality: 'Hyperactive squirrel, excited about everything',
+    greetings: [
+      'Oh oh oh! I need something!',
+      'THIS IS SO EXCITING! Ready?!',
+      'Best day ever! I need your help!',
+      'You will not BELIEVE what I need!',
+      'HI! HI! I have a request!',
+    ],
+    completions: [
+      'YESSS! This is AMAZING!',
+      'Best thing I have EVER seen!',
+      'I am SO happy right now!',
+      'You are my FAVORITE person!',
+      'This is going in my collection!',
+    ],
+    idles: [
+      'I can wait! I can wait! Maybe!',
+      'Still here! Still excited!',
+      'La la la, waiting is fun too!',
+    ],
+  },
+  {
+    id: 'suki',
+    name: 'Suki',
+    emoji: '🦋',
+    unlockLevel: 2,
+    personality: 'Elegant butterfly lover, refined but warm',
+    greetings: [
+      'I am curating something lovely...',
+      'Beauty takes the right materials.',
+      'Would you help with my collection?',
+      'I spotted something exquisite...',
+      'Elegance requires a careful touch.',
+    ],
+    completions: [
+      'Exquisite. Truly exquisite.',
+      'This belongs in a gallery!',
+      'Refined taste, as always.',
+      'Perfection needs no explanation.',
+      'Simply stunning. Thank you.',
+    ],
+    idles: [
+      'Fine things are worth the wait.',
+      'Beauty arrives on its own time.',
+      'I will admire the view meanwhile.',
+    ],
+  },
+  {
+    id: 'ren',
+    name: 'Ren',
+    emoji: '🍁',
+    unlockLevel: 4,
+    personality: 'Forest sage, calm and philosophical about nature',
+    greetings: [
+      'The forest has a small request.',
+      'All things grow in their own time.',
+      'Walk with me a moment, friend.',
+      'Nature asks, and we listen.',
+      'The old oak shared a thought...',
+    ],
+    completions: [
+      'Like rain after a long dry spell.',
+      'The forest nods in approval.',
+      'Well done. The roots remember.',
+      'Balance is restored. Thank you.',
+      'A gift returned to the earth.',
+    ],
+    idles: [
+      'The trees have patience. So do I.',
+      'Listen... the wind has stories.',
+      'I will sit with the moss a while.',
+    ],
+  },
+  {
+    id: 'kira',
+    name: 'Kira',
+    emoji: '☀️',
+    unlockLevel: 5,
+    personality: 'Bold adventurer, energetic and encouraging',
+    greetings: [
+      'Adventure calls! Are you ready?!',
+      'I found a quest just for us!',
+      'No time to waste, let\'s GO!',
+      'The map says we need supplies!',
+      'Gear up! Today is the day!',
+    ],
+    completions: [
+      'NAILED IT! High five!',
+      'Another quest complete! Onward!',
+      'You are an explorer at heart!',
+      'Victory tastes so sweet!',
+      'Legend! Absolute legend!',
+    ],
+    idles: [
+      'I will scout ahead while I wait!',
+      'Stretching... ready when you are!',
+      'The horizon is not going anywhere.',
+    ],
+  },
+  {
+    id: 'vivi',
+    name: 'Vivi',
+    emoji: '🧁',
+    unlockLevel: 6,
+    personality: 'Sweet baker, bubbly and celebration-obsessed',
+    greetings: [
+      'I am baking something special!',
+      'The oven is warm and waiting!',
+      'Sugar, sprinkles, and YOU!',
+      'Every treat starts with love!',
+      'Party prep time! Let\'s go!',
+    ],
+    completions: [
+      'Sweet as honey! Thank you!',
+      'The bakery smells amazing now!',
+      'Cherry on top! Just perfect!',
+      'This deserves extra sprinkles!',
+      'You make everything sweeter!',
+    ],
+    idles: [
+      'I will frost cupcakes while I wait!',
+      'The dough is rising... no rush!',
+      'Humming my baking playlist...',
+    ],
+  },
 ];
 
 export const ORDER_POOL: OrderDef[] = [

@@ -52,6 +52,58 @@ export class SoundManager {
   private _musicEnabled = true;
   private _volume = 0.5;
 
+  // --- Ambient music state ---
+  private musicNodes: (OscillatorNode | GainNode)[] = [];
+  private musicSchedulerId: number | null = null;
+  private currentMood: string = '';
+  private nextNoteTime: number = 0;
+  private currentChordIndex: number = 0;
+  private currentNoteInChord: number = 0;
+
+  // --- Mood chord progressions (arpeggiated music-box style) ---
+  private static readonly MOODS = {
+    morning: {
+      tempo: 80,
+      noteLength: 2.0,
+      chords: [
+        [261.63, 329.63, 392.00],  // C major
+        [220.00, 261.63, 329.63],  // Am
+        [174.61, 261.63, 349.23],  // F
+        [196.00, 246.94, 392.00],  // G
+      ],
+    },
+    afternoon: {
+      tempo: 70,
+      noteLength: 2.5,
+      chords: [
+        [196.00, 246.94, 392.00],  // G
+        [164.81, 196.00, 246.94],  // Em
+        [261.63, 329.63, 392.00],  // C
+        [146.83, 220.00, 293.66],  // D
+      ],
+    },
+    evening: {
+      tempo: 65,
+      noteLength: 3.0,
+      chords: [
+        [174.61, 261.63, 349.23],  // F
+        [146.83, 174.61, 220.00],  // Dm
+        [116.54, 174.61, 233.08],  // Bb
+        [130.81, 196.00, 261.63],  // C
+      ],
+    },
+    night: {
+      tempo: 55,
+      noteLength: 3.5,
+      chords: [
+        [146.83, 174.61, 220.00],  // Dm
+        [110.00, 130.81, 164.81],  // Am (low)
+        [116.54, 146.83, 174.61],  // Bb (low)
+        [98.00, 116.54, 146.83],   // Gm (low)
+      ],
+    },
+  };
+
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
 
@@ -431,13 +483,201 @@ export class SoundManager {
     this.boardFull();
   }
 
+  // ---- Ambient music (synthesized, no external files) ----
+
+  /** Start the ambient music loop. Detects time-of-day mood and arpeggios through chord tones. */
+  startAmbientMusic(): void {
+    if (!this._musicEnabled) return;
+    // Avoid double-starting
+    if (this.musicSchedulerId !== null) return;
+    this.startScheduler();
+  }
+
+  /** Fade out and stop all ambient music over 1.5 seconds. */
+  stopAmbientMusic(): void {
+    // Clear the scheduler first
+    if (this.musicSchedulerId !== null) {
+      window.clearInterval(this.musicSchedulerId);
+      this.musicSchedulerId = null;
+    }
+
+    const ctx = this.getCtx();
+    const now = ctx ? ctx.currentTime : 0;
+    const fadeDuration = 1.5;
+
+    // Fade out all tracked gain nodes
+    for (const node of this.musicNodes) {
+      try {
+        if (node instanceof GainNode && ctx) {
+          node.gain.cancelScheduledValues(now);
+          node.gain.setValueAtTime(node.gain.value, now);
+          node.gain.exponentialRampToValueAtTime(0.001, now + fadeDuration);
+        }
+      } catch {
+        // Node may already be disconnected
+      }
+    }
+
+    // Disconnect and clean up after fade completes
+    setTimeout(() => {
+      for (const node of this.musicNodes) {
+        try {
+          if (node instanceof OscillatorNode) {
+            node.stop();
+          }
+          node.disconnect();
+        } catch {
+          // Already stopped or disconnected
+        }
+      }
+      this.musicNodes = [];
+    }, (fadeDuration + 0.1) * 1000);
+  }
+
+  /** Check if time-of-day mood changed; if so, crossfade to the new mood. */
+  checkMoodChange(): void {
+    const newMood = this.getMood();
+    if (newMood !== this.currentMood && this.musicSchedulerId !== null) {
+      this.stopAmbientMusic();
+      // Start new mood after fade completes
+      setTimeout(() => {
+        if (this._musicEnabled) {
+          this.startAmbientMusic();
+        }
+      }, 1700);
+    }
+  }
+
+  /** Handle page visibility changes -- stop music when hidden, restart when visible. */
+  handleVisibilityChange(hidden: boolean): void {
+    if (hidden) {
+      this.stopAmbientMusic();
+    } else if (this._musicEnabled) {
+      this.startAmbientMusic();
+    }
+  }
+
+  /** Schedule a single music note: sine + detuned sine for warm music-box timbre. */
+  private scheduleNote(freq: number, time: number, duration: number, vol: number): void {
+    const ctx = this.getCtx();
+    if (!ctx || !this._musicEnabled) return;
+
+    const masterVol = this._volume * vol * 0.03; // Very quiet -- background atmosphere
+
+    // Main oscillator
+    const osc = ctx.createOscillator();
+    osc.type = 'sine';
+    osc.frequency.value = freq;
+
+    // Detuned warmth oscillator (+3 cents)
+    const osc2 = ctx.createOscillator();
+    osc2.type = 'sine';
+    osc2.frequency.value = freq;
+    osc2.detune.value = 3;
+
+    // Gain envelope: soft attack, sustain, long release
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.001, time);
+    gain.gain.linearRampToValueAtTime(masterVol, time + 0.08);
+    gain.gain.setValueAtTime(masterVol, time + duration * 0.3);
+    gain.gain.exponentialRampToValueAtTime(0.001, time + duration);
+
+    // Second osc slightly quieter for subtle chorus
+    const gain2 = ctx.createGain();
+    gain2.gain.setValueAtTime(0.001, time);
+    gain2.gain.linearRampToValueAtTime(masterVol * 0.6, time + 0.08);
+    gain2.gain.exponentialRampToValueAtTime(0.001, time + duration);
+
+    osc.connect(gain).connect(ctx.destination);
+    osc2.connect(gain2).connect(ctx.destination);
+
+    osc.start(time);
+    osc.stop(time + duration + 0.05);
+    osc2.start(time);
+    osc2.stop(time + duration + 0.05);
+
+    // Track for cleanup
+    this.musicNodes.push(osc, osc2, gain, gain2);
+
+    // Auto-cleanup after note finishes
+    osc.onended = () => {
+      const idx = this.musicNodes.indexOf(osc);
+      if (idx >= 0) this.musicNodes.splice(idx, 1);
+      const idx2 = this.musicNodes.indexOf(osc2);
+      if (idx2 >= 0) this.musicNodes.splice(idx2, 1);
+      const idx3 = this.musicNodes.indexOf(gain);
+      if (idx3 >= 0) this.musicNodes.splice(idx3, 1);
+      const idx4 = this.musicNodes.indexOf(gain2);
+      if (idx4 >= 0) this.musicNodes.splice(idx4, 1);
+    };
+  }
+
+  /** Look-ahead scheduler: runs every 100ms, schedules notes 200ms ahead for glitch-free playback. */
+  private startScheduler(): void {
+    const ctx = this.getCtx();
+    if (!ctx) return;
+
+    const mood = this.getMood();
+    const moodData = SoundManager.MOODS[mood as keyof typeof SoundManager.MOODS];
+    this.currentMood = mood;
+    this.nextNoteTime = ctx.currentTime + 0.5; // Start in 0.5s
+    this.currentChordIndex = 0;
+    this.currentNoteInChord = 0;
+
+    const scheduleAhead = 0.2; // Schedule 200ms ahead
+
+    this.musicSchedulerId = window.setInterval(() => {
+      if (!ctx || !this._musicEnabled) return;
+
+      while (this.nextNoteTime < ctx.currentTime + scheduleAhead) {
+        const chord = moodData.chords[this.currentChordIndex];
+        const freq = chord[this.currentNoteInChord];
+        const noteLen = moodData.noteLength;
+
+        this.scheduleNote(freq, this.nextNoteTime, noteLen, 1.0);
+
+        // Play a very quiet bass note (root, one octave down) on the first note of each chord
+        if (this.currentNoteInChord === 0) {
+          this.scheduleNote(chord[0] / 2, this.nextNoteTime, noteLen * 2, 0.4);
+        }
+
+        // Advance through the arpeggio
+        this.currentNoteInChord++;
+        if (this.currentNoteInChord >= chord.length) {
+          this.currentNoteInChord = 0;
+          this.currentChordIndex = (this.currentChordIndex + 1) % moodData.chords.length;
+        }
+
+        // Time between notes (arpeggio speed derived from tempo)
+        this.nextNoteTime += 60 / moodData.tempo;
+      }
+    }, 100);
+  }
+
+  /** Determine ambient mood from time of day. */
+  private getMood(): string {
+    const hour = new Date().getHours();
+    if (hour >= 6 && hour < 12) return 'morning';
+    if (hour >= 12 && hour < 17) return 'afternoon';
+    if (hour >= 17 && hour < 21) return 'evening';
+    return 'night';
+  }
+
   // ---- Settings ----
 
   get sfxEnabled() { return this._sfxEnabled; }
   set sfxEnabled(v: boolean) { this._sfxEnabled = v; this.savePrefs(); }
 
   get musicEnabled() { return this._musicEnabled; }
-  set musicEnabled(v: boolean) { this._musicEnabled = v; this.savePrefs(); }
+  set musicEnabled(v: boolean) {
+    this._musicEnabled = v;
+    this.savePrefs();
+    if (v) {
+      this.startAmbientMusic();
+    } else {
+      this.stopAmbientMusic();
+    }
+  }
 
   get volume() { return this._volume; }
   set volume(v: number) { this._volume = Math.max(0, Math.min(1, v)); this.savePrefs(); }
@@ -460,3 +700,11 @@ export class SoundManager {
     }));
   }
 }
+
+// === AMBIENT MUSIC INTEGRATION GUIDE ===
+// In GameScene.create(), after sound_ initialization:
+//   this.sound_.startAmbientMusic();
+//   this.time.addEvent({ delay: 60000, loop: true, callback: () => this.sound_.checkMoodChange() });
+//   document.addEventListener('visibilitychange', () => this.sound_.handleVisibilityChange(document.hidden));
+// In GameScene shutdown/destroy:
+//   this.sound_.stopAmbientMusic();

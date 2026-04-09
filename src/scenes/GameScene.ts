@@ -16,6 +16,9 @@ import { SIZES, COLORS, TIMING, FONT, FONT_BODY, TEXT, fs, s } from '../utils/co
 import { SoundManager, haptic } from '../utils/SoundManager';
 import { StoryBeat, getPendingBeats } from '../data/story';
 import { CHARACTERS } from '../data/orders';
+import { WeatherSystem } from '../systems/WeatherSystem';
+import { EventSystem } from '../systems/EventSystem';
+import { TimedOrderSystem, TimedOrderDef } from '../systems/TimedOrderSystem';
 
 /** Undo record for the most recent non-merge move */
 interface UndoRecord {
@@ -47,6 +50,9 @@ export class GameScene extends Phaser.Scene {
   public sound_!: SoundManager;
   private mascot!: Mascot;
   private storageTray!: StorageTray;
+  private weatherSystem!: WeatherSystem;
+  private eventSystem!: EventSystem;
+  private timedOrderSystem!: TimedOrderSystem;
 
   private items: Map<string, MergeItem> = new Map();
   private generators: Generator[] = [];
@@ -131,6 +137,12 @@ export class GameScene extends Phaser.Scene {
     this.orderSystem = new OrderSystem(this.playerLevel);
     this.orderSystem.initialize(save?.orders || undefined);
 
+    // New systems: weather, events, timed orders
+    this.weatherSystem = new WeatherSystem(this);
+    this.weatherSystem.start();
+    this.eventSystem = new EventSystem();
+    this.timedOrderSystem = new TimedOrderSystem(this.playerLevel);
+
     // Events
     this.events.on('item-dropped', this.handleDrop, this);
     this.events.on('generator-tapped', this.handleGenTap, this);
@@ -163,18 +175,54 @@ export class GameScene extends Phaser.Scene {
 
     this.time.addEvent({ delay: TIMING.AUTOSAVE, loop: true, callback: () => this.saveGame() });
 
-    // Save on app background — store ref for cleanup
-    const visHandler = () => { if (document.hidden) this.saveGame(); };
+    // Save on app background + ambient music pause/resume
+    const visHandler = () => {
+      if (document.hidden) { this.saveGame(); }
+      this.sound_.handleVisibilityChange(document.hidden);
+    };
     document.addEventListener('visibilitychange', visHandler);
-    this.events.once('shutdown', () => document.removeEventListener('visibilitychange', visHandler));
+    this.events.once('shutdown', () => {
+      document.removeEventListener('visibilitychange', visHandler);
+      this.sound_.stopAmbientMusic();
+      this.weatherSystem.destroy();
+    });
 
-    // Periodic popup timeout check (catches stuck popups)
+    // Start ambient music
+    this.sound_.startAmbientMusic();
+
+    // Periodic checks: popup queue, mood changes, event refresh, timed orders
     this.time.addEvent({ delay: 2000, loop: true, callback: () => this.processPopupQueue() });
+    this.time.addEvent({ delay: 60000, loop: true, callback: () => {
+      this.sound_.checkMoodChange();
+      this.eventSystem.refreshEvents();
+    }});
+    this.time.addEvent({ delay: 1000, loop: true, callback: () => {
+      this.timedOrderSystem.tick();
+      // Check timed order expiry
+      const timed = this.timedOrderSystem.getActiveOrder();
+      if (timed && !timed.completed && !timed.expired && this.timedOrderSystem.checkExpiry()) {
+        this.mascot.showSpeech('Time\'s up! Nice try!', 2500);
+        this.addXP(10); // consolation XP
+        this.updateUI();
+      }
+    }});
+    // Offer timed orders every 30 seconds
+    this.time.addEvent({ delay: 30000, loop: true, callback: () => {
+      if (this.timedOrderSystem.shouldOfferOrder()) {
+        const offer = this.timedOrderSystem.generateOrder();
+        this.showTimedOrderOffer(offer);
+      }
+    }});
 
-    // Mascot greeting (reduced to 2s for routine messages)
+    // Mascot greeting — event-aware
     this.time.delayedCall(1500, () => {
-      const greetings = ['Welcome back!', 'Let\'s garden!', 'Hi there!', 'Ready to merge?'];
-      this.mascot.showSpeech(greetings[Phaser.Math.Between(0, greetings.length - 1)], 2000);
+      const evt = this.eventSystem.getPrimaryEvent();
+      if (evt) {
+        this.mascot.showSpeech(`${evt.icon} ${evt.name} is active!`, 3000);
+      } else {
+        const greetings = ['Welcome back!', 'Let\'s garden!', 'Hi there!', 'Ready to merge?'];
+        this.mascot.showSpeech(greetings[Phaser.Math.Between(0, greetings.length - 1)], 2000);
+      }
     });
 
     // Mascot sleep timer
@@ -816,6 +864,12 @@ export class GameScene extends Phaser.Scene {
     this.hasEverMergedMaxTier = this.completedStoryBeats.includes('act1_first_max_tier');
     this.hasEverMergedGen = this.completedStoryBeats.includes('act1_first_gen_merge');
 
+    // Load timed order save
+    try {
+      const timedSave = localStorage.getItem('m3rg3r_timed_orders');
+      if (timedSave) this.timedOrderSystem?.initialize(JSON.parse(timedSave));
+    } catch { /* ignore corrupt timed order data */ }
+
     // Calculate offline auto-production
     this.processOfflineProduction(data);
   }
@@ -1013,7 +1067,29 @@ export class GameScene extends Phaser.Scene {
       newItem.playMergeResult();
       this.sound_.merge(result.newItem.tier);
       this.totalMerges++;
-      this.addXP(result.xpGained || 0);
+      // Apply merge XP multiplier from events
+      const mergeXpMult = this.eventSystem?.getMergeXpMultiplier() ?? 1;
+      this.addXP(Math.round((result.xpGained || 0) * mergeXpMult));
+
+      // Check timed order match
+      if (this.timedOrderSystem.getActiveOrder()) {
+        const timedMatch = this.timedOrderSystem.findMatch(result.newItem.chainId, result.newItem.tier);
+        if (timedMatch !== null) {
+          const complete = this.timedOrderSystem.fulfillItem(timedMatch);
+          if (complete) {
+            const timedRewards = this.timedOrderSystem.claimRewards();
+            if (timedRewards) {
+              for (const tr of timedRewards) {
+                if (tr.type === 'coins') this.orderSystem.coins += tr.amount;
+                if (tr.type === 'gems') this.gems = Math.min(this.gems + tr.amount, 999999);
+                if (tr.type === 'xp') this.addXP(tr.amount);
+              }
+              this.mascot.showSpeech('Timed order complete! Bonus!', 3000);
+              this.sound_.achievement();
+            }
+          }
+        }
+      }
 
       // Show combo text if combo > 1
       if (comboMultiplier > 1) {
@@ -1303,7 +1379,9 @@ export class GameScene extends Phaser.Scene {
   }
 
   private addXP(amount: number): void {
-    this.playerXP += amount;
+    // Apply event XP multiplier
+    const xpMult = this.eventSystem?.getXpMultiplier() ?? 1;
+    this.playerXP += Math.round(amount * xpMult);
     while (this.playerXP >= this.xpToNext) {
       this.playerXP -= this.xpToNext;
       this.playerLevel++;
@@ -1654,18 +1732,31 @@ export class GameScene extends Phaser.Scene {
   }
 
   private onClaimOrder(orderIdx: number): void {
+    // Get character for dialogue before claiming (which removes the order)
+    const orderBefore = this.orderSystem.getActiveOrders()[orderIdx];
+    const charForDialogue = orderBefore ? CHARACTERS.find(c => c.id === orderBefore.def.characterId) : null;
+
     const rewards = this.orderSystem.claimOrder(orderIdx);
     if (!rewards) return;
     this.sound_.complete();
 
+    // Apply event coin multiplier to rewards
+    const coinMult = this.eventSystem?.getCoinMultiplier() ?? 1;
     let xpGained = 0;
     let gemsGained = 0;
     for (const r of rewards) {
+      if (r.type === 'coins') r.amount = Math.round(r.amount * coinMult);
       if (r.type === 'xp') xpGained += r.amount;
       if (r.type === 'gems') gemsGained += r.amount;
     }
     if (xpGained > 0) this.addXP(xpGained);
     if (gemsGained > 0) this.gems = Math.min(this.gems + gemsGained, 999999);
+
+    // Character completion dialogue
+    if (charForDialogue && charForDialogue.completions?.length) {
+      const line = charForDialogue.completions[Phaser.Math.Between(0, charForDialogue.completions.length - 1)];
+      this.mascot.showSpeech(`${charForDialogue.name}: "${line}"`, 3000);
+    }
 
     // Queue the order complete celebration (priority 3)
     const rewardsCopy = [...rewards];
@@ -1823,8 +1914,14 @@ export class GameScene extends Phaser.Scene {
       return; // Only consume one item per tap
     }
 
-    // No matching item found on board -- show feedback
-    this.mascot.showSpeech('No matching items on the board!', 2000);
+    // No matching item found -- show character idle dialogue
+    const char = CHARACTERS.find(c => c.id === order.def.characterId);
+    if (char?.idles?.length) {
+      const idle = char.idles[Phaser.Math.Between(0, char.idles.length - 1)];
+      this.mascot.showSpeech(`${char.name}: "${idle}"`, 2500);
+    } else {
+      this.mascot.showSpeech('No matching items on the board!', 2000);
+    }
   }
 
   /** Claim a completed order by its definition ID (index-safe for delayed calls) */
@@ -1833,9 +1930,12 @@ export class GameScene extends Phaser.Scene {
     if (!rewards) return;
     this.sound_.complete();
 
+    // Apply event coin multiplier
+    const coinMult = this.eventSystem?.getCoinMultiplier() ?? 1;
     let xpGained = 0;
     let gemsGained = 0;
     for (const r of rewards) {
+      if (r.type === 'coins') r.amount = Math.round(r.amount * coinMult);
       if (r.type === 'xp') xpGained += r.amount;
       if (r.type === 'gems') gemsGained += r.amount;
     }
@@ -1938,6 +2038,11 @@ export class GameScene extends Phaser.Scene {
       gardenCount: this.gardenManager.count,
       gardenAvailable: this.gardenManager.availableSlots,
       gardenViewActive: this.gardenManager.isGardenViewActive,
+      // New: event and timed order data for UI
+      activeEvent: this.eventSystem?.getPrimaryEvent() ?? null,
+      eventBannerText: this.eventSystem?.getBannerText() ?? '',
+      timedOrder: this.timedOrderSystem?.getActiveOrder() ?? null,
+      timedOrderRemaining: this.timedOrderSystem?.getRemainingTime() ?? 0,
     });
   }
 
@@ -1961,6 +2066,10 @@ export class GameScene extends Phaser.Scene {
       login: { ...this.loginData },
       completedStoryBeats: [...this.completedStoryBeats],
     });
+    // Timed orders save separately to avoid save migration complexity
+    try {
+      localStorage.setItem('m3rg3r_timed_orders', JSON.stringify(this.timedOrderSystem.getSaveData()));
+    } catch { /* ignore */ }
   }
 
   // ─── FEATURE: Merge Chain Preview (long-press) ───
@@ -2319,6 +2428,108 @@ export class GameScene extends Phaser.Scene {
     container.setAlpha(0);
     this.tweens.add({
       targets: container, alpha: 1, duration: 300, ease: 'Power2',
+    });
+  }
+
+  // ─── FEATURE: Timed Bonus Orders ───
+
+  private showTimedOrderOffer(offer: TimedOrderDef): void {
+    const { width, height } = this.scale;
+    const container = this.add.container(0, 0).setDepth(6000);
+
+    // Overlay
+    const overlay = this.add.graphics();
+    overlay.fillStyle(0x6D3A5B, 0.4);
+    overlay.fillRect(0, 0, width, height);
+    container.add(overlay);
+
+    // Card
+    const cardW = width * 0.85;
+    const cardH = s(200);
+    const cardX = (width - cardW) / 2;
+    const cardY = (height - cardH) / 2;
+    const r = s(20);
+
+    const card = this.add.graphics();
+    card.fillStyle(0x000000, 0.1);
+    card.fillRoundedRect(cardX + s(3), cardY + s(4), cardW, cardH, r);
+    card.fillStyle(0xFFF8F0, 1);
+    card.fillRoundedRect(cardX, cardY, cardW, cardH, r);
+    // Urgency accent strip
+    card.fillStyle(0xFF6B6B, 0.3);
+    card.fillRoundedRect(cardX, cardY, cardW, s(45), { tl: r, tr: r, bl: 0, br: 0 });
+    card.lineStyle(s(1.5), 0xFF6B6B, 0.5);
+    card.strokeRoundedRect(cardX, cardY, cardW, cardH, r);
+    container.add(card);
+
+    // Title
+    const diffLabel = offer.difficulty === 'quick' ? 'Quick' : offer.difficulty === 'sprint' ? 'Sprint' : 'Marathon';
+    const timeLabel = Math.round(offer.timeLimitMs / 60000);
+    const title = this.add.text(width / 2, cardY + s(22), `Timed Order! (${diffLabel} ${timeLabel}m)`, {
+      fontSize: fs(16), color: '#C62828', fontFamily: FONT, fontStyle: '700',
+    }).setOrigin(0.5);
+    container.add(title);
+
+    // Flavor text
+    const flavor = this.add.text(width / 2, cardY + s(60), offer.flavorText, {
+      fontSize: fs(12), color: TEXT.PRIMARY, fontFamily: FONT,
+      wordWrap: { width: cardW - s(30) },
+    }).setOrigin(0.5, 0);
+    container.add(flavor);
+
+    // Reward preview
+    const coinReward = offer.rewards.find(r => r.type === 'coins');
+    const gemReward = offer.rewards.find(r => r.type === 'gems');
+    const rewardStr = [
+      coinReward ? `${coinReward.amount} coins` : '',
+      gemReward ? `${gemReward.amount} gems` : '',
+    ].filter(Boolean).join(' + ');
+    const rewardText = this.add.text(width / 2, cardY + s(100), `Reward: ${rewardStr}`, {
+      fontSize: fs(14), color: TEXT.GOLD, fontFamily: FONT, fontStyle: '700',
+    }).setOrigin(0.5);
+    container.add(rewardText);
+
+    // Accept button
+    const btnY = cardY + s(145);
+    const btnW = s(90);
+    const btnH = s(36);
+    const acceptBg = this.add.graphics();
+    acceptBg.fillStyle(0x81C784, 1);
+    acceptBg.fillRoundedRect(width / 2 - btnW - s(10), btnY, btnW, btnH, s(18));
+    const acceptTxt = this.add.text(width / 2 - btnW / 2 - s(10), btnY + btnH / 2, 'Accept!', {
+      fontSize: fs(14), color: '#FFFFFF', fontFamily: FONT, fontStyle: '700',
+    }).setOrigin(0.5);
+    const acceptZone = this.add.zone(width / 2 - btnW / 2 - s(10), btnY + btnH / 2, btnW, btnH).setInteractive();
+    acceptZone.on('pointerdown', () => {
+      this.timedOrderSystem.acceptOrder(offer);
+      this.mascot.showSpeech('Timer started! Go!', 2000);
+      this.sound_.buttonPress();
+      container.destroy();
+      this.updateUI();
+    });
+    container.add([acceptBg, acceptTxt, acceptZone]);
+
+    // Decline button
+    const declineBg = this.add.graphics();
+    declineBg.fillStyle(0xBDBDBD, 1);
+    declineBg.fillRoundedRect(width / 2 + s(10), btnY, btnW, btnH, s(18));
+    const declineTxt = this.add.text(width / 2 + btnW / 2 + s(10), btnY + btnH / 2, 'Skip', {
+      fontSize: fs(13), color: '#FFFFFF', fontFamily: FONT, fontStyle: '600',
+    }).setOrigin(0.5);
+    const declineZone = this.add.zone(width / 2 + btnW / 2 + s(10), btnY + btnH / 2, btnW, btnH).setInteractive();
+    declineZone.on('pointerdown', () => {
+      this.timedOrderSystem.declineOrder();
+      this.sound_.buttonPress();
+      container.destroy();
+    });
+    container.add([declineBg, declineTxt, declineZone]);
+
+    // Auto-dismiss after 15 seconds
+    this.time.delayedCall(15000, () => {
+      if (container.scene) {
+        this.timedOrderSystem.declineOrder();
+        container.destroy();
+      }
     });
   }
 

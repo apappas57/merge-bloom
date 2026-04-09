@@ -6,6 +6,7 @@ A premium kawaii merge game (PWA) built as a gift. Inspired by Travel Town / Gos
 **Live:** https://merge-game-nine.vercel.app
 **Repo:** https://github.com/apappas57/merge-bloom
 **Stack:** Phaser 3, TypeScript (strict), Vite 7, vite-plugin-pwa, Vercel
+**Total codebase:** ~21,000 lines across 30+ files
 
 ## Architecture
 
@@ -14,31 +15,37 @@ src/
   main.ts              -- Phaser config, DPR scaling
   scenes/              -- Boot, Preload, Menu, Game, UI, Shop, Collection, Settings, DailyChallenge
   objects/             -- Board, MergeItem, Generator, Mascot, StorageTray, GardenDecoration
-  systems/             -- MergeSystem, QuestSystem, OrderSystem, AchievementSystem, HintSystem, SaveSystem
+  systems/             -- MergeSystem, QuestSystem, OrderSystem, AchievementSystem, HintSystem,
+                          SaveSystem, TimedOrderSystem, WeatherSystem, EventSystem, ShareSystem
   data/                -- chains.ts, quests.ts, orders.ts, achievements.ts, lore.ts, dailyChallenges.ts
-  utils/               -- constants.ts, EmojiRenderer.ts, CharacterRenderer.ts, SoundManager.ts
+  utils/               -- constants.ts, EmojiRenderer.ts (8K lines), CharacterRenderer.ts, SoundManager.ts
 ```
 
 ## Key Design Decisions
 - **DPR rendering**: Game runs at `innerWidth * DPR` x `innerHeight * DPR` with `Phaser.Scale.FIT`
 - **Canvas-rendered sprites**: Items drawn programmatically via EmojiRenderer.ts (NO emoji text, all canvas 2D paths)
-- **Character system**: 10 named characters (Rosie, Lyra, Koji, Mizu, Nyx, Mochi, Suki, Ren, Kira, Vivi) with unique personalities and dialogue
+- **Puffy 3D plushie style**: Every item is a round squishy character with Molang-style eyes, rosy cheeks, and item-specific accessory. Uses `drawPlushieBody`, `drawPlushieEyes`, `drawPlushieMouth`, `drawPlushieBlush` shared helpers.
+- **Character system**: 10 named characters with personality-specific dialogue (130 lines across greetings, completions, idles)
 - **Generator merging**: 5 tiers per chain, weighted drop tables, hold-to-drag UX
-- **Save system**: localStorage v4 with migration chain, auto-save every 30s
+- **Save system**: localStorage v8 with migration chain, debounced auto-save (max 1/sec). Timed orders save separately.
 - **Orders**: Travel Town-style character orders drive progression (primary loop)
+- **Ambient music**: Synthesized lo-fi garden music via Web Audio (4 time-of-day moods)
+- **Events**: Date-based mini-events (weekends, birthdays, seasonal) with XP/coin/merge multipliers
+- **Static items**: No idle animations on board items (breathing/glow/shimmer all disabled per user feedback)
 
 ## Game Content
-- 12 merge chains, 79 items, 12 generators (5 tiers each = 60 variants)
-- 10 characters, 29 orders, 30 quests, 16 achievements
-- Daily challenges, garden decoration mode, XP/leveling
-- Y2K kawaii aesthetic with holographic effects
+- 12 merge chains, 79 items (all puffy 3D plushie style), 12 generators (5 tiers each)
+- 10 characters with 130 dialogue lines, 59 orders + timed bonus orders
+- 50 quests, 36 achievements, 20 daily challenges, 20 story beats
+- 20+ mini-events (weekend, birthday, seasonal, special)
+- 4 ambient music moods, 5 weather particle types (currently disabled)
+- Garden decoration mode, share/screenshot system, login streaks
 
 ## Color Palette
-- Background: `#FFF0F5` (lavender blush)
-- Board: `#FCE4EC` (soft pink)
-- Accents: `#EC407A` (rose), `#F48FB1` (pink)
-- Y2K: `#E8A4C8` (chrome pink), `#87CEEB` (holo blue), `#D4A5FF` (jelly purple)
-- Text: `#6D3A5B` (primary), `#B07A9E` (secondary)
+- Background: warm golden-hour pastels (time-of-day shifting)
+- Board: `#FFF5EE` (soft cream)
+- Accents: `#EC407A` (rose), `#F48FB1` (pink), `#F5D280` (warm gold)
+- Text: `#880E4F` (dark), `#C2185B` (mid)
 
 ## Commands
 ```bash
@@ -61,21 +68,30 @@ npm run preview  # Preview production build
 - `/game-ux` -- run UX review checklist against best practices
 - `/game-balance` -- check game balance (drop tables, XP curves, order difficulty)
 
-## Research Docs
-- `GAME_DESIGN.md` -- original design document
-- `DESIGN_SYSTEM.md` -- Y2K kawaii visual system (37KB)
-- `IMPROVEMENT_PLAN.md` -- phased roadmap
-- `GENERATOR_MERGING_SPEC.md` -- competitive research + gen merge spec
-- `Y2K_AESTHETIC_REFERENCE.md` -- Y2K theme guide with Phaser code
-- `ART_DIRECTION.md` -- top merge game art analysis + premium rendering technique
-- `BEST_MERGE_GAME_RESEARCH.md` -- 28-feature strategic roadmap
-- `MYSTERY_TOWN_ANALYSIS.md` -- Travel Town deep dive
+## Systems Reference
+
+| System | File | Key Info |
+|--------|------|----------|
+| Sprites | EmojiRenderer.ts (8K) | 71 plushie functions + 4 shared helpers + old icons |
+| Game loop | GameScene.ts (3K) | Board, merging, orders, popups, all integrations |
+| UI | UIScene.ts | Order cards, top bar, event banner, timed order timer |
+| Merge | MergeSystem.ts | Chain particles, freeze-frame, screen shake, combo |
+| Orders | OrderSystem.ts | 3 active slots, character-driven, board matching |
+| Timed orders | TimedOrderSystem.ts | Quick/sprint/marathon, countdown, cooldowns |
+| Events | EventSystem.ts | Weekends, birthdays, seasonal, special, multipliers |
+| Weather | WeatherSystem.ts | Seasonal particles (currently disabled) |
+| Sound | SoundManager.ts | SFX + ambient music (4 moods, Web Audio synthesis) |
+| Share | ShareSystem.ts | Photo mode, canvas capture, Web Share API |
+| Save | SaveSystem.ts | v8, localStorage, migration chain, login streaks |
 
 ## Rules
 - NEVER use emoji `ctx.fillText()` for game sprites -- always canvas 2D paths
+- All plushie items use `r = size * 0.35` for consistent sizing
 - All items must read clearly at 40px AND look great at 168px
-- Test on iPhone (PWA mode) before considering a feature complete
+- No idle animations on board items (disabled per motion sickness feedback)
 - Generator spawns use proximity-first BFS, not random placement
 - Characters have distinct personalities -- match dialogue to their voice
 - Sound effects use Web Audio synthesis, no external audio files
 - Save migrations must be backwards-compatible (never lose player progress)
+- Debounce saves to max 1/second (PERF)
+- Test on iPhone (PWA mode) before considering a feature complete

@@ -19,6 +19,7 @@ import { CHARACTERS } from '../data/orders';
 import { WeatherSystem } from '../systems/WeatherSystem';
 import { EventSystem } from '../systems/EventSystem';
 import { TimedOrderSystem, TimedOrderDef } from '../systems/TimedOrderSystem';
+import { ShareSystem } from '../systems/ShareSystem';
 
 /** Undo record for the most recent non-merge move */
 interface UndoRecord {
@@ -98,13 +99,21 @@ export class GameScene extends Phaser.Scene {
   private static readonly POPUP_MAX_QUEUED = 5; // Drop low-priority if queue grows
   private static readonly POPUP_TIMEOUT = 8000; // Force reset stuck popups after 8 seconds
 
+  // PERF: Debounce save to max 1 per second instead of saving after every action
+  private saveDebounceTimer: Phaser.Time.TimerEvent | null = null;
+  private savePending = false;
+
+  // PERF: Cache board item map for updateUI to avoid rebuilding on every call
+  private boardItemMapDirty = true;
+  private cachedBoardMatches: boolean[] = [];
+
   constructor() { super('GameScene'); }
 
   create() {
     const { width, height } = this.scale;
 
     this.drawBackground(width, height);
-    this.createAmbientSparkles(width, height);
+    // Ambient sparkles removed -- caused motion sickness feedback
 
     this.board = new Board(this, 6, 8);
     this.mergeSystem = new MergeSystem(this);
@@ -139,7 +148,8 @@ export class GameScene extends Phaser.Scene {
 
     // New systems: weather, events, timed orders
     this.weatherSystem = new WeatherSystem(this);
-    this.weatherSystem.start();
+    // Weather particles disabled -- moving elements caused motion sickness feedback
+    // this.weatherSystem.start();
     this.eventSystem = new EventSystem();
     this.timedOrderSystem = new TimedOrderSystem(this.playerLevel);
 
@@ -176,8 +186,9 @@ export class GameScene extends Phaser.Scene {
     this.time.addEvent({ delay: TIMING.AUTOSAVE, loop: true, callback: () => this.saveGame() });
 
     // Save on app background + ambient music pause/resume
+    // PERF: Use immediate save on visibility change (app going to background)
     const visHandler = () => {
-      if (document.hidden) { this.saveGame(); }
+      if (document.hidden) { this.saveGameImmediate(); }
       this.sound_.handleVisibilityChange(document.hidden);
     };
     document.addEventListener('visibilitychange', visHandler);
@@ -878,6 +889,7 @@ export class GameScene extends Phaser.Scene {
     const item = new MergeItem(this, this.board, data);
     item.setDepth(10);
     this.items.set(data.id, item);
+    this.markBoardDirty(); // PERF: invalidate cached board matches
     return item;
   }
 
@@ -933,6 +945,7 @@ export class GameScene extends Phaser.Scene {
     if (Math.abs(dropped.x - trashX) < s(30) && Math.abs(dropped.y - trashY) < s(30)) {
       const data = dropped.data_;
       this.items.delete(data.id);
+      this.markBoardDirty(); // PERF: invalidate cached board matches
       this.board.setOccupied(data.col, data.row, null);
       this.sound_.trash();
       this.lastMove = null;
@@ -952,6 +965,7 @@ export class GameScene extends Phaser.Scene {
       if (!this.storageTray.isFull()) {
         const data = dropped.data_;
         this.items.delete(data.id);
+        this.markBoardDirty(); // PERF: invalidate cached board matches
         this.board.setOccupied(data.col, data.row, null);
         dropped.destroy();
         this.storageTray.storeItem(data.chainId, data.tier);
@@ -1031,6 +1045,11 @@ export class GameScene extends Phaser.Scene {
       dropped.moveToCell(targetCell.col, targetCell.row);
       this.recordMove(dropped.data_.id, fromCol, fromRow, targetCell.col, targetCell.row);
       this.sound_.drop();
+      // Ensure visual snap to cell center
+      const snapCell = this.board.getCell(targetCell.col, targetCell.row);
+      if (snapCell) {
+        this.tweens.add({ targets: dropped, x: snapCell.x, y: snapCell.y, duration: 80, ease: 'Power2' });
+      }
     }
     else { dropped.returnToOriginal(); }
   }
@@ -1039,6 +1058,7 @@ export class GameScene extends Phaser.Scene {
     this.isMerging = true;
     this.items.delete(item1.data_.id);
     this.items.delete(item2.data_.id);
+    this.markBoardDirty(); // PERF: invalidate cached board matches
 
     // Combo tracking
     const now = Date.now();
@@ -1213,11 +1233,14 @@ export class GameScene extends Phaser.Scene {
     this.mascot.showSpeech('Board is full! Clear some space!', 2000);
   }
 
+  // PERF: Pre-allocated color array avoids per-call allocation
+  private static readonly SPAWN_PARTICLE_COLORS = [0xFFB3D9, 0xA8E6CF, 0xA8D8EA];
+
   private createSpawnParticles(x: number, y: number): void {
-    const colors = [0xFFB3D9, 0xA8E6CF, 0xA8D8EA];
+    const colors = GameScene.SPAWN_PARTICLE_COLORS;
     for (let i = 0; i < 5; i++) {
       const p = this.add.graphics();
-      p.fillStyle(colors[Phaser.Math.Between(0, colors.length - 1)], 0.8);
+      p.fillStyle(colors[Phaser.Math.Between(0, 2)], 0.8);
       p.fillCircle(0, 0, s(3));
       p.setPosition(x, y).setDepth(2000);
       const angle = Math.random() * Math.PI * 2;
@@ -1630,6 +1653,7 @@ export class GameScene extends Phaser.Scene {
 
     placeZone.on('pointerdown', () => {
       this.items.delete(item.data_.id);
+      this.markBoardDirty(); // PERF: invalidate cached board matches
       this.board.setOccupied(item.data_.col, item.data_.row, null);
       item.destroy();
 
@@ -1886,6 +1910,7 @@ export class GameScene extends Phaser.Scene {
       // Found a match -- consume it from the board
       const mi = matchItem as MergeItem;
       this.items.delete(mi.data_.id);
+      this.markBoardDirty(); // PERF: invalidate cached board matches
       this.board.setOccupied(mi.data_.col, mi.data_.row, null);
       mi.disableInteractive();
 
@@ -2021,13 +2046,22 @@ export class GameScene extends Phaser.Scene {
     this.mascot.showSpeech('Badge earned!', 2000);
   }
 
+  // PERF: Mark board items as changed so updateUI recalculates matches
+  private markBoardDirty(): void {
+    this.boardItemMapDirty = true;
+  }
+
   private updateUI(): void {
-    // Build a lightweight map of board items for order matching
-    const boardItemMap = new Map<string, { chainId: string; tier: number }>();
-    this.items.forEach((item, id) => {
-      boardItemMap.set(id, { chainId: item.data_.chainId, tier: item.data_.tier });
-    });
-    const boardMatches = this.orderSystem.findBoardMatches(boardItemMap);
+    // PERF: Only rebuild board item map when items have actually changed
+    if (this.boardItemMapDirty) {
+      const boardItemMap = new Map<string, { chainId: string; tier: number }>();
+      this.items.forEach((item, id) => {
+        boardItemMap.set(id, { chainId: item.data_.chainId, tier: item.data_.tier });
+      });
+      this.cachedBoardMatches = this.orderSystem.findBoardMatches(boardItemMap);
+      this.boardItemMapDirty = false;
+    }
+    const boardMatches = this.cachedBoardMatches;
 
     this.scene.get('UIScene').events.emit('update-ui', {
       gems: this.gems, coins: this.orderSystem.coins, level: this.playerLevel,
@@ -2046,7 +2080,27 @@ export class GameScene extends Phaser.Scene {
     });
   }
 
+  // PERF: Debounced save -- coalesces rapid save calls to max 1 per second.
+  // Immediate saves still happen on visibility change (app background).
   private saveGame(): void {
+    this.savePending = true;
+    if (this.saveDebounceTimer) return; // Already scheduled
+    this.saveDebounceTimer = this.time.delayedCall(1000, () => {
+      this.saveDebounceTimer = null;
+      if (this.savePending) {
+        this.savePending = false;
+        this.saveGameImmediate();
+      }
+    });
+  }
+
+  /** Force an immediate save (used on visibility change / shutdown) */
+  private saveGameImmediate(): void {
+    this.savePending = false;
+    if (this.saveDebounceTimer) {
+      this.saveDebounceTimer.remove(false);
+      this.saveDebounceTimer = null;
+    }
     const items: MergeItemData[] = [];
     this.items.forEach(item => items.push(item.getData()));
     const gens = this.generators.map(g => ({ genId: g.genDef.id, genTier: g.genTier, col: g.col, row: g.row, itemId: g.itemId, lastAutoProduceTime: g.lastAutoProduceTime }));

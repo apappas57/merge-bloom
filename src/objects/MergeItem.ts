@@ -59,15 +59,7 @@ export class MergeItem extends Phaser.GameObjects.Container {
     board.setOccupied(data.col, data.row, data.id);
     scene.add.existing(this);
 
-    // Subtle breathing animation -- scale pulse instead of y-bob to avoid grid drift
-    const stagger = ((data.col * 7 + data.row * 13) % 10) / 10;
-    scene.time.delayedCall(stagger * 2400, () => {
-      if (!this.scene) return;
-      this.idleTween = this.scene.tweens.add({
-        targets: this.sprite, scaleX: 1.02, scaleY: 1.02,
-        duration: 2400, yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
-      });
-    });
+    // Breathing animation disabled -- moving icons caused motion sickness feedback
   }
 
   private addGlow(): void {

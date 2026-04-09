@@ -54,6 +54,7 @@ export class WeatherSystem {
     this.tweenRefs = [];
     this.particles.forEach((p) => p.destroy());
     this.particles = [];
+    this.particleTweenMap.clear(); // PERF: Clean up tween tracking map
   }
 
   /** Southern Hemisphere (Melbourne) seasons */
@@ -114,6 +115,9 @@ export class WeatherSystem {
 
   // ─── Falling particle animation (shared by spring, autumn, winter) ────
 
+  // PERF: Use a Map to track one tween per particle, preventing unbounded tweenRefs growth
+  private particleTweenMap: Map<Phaser.GameObjects.Graphics, Phaser.Tweens.Tween> = new Map();
+
   private animateFalling(
     g: Phaser.GameObjects.Graphics,
     width: number,
@@ -131,6 +135,13 @@ export class WeatherSystem {
     const duration = this.randRange(durationMin, durationMax);
     const drift = (Math.random() - 0.5) * width * 0.3;
 
+    // PERF: Remove old tween ref for this particle before creating a new one
+    const oldTween = this.particleTweenMap.get(g);
+    if (oldTween) {
+      const idx = this.tweenRefs.indexOf(oldTween);
+      if (idx >= 0) this.tweenRefs[idx] = this.tweenRefs[this.tweenRefs.length - 1], this.tweenRefs.pop();
+    }
+
     const tween = this.scene.tweens.add({
       targets: g,
       y: bottom + s(10),
@@ -147,6 +158,7 @@ export class WeatherSystem {
         this.animateFalling(g, width, top, bottom, durationMin, durationMax, baseAlpha);
       },
     });
+    this.particleTweenMap.set(g, tween);
     this.tweenRefs.push(tween);
   }
 

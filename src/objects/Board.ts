@@ -21,6 +21,8 @@ export class Board {
   private offsetY: number;
   private cellSize: number;
   private gap: number;
+  // PERF: Cached empty cell count, updated incrementally
+  private _emptyCount: number = 0;
 
   constructor(scene: Phaser.Scene, cols: number, rows: number) {
     this.scene = scene;
@@ -49,6 +51,9 @@ export class Board {
         };
       }
     }
+
+    // PERF: Initialize empty count (all cells start empty and unlocked)
+    this._emptyCount = cols * rows;
 
     this.graphics = scene.add.graphics();
     this.highlightGfx = scene.add.graphics();
@@ -249,19 +254,33 @@ export class Board {
 
   setOccupied(col: number, row: number, itemId: string | null): void {
     if (!this.isValid(col, row)) return;
-    this.cells[row][col].occupied = itemId !== null;
-    this.cells[row][col].itemId = itemId;
+    const cell = this.cells[row][col];
+    const wasEmpty = !cell.occupied && !cell.locked;
+    cell.occupied = itemId !== null;
+    cell.itemId = itemId;
+    const isNowEmpty = !cell.occupied && !cell.locked;
+    // PERF: Update cached empty count incrementally
+    if (wasEmpty && !isNowEmpty) this._emptyCount--;
+    else if (!wasEmpty && isNowEmpty) this._emptyCount++;
   }
 
+  // PERF: Reservoir sampling -- O(n) scan with zero allocation instead of building a temp array
   findEmptyCell(): CellData | null {
-    const empty: CellData[] = [];
-    for (let row = 0; row < this.rows; row++)
+    let result: CellData | null = null;
+    let count = 0;
+    for (let row = 0; row < this.rows; row++) {
       for (let col = 0; col < this.cols; col++) {
         const c = this.cells[row][col];
-        if (!c.occupied && !c.locked) empty.push(c);
+        if (!c.occupied && !c.locked) {
+          count++;
+          // Reservoir sampling: each empty cell has 1/count chance of being selected
+          if (Math.random() < 1 / count) {
+            result = c;
+          }
+        }
       }
-    if (empty.length === 0) return null;
-    return empty[Phaser.Math.Between(0, empty.length - 1)];
+    }
+    return result;
   }
 
   findEmptyCellNear(col: number, row: number, exclude?: CellData[]): CellData | null {
@@ -300,12 +319,9 @@ export class Board {
   get boardWidth() { return this.cols * (this.cellSize + this.gap) - this.gap + SIZES.BOARD_PADDING * 2; }
   get boardHeight() { return this.rows * (this.cellSize + this.gap) - this.gap + SIZES.BOARD_PADDING * 2; }
 
+  // PERF: Cached empty count, updated incrementally by setOccupied
   getEmptyCount(): number {
-    let n = 0;
-    for (let r = 0; r < this.rows; r++)
-      for (let c = 0; c < this.cols; c++)
-        if (!this.cells[r][c].occupied && !this.cells[r][c].locked) n++;
-    return n;
+    return this._emptyCount;
   }
 
   destroy(): void { this.graphics.destroy(); this.highlightGfx.destroy(); }

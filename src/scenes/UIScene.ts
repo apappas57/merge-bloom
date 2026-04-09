@@ -23,6 +23,12 @@ export class UIScene extends Phaser.Scene {
   private curCoins = 0;
   private curLevel = 1;
   private lastOrderHash = '';
+  private bannerElements: Phaser.GameObjects.GameObject[] = [];
+  private bannerTweens: Phaser.Tweens.Tween[] = [];
+  private timerElements: Phaser.GameObjects.GameObject[] = [];
+  private timerTweens: Phaser.Tweens.Tween[] = [];
+  private lastBannerKey = '';
+  private lastTimerKey = '';
 
   constructor() { super('UIScene'); }
 
@@ -351,6 +357,10 @@ export class UIScene extends Phaser.Scene {
     gems: number; coins: number; level: number; xp: number; xpToNext: number;
     quests: ActiveQuest[]; orders: ActiveOrder[]; boardMatches?: boolean[];
     gardenCount?: number; gardenAvailable?: number; gardenViewActive?: boolean;
+    activeEvent?: { name: string; icon: string; bannerColor: number; bannerTextColor: string } | null;
+    eventBannerText?: string;
+    timedOrder?: { def: { difficulty: string; timeLimitMs: number; flavorText: string; items: Array<{ chainId: string; tier: number; quantity: number }> }; progress: number[]; startTime: number; completed: boolean; expired: boolean } | null;
+    timedOrderRemaining?: number;
   }): void {
     if (data.gems !== this.curGems) {
       this.curGems = data.gems;
@@ -366,9 +376,19 @@ export class UIScene extends Phaser.Scene {
       this.levelText.setText(`${data.level}`);
     }
     this.drawXPBar(data.xp, data.xpToNext);
-    // Re-render orders when they change OR when board matches change
+    // PERF: Lightweight order hash using string concat instead of JSON.stringify
     if (data.orders) {
-      const hash = JSON.stringify(data.orders.map(o => [o.def.id, o.progress, o.completed]).concat(data.boardMatches as never[] || []));
+      let hash = '';
+      for (let i = 0; i < data.orders.length; i++) {
+        const o = data.orders[i];
+        hash += o.def.id;
+        hash += o.completed ? '1' : '0';
+        for (let j = 0; j < o.progress.length; j++) hash += ',' + o.progress[j];
+        hash += '|';
+      }
+      if (data.boardMatches) {
+        for (let i = 0; i < data.boardMatches.length; i++) hash += data.boardMatches[i] ? '1' : '0';
+      }
       if (hash !== this.lastOrderHash) {
         this.lastOrderHash = hash;
         this.renderOrders(data.orders, data.boardMatches);
@@ -391,6 +411,154 @@ export class UIScene extends Phaser.Scene {
     if (this.gardenLabel) {
       this.gardenLabel.setColor(data.gardenViewActive ? '#EC407A' : TEXT.SECONDARY);
     }
+
+    // Event banner
+    this.renderEventBanner(data.activeEvent ?? null, data.eventBannerText ?? '');
+
+    // Timed order timer
+    this.renderTimedOrderTimer(data.timedOrder ?? null, data.timedOrderRemaining ?? 0);
+  }
+
+  private renderEventBanner(
+    activeEvent: { name: string; icon: string; bannerColor: number; bannerTextColor: string } | null,
+    eventBannerText: string,
+  ): void {
+    const key = activeEvent ? `${activeEvent.name}_${activeEvent.bannerColor}` : '';
+    if (key === this.lastBannerKey) return;
+    this.lastBannerKey = key;
+
+    // Tear down previous banner
+    this.bannerTweens.forEach(t => t.destroy());
+    this.bannerTweens = [];
+    this.bannerElements.forEach(e => e.destroy());
+    this.bannerElements = [];
+
+    if (!activeEvent) return;
+
+    const { width } = this.scale;
+    const bannerY = SIZES.TOP_BAR;
+    const bannerH = s(24);
+
+    const bg = this.add.graphics();
+    bg.fillStyle(activeEvent.bannerColor, 0.85);
+    bg.fillRect(0, bannerY, width, bannerH);
+    this.bannerElements.push(bg);
+
+    const label = eventBannerText || `${activeEvent.icon} ${activeEvent.name} Active!`;
+    const txt = this.add.text(width / 2, bannerY + bannerH / 2, label, {
+      fontSize: fs(10),
+      color: activeEvent.bannerTextColor,
+      fontFamily: FONT,
+      fontStyle: '600',
+    }).setOrigin(0.5).setDepth(5);
+    this.bannerElements.push(txt);
+
+    const glow = this.tweens.add({
+      targets: txt,
+      alpha: { from: 0.7, to: 1.0 },
+      duration: 800,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut',
+    });
+    this.bannerTweens.push(glow);
+  }
+
+  private renderTimedOrderTimer(
+    timedOrder: { def: { difficulty: string; timeLimitMs: number; flavorText: string; items: Array<{ chainId: string; tier: number; quantity: number }> }; progress: number[]; startTime: number; completed: boolean; expired: boolean } | null,
+    timedOrderRemaining: number,
+  ): void {
+    const visible = timedOrder && !timedOrder.completed && !timedOrder.expired;
+    const key = visible ? `${timedOrder.startTime}_${Math.floor(timedOrderRemaining / 1000)}` : '';
+    if (key === this.lastTimerKey) return;
+    this.lastTimerKey = key;
+
+    // Tear down previous timer
+    this.timerTweens.forEach(t => t.destroy());
+    this.timerTweens = [];
+    this.timerElements.forEach(e => e.destroy());
+    this.timerElements = [];
+
+    if (!visible || !timedOrder) return;
+
+    const { width } = this.scale;
+    const cardW = width * 0.6;
+    const cardH = s(22);
+    const cardX = (width - cardW) / 2;
+    const cardY = SIZES.TOP_BAR + SIZES.ORDER_BAR + s(2);
+
+    // Urgency ratio
+    const pct = timedOrder.def.timeLimitMs > 0
+      ? timedOrderRemaining / timedOrder.def.timeLimitMs
+      : 1;
+
+    // Colors based on urgency
+    let textColor = TEXT.PRIMARY;
+    let borderColor = 0xFFCDD2;
+    if (pct <= 0.25) { textColor = '#C62828'; borderColor = 0xC62828; }
+    else if (pct <= 0.5) { textColor = '#E65100'; borderColor = 0xE65100; }
+
+    // Background card
+    const bg = this.add.graphics();
+    bg.fillStyle(0xFFEBEE, 0.95);
+    bg.fillRoundedRect(cardX, cardY, cardW, cardH, s(6));
+    bg.lineStyle(s(1), borderColor, 0.8);
+    bg.strokeRoundedRect(cardX, cardY, cardW, cardH, s(6));
+    this.timerElements.push(bg);
+
+    // Difficulty icon
+    const diffIcons: Record<string, string> = { quick: '\u26A1', sprint: '\uD83C\uDFC3', marathon: '\uD83C\uDFC6' };
+    const icon = diffIcons[timedOrder.def.difficulty] || '\u26A1';
+    const iconText = this.add.text(cardX + s(8), cardY + cardH / 2, icon, {
+      fontSize: fs(10),
+    }).setOrigin(0, 0.5).setDepth(5);
+    this.timerElements.push(iconText);
+
+    // Countdown MM:SS
+    const totalSec = Math.max(0, Math.ceil(timedOrderRemaining / 1000));
+    const mins = Math.floor(totalSec / 60);
+    const secs = totalSec % 60;
+    const timeStr = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    const timeTxt = this.add.text(cardX + cardW / 2, cardY + cardH / 2, timeStr, {
+      fontSize: fs(11),
+      color: textColor,
+      fontFamily: FONT,
+      fontStyle: '700',
+    }).setOrigin(0.5).setDepth(5);
+    this.timerElements.push(timeTxt);
+
+    // Pulsing text when <25% time remains
+    if (pct <= 0.25) {
+      const pulse = this.tweens.add({
+        targets: timeTxt,
+        alpha: { from: 0.6, to: 1.0 },
+        duration: 500,
+        yoyo: true,
+        repeat: -1,
+        ease: 'Sine.easeInOut',
+      });
+      this.timerTweens.push(pulse);
+    }
+
+    // Progress dots (right side)
+    const dotR = s(3);
+    const dotGap = s(8);
+    const items = timedOrder.def.items;
+    const dotsW = items.length * dotGap;
+    const dotsStartX = cardX + cardW - s(10) - dotsW;
+    items.forEach((item, idx) => {
+      const filled = (timedOrder.progress[idx] || 0) >= item.quantity;
+      const dx = dotsStartX + idx * dotGap + dotGap / 2;
+      const dy = cardY + cardH / 2;
+      const dot = this.add.graphics();
+      dot.fillStyle(filled ? 0x81C784 : 0xCFD8DC, 1);
+      dot.fillCircle(dx, dy, dotR);
+      if (filled) {
+        dot.lineStyle(s(0.5), 0x4CAF50, 0.7);
+        dot.strokeCircle(dx, dy, dotR);
+      }
+      this.timerElements.push(dot);
+    });
   }
 
   private fmt(n: number): string {

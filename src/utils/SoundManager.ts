@@ -53,7 +53,8 @@ export class SoundManager {
   private _volume = 0.5;
 
   // --- Ambient music state ---
-  private musicNodes: (OscillatorNode | GainNode)[] = [];
+  // PERF: Use Set for O(1) add/delete instead of array with O(n) splice
+  private musicNodes: Set<OscillatorNode | GainNode> = new Set();
   private musicSchedulerId: number | null = null;
   private currentMood: string = '';
   private nextNoteTime: number = 0;
@@ -530,7 +531,7 @@ export class SoundManager {
           // Already stopped or disconnected
         }
       }
-      this.musicNodes = [];
+      this.musicNodes.clear();
     }, (fadeDuration + 0.1) * 1000);
   }
 
@@ -596,19 +597,18 @@ export class SoundManager {
     osc2.start(time);
     osc2.stop(time + duration + 0.05);
 
-    // Track for cleanup
-    this.musicNodes.push(osc, osc2, gain, gain2);
+    // PERF: Track for cleanup using Set (O(1) add/delete)
+    this.musicNodes.add(osc);
+    this.musicNodes.add(osc2);
+    this.musicNodes.add(gain);
+    this.musicNodes.add(gain2);
 
     // Auto-cleanup after note finishes
     osc.onended = () => {
-      const idx = this.musicNodes.indexOf(osc);
-      if (idx >= 0) this.musicNodes.splice(idx, 1);
-      const idx2 = this.musicNodes.indexOf(osc2);
-      if (idx2 >= 0) this.musicNodes.splice(idx2, 1);
-      const idx3 = this.musicNodes.indexOf(gain);
-      if (idx3 >= 0) this.musicNodes.splice(idx3, 1);
-      const idx4 = this.musicNodes.indexOf(gain2);
-      if (idx4 >= 0) this.musicNodes.splice(idx4, 1);
+      this.musicNodes.delete(osc);
+      this.musicNodes.delete(osc2);
+      this.musicNodes.delete(gain);
+      this.musicNodes.delete(gain2);
     };
   }
 

@@ -94,7 +94,7 @@ function addHighlight(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: 
 }
 
 /** Draw tiny 4-point sparkle stars around an icon for higher tiers */
-function addTierSparkles(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number, tier: number): void {
+export function addTierSparkles(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number, tier: number): void {
   if (tier < 3) return;
   const count = Math.min(tier - 2, 5);
   ctx.fillStyle = 'rgba(255,255,255,0.8)';
@@ -1992,97 +1992,97 @@ function getItemIconConfig(chainId: string, tier: number): IconConfig {
       { draw: drawPlushieBouquetIcon, color: '#FFD0E1', accent: '#FFD700' },     // t8 Bouquet plushie
     ],
     butterfly: [
-      { draw: drawEggIcon, color: '#BCAAA4', accent: '#EFEBE9' },            // t1 Egg
-      { draw: drawLeafIcon, color: '#8BC34A', accent: '#C5E1A5' },           // t2 Caterpillar (worm-like leaf)
-      { draw: drawButterflyIcon, color: '#FFC107', accent: '#FFECB3' },      // t3 Bee
-      { draw: drawButterflyIcon, color: '#F44336', accent: '#EF5350' },      // t4 Ladybug
-      { draw: drawButterflyIcon, color: '#7C4DFF', accent: '#B388FF' },      // t5 Butterfly
-      { draw: drawButterflyIcon, color: '#00BCD4', accent: '#4DD0E1' },      // t6 Peacock
+      { draw: drawPlushieEggIcon, color: '#BCAAA4', accent: '#EFEBE9' },        // t1 Egg plushie
+      { draw: drawPlushieCaterpillarIcon, color: '#8BC34A', accent: '#C5E1A5' }, // t2 Caterpillar plushie
+      { draw: drawPlushieBeeIcon, color: '#FFC107', accent: '#FFE082' },         // t3 Bee plushie
+      { draw: drawPlushieLadybugIcon, color: '#F44336', accent: '#EF9A9A' },     // t4 Ladybug plushie
+      { draw: drawPlushieButterflyIcon, color: '#7C4DFF', accent: '#B388FF' },   // t5 Butterfly plushie
+      { draw: drawPlushiePeacockIcon, color: '#00BCD4', accent: '#80DEEA' },     // t6 Peacock plushie
     ],
     fruit: [
-      { draw: drawFruitIcon, color: '#7B1FA2', accent: '#CE93D8' },          // t1 Grapes
-      { draw: drawFruitIcon, color: '#F44336', accent: '#EF9A9A' },          // t2 Apple
-      { draw: drawFruitIcon, color: '#FF9800', accent: '#FFCC80' },          // t3 Orange
-      { draw: drawFruitIcon, color: '#8BC34A', accent: '#C5E1A5' },          // t4 Kiwi
-      { draw: drawFruitIcon, color: '#FF9800', accent: '#FFE0B2' },          // t5 Mango
-      { draw: drawFruitIcon, color: '#FF8A65', accent: '#FFCCBC' },          // t6 Peach
-      { draw: drawCakeIcon, color: '#F48FB1', accent: '#FCE4EC' },           // t7 Cake
+      { draw: drawPlushieGrapesIcon, color: '#7B1FA2', accent: '#CE93D8' },      // t1 Grapes plushie
+      { draw: drawPlushieAppleIcon, color: '#F44336', accent: '#EF9A9A' },       // t2 Apple plushie
+      { draw: drawPlushieOrangeIcon, color: '#FF9800', accent: '#FFE0B2' },      // t3 Orange plushie
+      { draw: drawPlushieKiwiIcon, color: '#8BC34A', accent: '#C5E1A5' },        // t4 Kiwi plushie
+      { draw: drawPlushieMangoIcon, color: '#FF9800', accent: '#FFCC80' },       // t5 Mango plushie
+      { draw: drawPlushiePeachIcon, color: '#FF8A65', accent: '#FFCCBC' },       // t6 Peach plushie
+      { draw: drawPlushieCakeIcon, color: '#F48FB1', accent: '#F8BBD0' },        // t7 Cake plushie
     ],
     crystal: [
-      { draw: drawDropletIcon, color: '#42A5F5', accent: '#BBDEFB' },        // t1 Droplet
-      { draw: drawCrystalIcon, color: '#B3E5FC', accent: '#E1F5FE' },        // t2 Ice
-      { draw: drawCrystalIcon, color: '#9C27B0', accent: '#CE93D8' },        // t3 Crystal Ball
-      { draw: drawCrystalIcon, color: '#00BCD4', accent: '#B2EBF2' },        // t4 Diamond
-      { draw: drawCrownIcon, color: '#FFD700', accent: '#FFF9C4' },          // t5 Crown
+      { draw: drawPlushieDropletIcon, color: '#42A5F5', accent: '#BBDEFB' },    // t1 Droplet plushie
+      { draw: drawPlushieIceIcon, color: '#B3E5FC', accent: '#E1F5FE' },       // t2 Ice plushie
+      { draw: drawPlushieCrystalBallIcon, color: '#9C27B0', accent: '#E1BEE7' }, // t3 Crystal Ball plushie
+      { draw: drawPlushieDiamondIcon, color: '#00BCD4', accent: '#B2EBF2' },    // t4 Diamond plushie
+      { draw: drawPlushieCrownIcon, color: '#FFD700', accent: '#FFF8E1' },      // t5 Crown plushie
     ],
     nature: [
-      { draw: drawLeafIcon, color: '#8D6E63', accent: '#D7CCC8' },           // t1 Leaf
-      { draw: drawLeafIcon, color: '#E65100', accent: '#FF8A65' },           // t2 Maple Leaf
-      { draw: drawLeafIcon, color: '#2E7D32', accent: '#4CAF50' },           // t3 Pine
-      { draw: drawLeafIcon, color: '#388E3C', accent: '#66BB6A' },           // t4 Tree
-      { draw: drawLeafIcon, color: '#43A047', accent: '#81C784' },           // t5 Palm
-      { draw: drawHouseIcon, color: '#8D6E63', accent: '#D7CCC8' },          // t6 Cottage
+      { draw: drawPlushieLeafIcon, color: '#8D6E63', accent: '#D7CCC8' },       // t1 Leaf plushie
+      { draw: drawPlushieMapleLeafIcon, color: '#E65100', accent: '#FFE0B2' },   // t2 Maple Leaf plushie
+      { draw: drawPlushiePineIcon, color: '#2E7D32', accent: '#C8E6C9' },       // t3 Pine plushie
+      { draw: drawPlushieTreeIcon, color: '#388E3C', accent: '#A5D6A7' },       // t4 Tree plushie
+      { draw: drawPlushiePalmIcon, color: '#43A047', accent: '#C8E6C9' },       // t5 Palm plushie
+      { draw: drawPlushieCottageIcon, color: '#8D6E63', accent: '#EFEBE9' },    // t6 Cottage plushie
     ],
     star: [
-      { draw: drawStarIcon, color: '#FFD54F', accent: '#FFF9C4' },           // t1 Star
-      { draw: drawStarIcon, color: '#FFD700', accent: '#FFECB3' },           // t2 Glowing Star
-      { draw: drawStarIcon, color: '#FFC107', accent: '#FFF8E1' },           // t3 Sparkles
-      { draw: drawStarIcon, color: '#FF9800', accent: '#FFE0B2' },           // t4 Shooting Star
-      { draw: drawMoonIcon, color: '#FDD835', accent: '#FFF9C4' },           // t5 Moon
-      { draw: drawRainbowIcon, color: '#FF5252', accent: '#FFCDD2' },        // t6 Rainbow
+      { draw: drawPlushieStarIcon, color: '#FFD54F', accent: '#FFF9C4' },       // t1 Star plushie
+      { draw: drawPlushieGlowingStarIcon, color: '#FFD700', accent: '#FFF8E1' }, // t2 Glowing Star plushie
+      { draw: drawPlushieSparklesIcon, color: '#FFC107', accent: '#FFF8E1' },   // t3 Sparkles plushie
+      { draw: drawPlushieShootingStarIcon, color: '#FF9800', accent: '#FFE0B2' }, // t4 Shooting Star plushie
+      { draw: drawPlushieMoonIcon, color: '#FDD835', accent: '#FFF9C4' },       // t5 Moon plushie
+      { draw: drawPlushieRainbowIcon, color: '#FF5252', accent: '#FFFFFF' },    // t6 Rainbow plushie
     ],
     tea: [
-      { draw: drawLeafIcon, color: '#689F38', accent: '#AED581' },           // t1 Tea Leaf
-      { draw: drawCupIcon, color: '#689F38', accent: '#C5E1A5' },            // t2 Matcha
-      { draw: drawCupIcon, color: '#795548', accent: '#D7CCC8' },            // t3 Coffee
-      { draw: drawCupIcon, color: '#8D6E63', accent: '#BCAAA4' },            // t4 Boba Tea
-      { draw: drawCakeIcon, color: '#F8BBD0', accent: '#FCE4EC' },           // t5 Cake Slice
-      { draw: drawCupIcon, color: '#A1887F', accent: '#D7CCC8' },            // t6 Tea Set
-      { draw: drawHouseIcon, color: '#8D6E63', accent: '#BCAAA4' },          // t7 Tea House
+      { draw: drawPlushieTeaLeafIcon, color: '#689F38', accent: '#AED581' },     // t1 Tea Leaf plushie
+      { draw: drawPlushieMatchaIcon, color: '#689F38', accent: '#C5E1A5' },      // t2 Matcha plushie
+      { draw: drawPlushieCoffeeIcon, color: '#795548', accent: '#D7CCC8' },      // t3 Coffee plushie
+      { draw: drawPlushieBobaTeaIcon, color: '#8D6E63', accent: '#BCAAA4' },     // t4 Boba Tea plushie
+      { draw: drawPlushieCakeSliceIcon, color: '#F8BBD0', accent: '#FCE4EC' },   // t5 Cake Slice plushie
+      { draw: drawPlushieTeaSetIcon, color: '#A1887F', accent: '#D7CCC8' },      // t6 Tea Set plushie
+      { draw: drawPlushieTeaHouseIcon, color: '#8D6E63', accent: '#BCAAA4' },    // t7 Tea House plushie
     ],
     shell: [
-      { draw: drawCoralIcon, color: '#EF5350', accent: '#FFCDD2' },          // t1 Coral
-      { draw: drawShellIcon, color: '#FFAB91', accent: '#FBE9E7' },          // t2 Shell
-      { draw: drawCrabIcon, color: '#E53935', accent: '#EF9A9A' },           // t3 Crab
-      { draw: drawFishIcon, color: '#29B6F6', accent: '#B3E5FC' },           // t4 Tropical Fish
-      { draw: drawDolphinIcon, color: '#42A5F5', accent: '#90CAF9' },        // t5 Dolphin
-      { draw: drawMermaidIcon, color: '#26C6DA', accent: '#80DEEA' },        // t6 Mermaid
+      { draw: drawPlushieCoralIcon, color: '#EF5350', accent: '#FFCDD2' },       // t1 Coral plushie
+      { draw: drawPlushieShellIcon, color: '#FFAB91', accent: '#FBE9E7' },       // t2 Shell plushie
+      { draw: drawPlushieCrabIcon, color: '#E53935', accent: '#EF9A9A' },        // t3 Crab plushie
+      { draw: drawPlushieTropicalFishIcon, color: '#29B6F6', accent: '#B3E5FC' }, // t4 Tropical Fish plushie
+      { draw: drawPlushieDolphinIcon, color: '#42A5F5', accent: '#90CAF9' },     // t5 Dolphin plushie
+      { draw: drawPlushieMermaidIcon, color: '#26C6DA', accent: '#80DEEA' },     // t6 Mermaid plushie
     ],
     sweet: [
-      { draw: drawCandyIcon, color: '#E91E63', accent: '#F48FB1' },          // t1 Candy
-      { draw: drawCandyIcon, color: '#E91E63', accent: '#F8BBD0' },          // t2 Lollipop
-      { draw: drawCandyIcon, color: '#8D6E63', accent: '#D7CCC8' },          // t3 Cookie
-      { draw: drawCakeIcon, color: '#F06292', accent: '#F8BBD0' },           // t4 Cupcake
-      { draw: drawCandyIcon, color: '#F48FB1', accent: '#FCE4EC' },          // t5 Donut
-      { draw: drawCandyIcon, color: '#795548', accent: '#A1887F' },          // t6 Chocolate
-      { draw: drawCakeIcon, color: '#F8BBD0', accent: '#FCE4EC' },           // t7 Birthday Cake
-      { draw: drawCastleIcon, color: '#F8BBD0', accent: '#FCE4EC' },         // t8 Candy Castle
+      { draw: drawPlushieCandyIcon, color: '#E91E63', accent: '#F48FB1' },       // t1 Candy plushie
+      { draw: drawPlushieLollipopIcon, color: '#E91E63', accent: '#F8BBD0' },    // t2 Lollipop plushie
+      { draw: drawPlushieCookieIcon, color: '#8D6E63', accent: '#D7CCC8' },      // t3 Cookie plushie
+      { draw: drawPlushieCupcakeIcon, color: '#F06292', accent: '#F8BBD0' },     // t4 Cupcake plushie
+      { draw: drawPlushieDonutIcon, color: '#F48FB1', accent: '#FCE4EC' },       // t5 Donut plushie
+      { draw: drawPlushieChocolateIcon, color: '#795548', accent: '#A1887F' },   // t6 Chocolate plushie
+      { draw: drawPlushieBirthdayCakeIcon, color: '#F8BBD0', accent: '#FCE4EC' }, // t7 Birthday Cake plushie
+      { draw: drawPlushieCandyCastleIcon, color: '#F8BBD0', accent: '#FCE4EC' }, // t8 Candy Castle plushie
     ],
     love: [
-      { draw: drawLetterIcon, color: '#F48FB1', accent: '#FCE4EC' },         // t1 Love Note
-      { draw: drawHeartIcon, color: '#EC407A', accent: '#F48FB1' },          // t2 Growing Heart
-      { draw: drawHeartIcon, color: '#E91E63', accent: '#F06292' },          // t3 Sparkling Heart
-      { draw: drawHeartIcon, color: '#D81B60', accent: '#EC407A' },          // t4 Gift Heart
-      { draw: drawHeartIcon, color: '#C2185B', accent: '#E91E63' },          // t5 Twin Hearts
-      { draw: drawHeartIcon, color: '#AD1457', accent: '#D81B60' },          // t6 Eternal Love
+      { draw: drawPlushieLoveNoteIcon, color: '#F48FB1', accent: '#FCE4EC' },     // t1 Love Note plushie
+      { draw: drawPlushieGrowingHeartIcon, color: '#EC407A', accent: '#F8BBD0' }, // t2 Growing Heart plushie
+      { draw: drawPlushieSparklingHeartIcon, color: '#E91E63', accent: '#F48FB1' }, // t3 Sparkling Heart plushie
+      { draw: drawPlushieGiftHeartIcon, color: '#D81B60', accent: '#F06292' },    // t4 Gift Heart plushie
+      { draw: drawPlushieTwinHeartsIcon, color: '#C2185B', accent: '#EC407A' },   // t5 Twin Hearts plushie
+      { draw: drawPlushieEternalLoveIcon, color: '#AD1457', accent: '#FFD700' },  // t6 Eternal Love plushie
     ],
     cosmic: [
-      { draw: drawCosmicIcon, color: '#78909C', accent: '#B0BEC5' },         // t1 Space Rock
-      { draw: drawCosmicIcon, color: '#7C4DFF', accent: '#B388FF' },         // t2 Comet
-      { draw: drawCosmicIcon, color: '#7C4DFF', accent: '#B388FF' },         // t3 UFO
-      { draw: drawCosmicIcon, color: '#42A5F5', accent: '#90CAF9' },         // t4 Earth
-      { draw: drawCosmicIcon, color: '#FFB74D', accent: '#FFE0B2' },         // t5 Saturn
-      { draw: drawCosmicIcon, color: '#7C4DFF', accent: '#D1C4E9' },         // t6 Nebula
-      { draw: drawCosmicIcon, color: '#EF5350', accent: '#FFCDD2' },         // t7 Rocket Ship
+      { draw: drawPlushieSpaceRockIcon, color: '#78909C', accent: '#B0BEC5' },    // t1 Space Rock plushie
+      { draw: drawPlushieCometIcon, color: '#7C4DFF', accent: '#B388FF' },        // t2 Comet plushie
+      { draw: drawPlushieUFOIcon, color: '#90A4AE', accent: '#E0E0E0' },         // t3 UFO plushie
+      { draw: drawPlushieEarthIcon, color: '#42A5F5', accent: '#81D4FA' },        // t4 Earth plushie
+      { draw: drawPlushieSaturnIcon, color: '#7C4DFF', accent: '#D1C4E9' },       // t5 Saturn plushie
+      { draw: drawPlushieNebulaIcon, color: '#7B1FA2', accent: '#CE93D8' },       // t6 Nebula plushie
+      { draw: drawPlushieRocketIcon, color: '#B0BEC5', accent: '#FFD700' },       // t7 Rocket plushie
     ],
     cafe: [
-      { draw: drawCoffeeIcon, color: '#6D4C41', accent: '#A1887F' },         // t1 Coffee Bean
-      { draw: drawCoffeeIcon, color: '#795548', accent: '#D7CCC8' },         // t2 Espresso
-      { draw: drawCoffeeIcon, color: '#FFB74D', accent: '#FFE0B2' },         // t3 Croissant
-      { draw: drawCoffeeIcon, color: '#FFB74D', accent: '#FFF3E0' },         // t4 Waffle
-      { draw: drawCoffeeIcon, color: '#FFCC80', accent: '#FFF8E1' },         // t5 Pancake Stack
-      { draw: drawCakeIcon, color: '#F8BBD0', accent: '#FCE4EC' },           // t6 Layer Cake
-      { draw: drawHouseIcon, color: '#A1887F', accent: '#D7CCC8' },          // t7 Bakery
+      { draw: drawPlushieCoffeeBeanIcon, color: '#795548', accent: '#A1887F' },   // t1 Coffee Bean plushie
+      { draw: drawPlushieEspressoIcon, color: '#6D4C41', accent: '#BCAAA4' },     // t2 Espresso plushie
+      { draw: drawPlushieCroissantIcon, color: '#F9A825', accent: '#FFF9C4' },    // t3 Croissant plushie
+      { draw: drawPlushieWaffleIcon, color: '#FFB300', accent: '#FFE082' },       // t4 Waffle plushie
+      { draw: drawPlushiePancakeStackIcon, color: '#D7CCC8', accent: '#EFEBE9' }, // t5 Pancake Stack plushie
+      { draw: drawPlushieLayerCakeIcon, color: '#F48FB1', accent: '#FCE4EC' },    // t6 Layer Cake plushie
+      { draw: drawPlushieBakeryIcon, color: '#8D6E63', accent: '#FFD700' },       // t7 Bakery plushie
     ],
   };
 
@@ -2895,10 +2895,10 @@ function drawKawaiiFace(
 // Inspired by Molang, Sumikko Gurashi -- puffy toy aesthetic.
 // ============================================================
 
-// --- Shared plushie rendering helpers (flower chain only) ---
+// --- Shared plushie rendering helpers (exported for use by chain files) ---
 
 /** Draw a puffy 3D plushie body with multi-layer gradients */
-function drawPlushieBody(
+export function drawPlushieBody(
   ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number,
   baseColor: string, highlightColor: string, shadowColor: string
 ): void {
@@ -2930,7 +2930,7 @@ function drawPlushieBody(
 }
 
 /** Draw big shiny Molang-style eyes */
-function drawPlushieEyes(
+export function drawPlushieEyes(
   ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number,
   style: 'normal' | 'wide' | 'gentle' | 'sparkle' = 'normal'
 ): void {
@@ -2992,7 +2992,7 @@ function drawPlushieEyes(
 }
 
 /** Draw rosy cheek blush on plushie */
-function drawPlushieBlush(
+export function drawPlushieBlush(
   ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number,
   opacity: number = 0.3
 ): void {
@@ -3010,7 +3010,7 @@ function drawPlushieBlush(
 }
 
 /** Draw a tiny plushie mouth */
-function drawPlushieMouth(
+export function drawPlushieMouth(
   ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number,
   style: 'smile' | 'dot' | 'open' | 'cat' = 'smile'
 ): void {
@@ -3046,6 +3046,4159 @@ function drawPlushieMouth(
     ctx.arc(cx, my - r * 0.03, r * 0.07, Math.PI * 0.15, Math.PI * 0.85);
     ctx.stroke();
   }
+}
+
+// ===================== BUTTERFLY CHAIN =====================
+
+// --- T1 Egg: Cream plushie with eggshell fragment on head ---
+function drawPlushieEggIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, _tier: number, _color: string, _accent: string): void {
+  const r = size * 0.35;
+  const bodyCy = cy + r * 0.15;
+
+  // Ground shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.06)';
+  ctx.beginPath();
+  ctx.ellipse(cx, bodyCy + r * 1.05, r * 0.7, r * 0.12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Plushie body - soft cream
+  drawPlushieBody(ctx, cx, bodyCy, r, '#BCAAA4', '#D7CCC8', '#9E8E82');
+
+  // Eggshell fragment on top of head
+  ctx.save();
+  ctx.fillStyle = '#EFEBE9';
+  ctx.strokeStyle = '#D7CCC8';
+  ctx.lineWidth = r * 0.03;
+  ctx.beginPath();
+  ctx.moveTo(cx - r * 0.25, bodyCy - r * 0.75);
+  ctx.lineTo(cx - r * 0.2, bodyCy - r * 1.05);
+  ctx.lineTo(cx - r * 0.08, bodyCy - r * 0.85);
+  ctx.lineTo(cx + r * 0.05, bodyCy - r * 1.1);
+  ctx.lineTo(cx + r * 0.15, bodyCy - r * 0.82);
+  ctx.lineTo(cx + r * 0.25, bodyCy - r * 0.98);
+  ctx.lineTo(cx + r * 0.28, bodyCy - r * 0.75);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+
+  // Face
+  drawPlushieEyes(ctx, cx, bodyCy, r, 'gentle');
+  drawPlushieMouth(ctx, cx, bodyCy, r, 'dot');
+  drawPlushieBlush(ctx, cx, bodyCy, r, 0.25);
+}
+
+// --- T2 Caterpillar: Soft green body with tiny antennae ---
+function drawPlushieCaterpillarIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, _tier: number, _color: string, _accent: string): void {
+  const r = size * 0.35;
+  const bodyCy = cy + r * 0.15;
+
+  // Ground shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.06)';
+  ctx.beginPath();
+  ctx.ellipse(cx, bodyCy + r * 1.05, r * 0.7, r * 0.12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Plushie body - soft green
+  drawPlushieBody(ctx, cx, bodyCy, r, '#8BC34A', '#AED581', '#689F38');
+
+  // Two antennae on top
+  ctx.save();
+  ctx.strokeStyle = '#558B2F';
+  ctx.lineWidth = r * 0.06;
+  ctx.lineCap = 'round';
+  // Left antenna
+  ctx.beginPath();
+  ctx.moveTo(cx - r * 0.2, bodyCy - r * 0.85);
+  ctx.quadraticCurveTo(cx - r * 0.3, bodyCy - r * 1.2, cx - r * 0.25, bodyCy - r * 1.3);
+  ctx.stroke();
+  // Left antenna ball
+  ctx.fillStyle = '#CDDC39';
+  ctx.beginPath();
+  ctx.arc(cx - r * 0.25, bodyCy - r * 1.33, r * 0.08, 0, Math.PI * 2);
+  ctx.fill();
+  // Right antenna
+  ctx.beginPath();
+  ctx.moveTo(cx + r * 0.2, bodyCy - r * 0.85);
+  ctx.quadraticCurveTo(cx + r * 0.3, bodyCy - r * 1.2, cx + r * 0.25, bodyCy - r * 1.3);
+  ctx.stroke();
+  // Right antenna ball
+  ctx.fillStyle = '#CDDC39';
+  ctx.beginPath();
+  ctx.arc(cx + r * 0.25, bodyCy - r * 1.33, r * 0.08, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // Face
+  drawPlushieEyes(ctx, cx, bodyCy, r, 'normal');
+  drawPlushieMouth(ctx, cx, bodyCy, r, 'smile');
+  drawPlushieBlush(ctx, cx, bodyCy, r, 0.25);
+}
+
+// --- T3 Bee: Yellow body with brown stripes and small wings ---
+function drawPlushieBeeIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, _tier: number, _color: string, _accent: string): void {
+  const r = size * 0.35;
+  const bodyCy = cy + r * 0.15;
+
+  // Ground shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.06)';
+  ctx.beginPath();
+  ctx.ellipse(cx, bodyCy + r * 1.05, r * 0.7, r * 0.12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Plushie body - warm yellow
+  drawPlushieBody(ctx, cx, bodyCy, r, '#FFC107', '#FFE082', '#FFA000');
+
+  // Two brown horizontal stripes across the body
+  ctx.save();
+  ctx.globalAlpha = 0.35;
+  ctx.fillStyle = '#795548';
+  // Upper stripe
+  ctx.beginPath();
+  ctx.ellipse(cx, bodyCy - r * 0.15, r * 0.85, r * 0.08, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // Lower stripe
+  ctx.beginPath();
+  ctx.ellipse(cx, bodyCy + r * 0.2, r * 0.8, r * 0.08, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // Small wings on sides
+  ctx.save();
+  ctx.globalAlpha = 0.35;
+  ctx.fillStyle = '#FFFFFF';
+  // Left wing
+  ctx.beginPath();
+  ctx.ellipse(cx - r * 0.85, bodyCy - r * 0.3, r * 0.3, r * 0.18, -0.4, 0, Math.PI * 2);
+  ctx.fill();
+  // Right wing
+  ctx.beginPath();
+  ctx.ellipse(cx + r * 0.85, bodyCy - r * 0.3, r * 0.3, r * 0.18, 0.4, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // Face
+  drawPlushieEyes(ctx, cx, bodyCy, r, 'normal');
+  drawPlushieMouth(ctx, cx, bodyCy, r, 'cat');
+  drawPlushieBlush(ctx, cx, bodyCy, r, 0.28);
+}
+
+// --- T4 Ladybug: Red body with black dots and small antennae ---
+function drawPlushieLadybugIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, _tier: number, _color: string, _accent: string): void {
+  const r = size * 0.35;
+  const bodyCy = cy + r * 0.15;
+
+  // Ground shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.06)';
+  ctx.beginPath();
+  ctx.ellipse(cx, bodyCy + r * 1.05, r * 0.7, r * 0.12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Plushie body - vibrant red
+  drawPlushieBody(ctx, cx, bodyCy, r, '#F44336', '#EF9A9A', '#C62828');
+
+  // Black dots on the body (3 visible)
+  ctx.fillStyle = '#37474F';
+  const dots = [
+    { x: -0.3, y: -0.25 },
+    { x: 0.25, y: -0.15 },
+    { x: -0.1, y: 0.3 },
+    { x: 0.3, y: 0.35 },
+  ];
+  for (const d of dots) {
+    ctx.beginPath();
+    ctx.arc(cx + r * d.x, bodyCy + r * d.y, r * 0.1, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Small antennae
+  ctx.save();
+  ctx.strokeStyle = '#37474F';
+  ctx.lineWidth = r * 0.05;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(cx - r * 0.15, bodyCy - r * 0.9);
+  ctx.lineTo(cx - r * 0.25, bodyCy - r * 1.15);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(cx + r * 0.15, bodyCy - r * 0.9);
+  ctx.lineTo(cx + r * 0.25, bodyCy - r * 1.15);
+  ctx.stroke();
+  // Antenna tips
+  ctx.fillStyle = '#37474F';
+  ctx.beginPath();
+  ctx.arc(cx - r * 0.25, bodyCy - r * 1.15, r * 0.05, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(cx + r * 0.25, bodyCy - r * 1.15, r * 0.05, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // Face
+  drawPlushieEyes(ctx, cx, bodyCy, r, 'normal');
+  drawPlushieMouth(ctx, cx, bodyCy, r, 'smile');
+  drawPlushieBlush(ctx, cx, bodyCy, r, 0.3);
+}
+
+// --- T5 Butterfly: Purple body with colorful symmetrical wings ---
+function drawPlushieButterflyIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, _tier: number, _color: string, _accent: string): void {
+  const r = size * 0.35;
+  const bodyCy = cy + r * 0.15;
+
+  // Ground shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.06)';
+  ctx.beginPath();
+  ctx.ellipse(cx, bodyCy + r * 1.05, r * 0.7, r * 0.12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Wings behind body (draw BEFORE body)
+  ctx.save();
+  for (const side of [-1, 1]) {
+    // Upper wing
+    const uwGrad = ctx.createRadialGradient(
+      cx + side * r * 0.7, bodyCy - r * 0.3, 0,
+      cx + side * r * 0.7, bodyCy - r * 0.3, r * 0.5
+    );
+    uwGrad.addColorStop(0, '#CE93D8');
+    uwGrad.addColorStop(1, '#AB47BC');
+    ctx.fillStyle = uwGrad;
+    ctx.globalAlpha = 0.65;
+    ctx.beginPath();
+    ctx.ellipse(cx + side * r * 0.75, bodyCy - r * 0.25, r * 0.45, r * 0.35, side * 0.3, 0, Math.PI * 2);
+    ctx.fill();
+    // Lower wing (smaller)
+    ctx.fillStyle = '#F48FB1';
+    ctx.globalAlpha = 0.5;
+    ctx.beginPath();
+    ctx.ellipse(cx + side * r * 0.65, bodyCy + r * 0.25, r * 0.3, r * 0.22, side * 0.2, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+
+  // Plushie body - lavender
+  drawPlushieBody(ctx, cx, bodyCy, r, '#7C4DFF', '#B388FF', '#5E35B1');
+
+  // Small antennae
+  ctx.save();
+  ctx.strokeStyle = '#5E35B1';
+  ctx.lineWidth = r * 0.05;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(cx - r * 0.12, bodyCy - r * 0.9);
+  ctx.quadraticCurveTo(cx - r * 0.25, bodyCy - r * 1.25, cx - r * 0.18, bodyCy - r * 1.3);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(cx + r * 0.12, bodyCy - r * 0.9);
+  ctx.quadraticCurveTo(cx + r * 0.25, bodyCy - r * 1.25, cx + r * 0.18, bodyCy - r * 1.3);
+  ctx.stroke();
+  ctx.fillStyle = '#CE93D8';
+  ctx.beginPath();
+  ctx.arc(cx - r * 0.18, bodyCy - r * 1.33, r * 0.06, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(cx + r * 0.18, bodyCy - r * 1.33, r * 0.06, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // Face
+  drawPlushieEyes(ctx, cx, bodyCy, r, 'sparkle');
+  drawPlushieMouth(ctx, cx, bodyCy, r, 'open');
+  drawPlushieBlush(ctx, cx, bodyCy, r, 0.3);
+}
+
+// --- T6 Peacock: Teal body with elaborate tail fan, gold accents ---
+function drawPlushiePeacockIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, _tier: number, _color: string, _accent: string): void {
+  const r = size * 0.35;
+  const bodyCy = cy + r * 0.15;
+
+  // Ground shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.06)';
+  ctx.beginPath();
+  ctx.ellipse(cx, bodyCy + r * 1.05, r * 0.7, r * 0.12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Tail fan behind body (5 feathers in arc)
+  ctx.save();
+  const featherAngles = [-0.5, -0.25, 0, 0.25, 0.5];
+  for (let i = 0; i < featherAngles.length; i++) {
+    const angle = featherAngles[i];
+    const fx = cx + Math.sin(angle) * r * 1.1;
+    const fy = bodyCy - Math.cos(angle) * r * 1.1;
+
+    // Feather shaft
+    ctx.strokeStyle = '#00897B';
+    ctx.lineWidth = r * 0.04;
+    ctx.beginPath();
+    ctx.moveTo(cx, bodyCy - r * 0.5);
+    ctx.lineTo(fx, fy);
+    ctx.stroke();
+
+    // Eye-spot at tip
+    ctx.fillStyle = '#004D40';
+    ctx.beginPath();
+    ctx.arc(fx, fy, r * 0.13, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#00BCD4';
+    ctx.beginPath();
+    ctx.arc(fx, fy, r * 0.09, 0, Math.PI * 2);
+    ctx.fill();
+    // Gold center dot
+    ctx.fillStyle = '#FFD700';
+    ctx.beginPath();
+    ctx.arc(fx, fy, r * 0.04, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+
+  // Plushie body - teal
+  drawPlushieBody(ctx, cx, bodyCy, r, '#00BCD4', '#80DEEA', '#00838F');
+
+  // Small crown / crest on top (3 gold feather tips)
+  ctx.save();
+  ctx.strokeStyle = '#FFD700';
+  ctx.lineWidth = r * 0.05;
+  ctx.lineCap = 'round';
+  const crests = [-0.15, 0, 0.15];
+  for (const offsetX of crests) {
+    ctx.beginPath();
+    ctx.moveTo(cx + r * offsetX, bodyCy - r * 0.85);
+    ctx.lineTo(cx + r * offsetX, bodyCy - r * 1.15);
+    ctx.stroke();
+    ctx.fillStyle = '#FFD700';
+    ctx.beginPath();
+    ctx.arc(cx + r * offsetX, bodyCy - r * 1.18, r * 0.05, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+
+  // Face
+  drawPlushieEyes(ctx, cx, bodyCy, r, 'sparkle');
+  drawPlushieMouth(ctx, cx, bodyCy, r, 'cat');
+  drawPlushieBlush(ctx, cx, bodyCy, r, 0.3);
+}
+
+
+// ===================== FRUIT CHAIN =====================
+
+// --- T1 Grapes: Purple body with tiny grape cluster on head ---
+function drawPlushieGrapesIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, _tier: number, _color: string, _accent: string): void {
+  const r = size * 0.35;
+  const bodyCy = cy + r * 0.15;
+
+  // Ground shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.06)';
+  ctx.beginPath();
+  ctx.ellipse(cx, bodyCy + r * 1.05, r * 0.7, r * 0.12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Plushie body - purple
+  drawPlushieBody(ctx, cx, bodyCy, r, '#7B1FA2', '#CE93D8', '#4A148C');
+
+  // Tiny grape cluster on head (4 small circles)
+  ctx.save();
+  const grapeColor = '#9C27B0';
+  const grapeHighlight = '#E1BEE7';
+  const grapeR = r * 0.1;
+  const gx = cx;
+  const gy = bodyCy - r * 1.0;
+  const grapePositions = [
+    { x: -0.08, y: 0 },
+    { x: 0.08, y: 0 },
+    { x: 0, y: -0.14 },
+    { x: 0, y: 0.12 },
+  ];
+  for (const gp of grapePositions) {
+    ctx.fillStyle = grapeColor;
+    ctx.beginPath();
+    ctx.arc(gx + r * gp.x, gy + r * gp.y, grapeR, 0, Math.PI * 2);
+    ctx.fill();
+    // Tiny highlight
+    ctx.fillStyle = grapeHighlight;
+    ctx.globalAlpha = 0.4;
+    ctx.beginPath();
+    ctx.arc(gx + r * gp.x - grapeR * 0.3, gy + r * gp.y - grapeR * 0.3, grapeR * 0.35, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+  // Tiny stem
+  ctx.strokeStyle = '#4E342E';
+  ctx.lineWidth = r * 0.04;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(gx, gy - r * 0.18);
+  ctx.lineTo(gx, gy - r * 0.3);
+  ctx.stroke();
+  ctx.restore();
+
+  // Face
+  drawPlushieEyes(ctx, cx, bodyCy, r, 'normal');
+  drawPlushieMouth(ctx, cx, bodyCy, r, 'dot');
+  drawPlushieBlush(ctx, cx, bodyCy, r, 0.25);
+}
+
+// --- T2 Apple: Red body with small green leaf on top ---
+function drawPlushieAppleIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, _tier: number, _color: string, _accent: string): void {
+  const r = size * 0.35;
+  const bodyCy = cy + r * 0.15;
+
+  // Ground shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.06)';
+  ctx.beginPath();
+  ctx.ellipse(cx, bodyCy + r * 1.05, r * 0.7, r * 0.12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Plushie body - red
+  drawPlushieBody(ctx, cx, bodyCy, r, '#F44336', '#EF9A9A', '#C62828');
+
+  // Stem and leaf on top
+  ctx.save();
+  // Stem
+  ctx.strokeStyle = '#5D4037';
+  ctx.lineWidth = r * 0.07;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(cx, bodyCy - r * 0.9);
+  ctx.lineTo(cx, bodyCy - r * 1.15);
+  ctx.stroke();
+  // Leaf
+  ctx.fillStyle = '#66BB6A';
+  ctx.beginPath();
+  ctx.ellipse(cx + r * 0.12, bodyCy - r * 1.12, r * 0.15, r * 0.08, 0.4, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // Face
+  drawPlushieEyes(ctx, cx, bodyCy, r, 'normal');
+  drawPlushieMouth(ctx, cx, bodyCy, r, 'smile');
+  drawPlushieBlush(ctx, cx, bodyCy, r, 0.28);
+}
+
+// --- T3 Orange: Orange body with small green leaf/stem on top ---
+function drawPlushieOrangeIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, _tier: number, _color: string, _accent: string): void {
+  const r = size * 0.35;
+  const bodyCy = cy + r * 0.15;
+
+  // Ground shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.06)';
+  ctx.beginPath();
+  ctx.ellipse(cx, bodyCy + r * 1.05, r * 0.7, r * 0.12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Plushie body - orange
+  drawPlushieBody(ctx, cx, bodyCy, r, '#FF9800', '#FFE0B2', '#E65100');
+
+  // Small green leaf and stem on top
+  ctx.save();
+  // Stem
+  ctx.strokeStyle = '#4E342E';
+  ctx.lineWidth = r * 0.06;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(cx, bodyCy - r * 0.9);
+  ctx.lineTo(cx, bodyCy - r * 1.08);
+  ctx.stroke();
+  // Leaf
+  ctx.fillStyle = '#43A047';
+  ctx.beginPath();
+  ctx.ellipse(cx + r * 0.1, bodyCy - r * 1.05, r * 0.14, r * 0.07, 0.3, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // Face
+  drawPlushieEyes(ctx, cx, bodyCy, r, 'normal');
+  drawPlushieMouth(ctx, cx, bodyCy, r, 'cat');
+  drawPlushieBlush(ctx, cx, bodyCy, r, 0.28);
+}
+
+// --- T4 Kiwi: Brown-green body with kiwi slice on head ---
+function drawPlushieKiwiIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, _tier: number, _color: string, _accent: string): void {
+  const r = size * 0.35;
+  const bodyCy = cy + r * 0.15;
+
+  // Ground shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.06)';
+  ctx.beginPath();
+  ctx.ellipse(cx, bodyCy + r * 1.05, r * 0.7, r * 0.12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Plushie body - brown-green
+  drawPlushieBody(ctx, cx, bodyCy, r, '#8BC34A', '#C5E1A5', '#558B2F');
+
+  // Kiwi slice on head
+  ctx.save();
+  const kx = cx + r * 0.05;
+  const ky = bodyCy - r * 1.0;
+  const sliceR = r * 0.22;
+  // Outer brown ring
+  ctx.fillStyle = '#795548';
+  ctx.beginPath();
+  ctx.arc(kx, ky, sliceR, 0, Math.PI * 2);
+  ctx.fill();
+  // Green interior
+  ctx.fillStyle = '#8BC34A';
+  ctx.beginPath();
+  ctx.arc(kx, ky, sliceR * 0.8, 0, Math.PI * 2);
+  ctx.fill();
+  // White center
+  ctx.fillStyle = '#F1F8E9';
+  ctx.beginPath();
+  ctx.arc(kx, ky, sliceR * 0.3, 0, Math.PI * 2);
+  ctx.fill();
+  // Seed dots radiating from center
+  ctx.fillStyle = '#33691E';
+  for (let i = 0; i < 6; i++) {
+    const seedAngle = (i / 6) * Math.PI * 2;
+    const sx = kx + Math.cos(seedAngle) * sliceR * 0.55;
+    const sy = ky + Math.sin(seedAngle) * sliceR * 0.55;
+    ctx.beginPath();
+    ctx.arc(sx, sy, r * 0.025, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+
+  // Face
+  drawPlushieEyes(ctx, cx, bodyCy, r, 'gentle');
+  drawPlushieMouth(ctx, cx, bodyCy, r, 'smile');
+  drawPlushieBlush(ctx, cx, bodyCy, r, 0.25);
+}
+
+// --- T5 Mango: Golden-orange body with small leaf on stem ---
+function drawPlushieMangoIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, _tier: number, _color: string, _accent: string): void {
+  const r = size * 0.35;
+  const bodyCy = cy + r * 0.15;
+
+  // Ground shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.06)';
+  ctx.beginPath();
+  ctx.ellipse(cx, bodyCy + r * 1.05, r * 0.7, r * 0.12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Plushie body - golden orange
+  drawPlushieBody(ctx, cx, bodyCy, r, '#FF9800', '#FFCC80', '#E65100');
+
+  // Stem and leaf on top
+  ctx.save();
+  // Stem
+  ctx.strokeStyle = '#5D4037';
+  ctx.lineWidth = r * 0.06;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(cx + r * 0.05, bodyCy - r * 0.88);
+  ctx.lineTo(cx + r * 0.05, bodyCy - r * 1.1);
+  ctx.stroke();
+  // Leaf
+  ctx.fillStyle = '#43A047';
+  ctx.beginPath();
+  ctx.ellipse(cx + r * 0.18, bodyCy - r * 1.08, r * 0.16, r * 0.07, 0.3, 0, Math.PI * 2);
+  ctx.fill();
+  // Subtle warm blush on the body (mango "rosy cheek" gradient)
+  ctx.globalAlpha = 0.15;
+  ctx.fillStyle = '#FF5722';
+  ctx.beginPath();
+  ctx.arc(cx + r * 0.3, bodyCy - r * 0.15, r * 0.35, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // Face
+  drawPlushieEyes(ctx, cx, bodyCy, r, 'normal');
+  drawPlushieMouth(ctx, cx, bodyCy, r, 'open');
+  drawPlushieBlush(ctx, cx, bodyCy, r, 0.3);
+}
+
+// --- T6 Peach: Soft pink body with heart-shaped leaf, extra rosy blush ---
+function drawPlushiePeachIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, _tier: number, _color: string, _accent: string): void {
+  const r = size * 0.35;
+  const bodyCy = cy + r * 0.15;
+
+  // Ground shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.06)';
+  ctx.beginPath();
+  ctx.ellipse(cx, bodyCy + r * 1.05, r * 0.7, r * 0.12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Plushie body - soft peach/pink
+  drawPlushieBody(ctx, cx, bodyCy, r, '#FF8A65', '#FFCCBC', '#E64A19');
+
+  // Stem on top
+  ctx.save();
+  ctx.strokeStyle = '#5D4037';
+  ctx.lineWidth = r * 0.06;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(cx, bodyCy - r * 0.9);
+  ctx.lineTo(cx, bodyCy - r * 1.12);
+  ctx.stroke();
+
+  // Heart-shaped leaf
+  const hx = cx + r * 0.02;
+  const hy = bodyCy - r * 1.18;
+  const hs = r * 0.12;
+  ctx.fillStyle = '#66BB6A';
+  ctx.beginPath();
+  ctx.moveTo(hx, hy + hs * 0.8);
+  ctx.bezierCurveTo(hx - hs * 1.2, hy - hs * 0.3, hx - hs * 0.3, hy - hs * 1.5, hx, hy - hs * 0.4);
+  ctx.bezierCurveTo(hx + hs * 0.3, hy - hs * 1.5, hx + hs * 1.2, hy - hs * 0.3, hx, hy + hs * 0.8);
+  ctx.fill();
+  ctx.restore();
+
+  // Face
+  drawPlushieEyes(ctx, cx, bodyCy, r, 'gentle');
+  drawPlushieMouth(ctx, cx, bodyCy, r, 'smile');
+  // Extra rosy blush for peach
+  drawPlushieBlush(ctx, cx, bodyCy, r, 0.45);
+}
+
+// --- T7 Cake: Pink body with tiny layered cake hat, strawberry on top, sprinkles ---
+function drawPlushieCakeIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, _tier: number, _color: string, _accent: string): void {
+  const r = size * 0.35;
+  const bodyCy = cy + r * 0.15;
+
+  // Ground shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.06)';
+  ctx.beginPath();
+  ctx.ellipse(cx, bodyCy + r * 1.05, r * 0.7, r * 0.12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Plushie body - soft pink
+  drawPlushieBody(ctx, cx, bodyCy, r, '#F48FB1', '#F8BBD0', '#EC407A');
+
+  // Sprinkle dots on the body
+  ctx.save();
+  const sprinkleColors = ['#FF5722', '#FFEB3B', '#4CAF50', '#2196F3', '#FF9800'];
+  const sprinkles = [
+    { x: -0.35, y: -0.2 }, { x: 0.38, y: -0.1 },
+    { x: -0.25, y: 0.35 }, { x: 0.3, y: 0.3 },
+    { x: 0.05, y: 0.45 },
+  ];
+  for (let i = 0; i < sprinkles.length; i++) {
+    ctx.fillStyle = sprinkleColors[i % sprinkleColors.length];
+    ctx.beginPath();
+    ctx.arc(cx + r * sprinkles[i].x, bodyCy + r * sprinkles[i].y, r * 0.035, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+
+  // Tiny layered cake hat on head
+  ctx.save();
+  const cakeX = cx;
+  const cakeBaseY = bodyCy - r * 0.85;
+
+  // Bottom layer (wider)
+  ctx.fillStyle = '#FFCC80';
+  ctx.beginPath();
+  ctx.roundRect(cakeX - r * 0.25, cakeBaseY - r * 0.12, r * 0.5, r * 0.16, r * 0.03);
+  ctx.fill();
+  // Frosting line
+  ctx.fillStyle = '#FFFFFF';
+  ctx.beginPath();
+  ctx.roundRect(cakeX - r * 0.27, cakeBaseY - r * 0.15, r * 0.54, r * 0.06, r * 0.02);
+  ctx.fill();
+
+  // Top layer (narrower)
+  ctx.fillStyle = '#FFE0B2';
+  ctx.beginPath();
+  ctx.roundRect(cakeX - r * 0.18, cakeBaseY - r * 0.32, r * 0.36, r * 0.2, r * 0.03);
+  ctx.fill();
+  // Pink frosting on top
+  ctx.fillStyle = '#F48FB1';
+  ctx.beginPath();
+  ctx.roundRect(cakeX - r * 0.2, cakeBaseY - r * 0.35, r * 0.4, r * 0.06, r * 0.02);
+  ctx.fill();
+
+  // Tiny strawberry on very top
+  ctx.fillStyle = '#F44336';
+  ctx.beginPath();
+  ctx.arc(cakeX, cakeBaseY - r * 0.42, r * 0.07, 0, Math.PI * 2);
+  ctx.fill();
+  // Strawberry leaf
+  ctx.fillStyle = '#43A047';
+  ctx.beginPath();
+  ctx.ellipse(cakeX, cakeBaseY - r * 0.48, r * 0.05, r * 0.025, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // Face
+  drawPlushieEyes(ctx, cx, bodyCy, r, 'sparkle');
+  drawPlushieMouth(ctx, cx, bodyCy, r, 'open');
+  drawPlushieBlush(ctx, cx, bodyCy, r, 0.35);
+}
+
+
+
+// --- CRYSTAL CHAIN CONFIG ---
+// { draw: drawPlushieDropletIcon, color: '#42A5F5', accent: '#BBDEFB' },    // t1 Droplet plushie
+// { draw: drawPlushieIceIcon, color: '#B3E5FC', accent: '#E1F5FE' },       // t2 Ice plushie
+// { draw: drawPlushieCrystalBallIcon, color: '#9C27B0', accent: '#E1BEE7' }, // t3 Crystal Ball plushie
+// { draw: drawPlushieDiamondIcon, color: '#00BCD4', accent: '#B2EBF2' },    // t4 Diamond plushie
+// { draw: drawPlushieCrownIcon, color: '#FFD700', accent: '#FFF8E1' },      // t5 Crown plushie
+//
+// --- NATURE CHAIN CONFIG ---
+// { draw: drawPlushieLeafIcon, color: '#8D6E63', accent: '#D7CCC8' },       // t1 Leaf plushie
+// { draw: drawPlushieMapleLeafIcon, color: '#E65100', accent: '#FFE0B2' },   // t2 Maple Leaf plushie
+// { draw: drawPlushiePineIcon, color: '#2E7D32', accent: '#C8E6C9' },       // t3 Pine plushie
+// { draw: drawPlushieTreeIcon, color: '#388E3C', accent: '#A5D6A7' },       // t4 Tree plushie
+// { draw: drawPlushiePalmIcon, color: '#43A047', accent: '#C8E6C9' },       // t5 Palm plushie
+// { draw: drawPlushieCottageIcon, color: '#8D6E63', accent: '#EFEBE9' },    // t6 Cottage plushie
+//
+// --- STAR CHAIN CONFIG ---
+// { draw: drawPlushieStarIcon, color: '#FFD54F', accent: '#FFF9C4' },       // t1 Star plushie
+// { draw: drawPlushieGlowingStarIcon, color: '#FFD700', accent: '#FFF8E1' }, // t2 Glowing Star plushie
+// { draw: drawPlushieSparklesIcon, color: '#FFC107', accent: '#FFF8E1' },   // t3 Sparkles plushie
+// { draw: drawPlushieShootingStarIcon, color: '#FF9800', accent: '#FFE0B2' }, // t4 Shooting Star plushie
+// { draw: drawPlushieMoonIcon, color: '#FDD835', accent: '#FFF9C4' },       // t5 Moon plushie
+// { draw: drawPlushieRainbowIcon, color: '#FF5252', accent: '#FFFFFF' },    // t6 Rainbow plushie
+// =============================================================================
+
+// Helpers used (already defined in EmojiRenderer.ts):
+// drawPlushieBody, drawPlushieEyes, drawPlushieMouth, drawPlushieBlush, addTierSparkles
+
+// =============================================================================
+// CRYSTAL CHAIN (5 tiers)
+// =============================================================================
+
+// --- T1 Droplet: Light blue plushie with teardrop on head ---
+function drawPlushieDropletIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, _tier: number, _color: string, _accent: string): void {
+  const r = size * 0.35;
+  const bodyCy = cy + r * 0.1;
+
+  // Ground shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.06)';
+  ctx.beginPath();
+  ctx.ellipse(cx, bodyCy + r * 1.05, r * 0.7, r * 0.12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Body
+  drawPlushieBody(ctx, cx, bodyCy, r, '#42A5F5', '#90CAF9', '#1E88E5');
+
+  // Teardrop on head
+  ctx.save();
+  const dropX = cx;
+  const dropY = bodyCy - r * 1.0;
+  const dropGrad = ctx.createRadialGradient(dropX - r * 0.03, dropY - r * 0.05, 0, dropX, dropY, r * 0.2);
+  dropGrad.addColorStop(0, '#E3F2FD');
+  dropGrad.addColorStop(0.6, '#64B5F6');
+  dropGrad.addColorStop(1, '#1E88E5');
+  ctx.fillStyle = dropGrad;
+  ctx.beginPath();
+  ctx.moveTo(dropX, dropY - r * 0.28);
+  ctx.quadraticCurveTo(dropX + r * 0.15, dropY - r * 0.05, dropX + r * 0.12, dropY + r * 0.06);
+  ctx.arc(dropX, dropY + r * 0.06, r * 0.12, 0, Math.PI, false);
+  ctx.quadraticCurveTo(dropX - r * 0.15, dropY - r * 0.05, dropX, dropY - r * 0.28);
+  ctx.fill();
+  // Tiny highlight on droplet
+  ctx.fillStyle = 'rgba(255,255,255,0.6)';
+  ctx.beginPath();
+  ctx.arc(dropX - r * 0.03, dropY - r * 0.06, r * 0.04, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // Face
+  drawPlushieEyes(ctx, cx, bodyCy, r, 'wide');
+  drawPlushieMouth(ctx, cx, bodyCy, r, 'dot');
+  drawPlushieBlush(ctx, cx, bodyCy, r, 0.25);
+}
+
+// --- T2 Ice: Pale blue plushie with small ice crystal facets on head ---
+function drawPlushieIceIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, _tier: number, _color: string, _accent: string): void {
+  const r = size * 0.35;
+  const bodyCy = cy + r * 0.1;
+
+  // Ground shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.06)';
+  ctx.beginPath();
+  ctx.ellipse(cx, bodyCy + r * 1.05, r * 0.7, r * 0.12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Body
+  drawPlushieBody(ctx, cx, bodyCy, r, '#B3E5FC', '#E1F5FE', '#81D4FA');
+
+  // Ice crystal facets on head (3 small hexagonal shards)
+  ctx.save();
+  const crystals = [
+    { x: cx - r * 0.15, y: bodyCy - r * 0.95, rot: -0.3, s: 0.8 },
+    { x: cx + r * 0.1, y: bodyCy - r * 1.05, rot: 0.2, s: 1.0 },
+    { x: cx + r * 0.28, y: bodyCy - r * 0.85, rot: 0.5, s: 0.65 },
+  ];
+  crystals.forEach(c => {
+    ctx.save();
+    ctx.translate(c.x, c.y);
+    ctx.rotate(c.rot);
+    const cH = r * 0.22 * c.s;
+    const cW = r * 0.1 * c.s;
+    // Diamond/shard shape
+    const shardGrad = ctx.createLinearGradient(0, -cH, 0, cH);
+    shardGrad.addColorStop(0, '#E1F5FE');
+    shardGrad.addColorStop(0.4, '#B3E5FC');
+    shardGrad.addColorStop(1, '#4FC3F7');
+    ctx.fillStyle = shardGrad;
+    ctx.beginPath();
+    ctx.moveTo(0, -cH);
+    ctx.lineTo(cW, -cH * 0.2);
+    ctx.lineTo(cW * 0.7, cH);
+    ctx.lineTo(-cW * 0.7, cH);
+    ctx.lineTo(-cW, -cH * 0.2);
+    ctx.closePath();
+    ctx.fill();
+    // Highlight edge
+    ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+    ctx.lineWidth = r * 0.02;
+    ctx.beginPath();
+    ctx.moveTo(0, -cH);
+    ctx.lineTo(cW, -cH * 0.2);
+    ctx.stroke();
+    ctx.restore();
+  });
+  ctx.restore();
+
+  // Face
+  drawPlushieEyes(ctx, cx, bodyCy, r, 'normal');
+  drawPlushieMouth(ctx, cx, bodyCy, r, 'dot');
+  drawPlushieBlush(ctx, cx, bodyCy, r, 0.25);
+}
+
+// --- T3 Crystal Ball: Purple plushie with tiny crystal ball on head with glow ---
+function drawPlushieCrystalBallIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, tier: number, _color: string, _accent: string): void {
+  const r = size * 0.35;
+  const bodyCy = cy + r * 0.1;
+
+  // Ground shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.06)';
+  ctx.beginPath();
+  ctx.ellipse(cx, bodyCy + r * 1.05, r * 0.7, r * 0.12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Body
+  drawPlushieBody(ctx, cx, bodyCy, r, '#9C27B0', '#CE93D8', '#7B1FA2');
+
+  // Crystal ball on head
+  ctx.save();
+  const ballCx = cx;
+  const ballCy = bodyCy - r * 0.95;
+  const ballR = r * 0.22;
+
+  // Glow behind ball
+  const glowGrad = ctx.createRadialGradient(ballCx, ballCy, ballR * 0.3, ballCx, ballCy, ballR * 2.0);
+  glowGrad.addColorStop(0, 'rgba(186,104,200,0.3)');
+  glowGrad.addColorStop(1, 'rgba(186,104,200,0)');
+  ctx.fillStyle = glowGrad;
+  ctx.beginPath();
+  ctx.arc(ballCx, ballCy, ballR * 2.0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Ball body
+  const ballGrad = ctx.createRadialGradient(ballCx - ballR * 0.25, ballCy - ballR * 0.25, 0, ballCx, ballCy, ballR);
+  ballGrad.addColorStop(0, '#E1BEE7');
+  ballGrad.addColorStop(0.5, '#BA68C8');
+  ballGrad.addColorStop(1, '#7B1FA2');
+  ctx.fillStyle = ballGrad;
+  ctx.beginPath();
+  ctx.arc(ballCx, ballCy, ballR, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Specular highlight on ball
+  ctx.fillStyle = 'rgba(255,255,255,0.5)';
+  ctx.beginPath();
+  ctx.arc(ballCx - ballR * 0.25, ballCy - ballR * 0.2, ballR * 0.25, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Small base under ball
+  ctx.fillStyle = '#6A1B9A';
+  ctx.beginPath();
+  ctx.ellipse(ballCx, ballCy + ballR * 0.9, ballR * 0.6, ballR * 0.2, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  addTierSparkles(ctx, cx, cy, r, tier);
+
+  // Face
+  drawPlushieEyes(ctx, cx, bodyCy, r, 'gentle');
+  drawPlushieMouth(ctx, cx, bodyCy, r, 'smile');
+  drawPlushieBlush(ctx, cx, bodyCy, r, 0.3);
+}
+
+// --- T4 Diamond: Cyan/teal plushie with diamond shape on head ---
+function drawPlushieDiamondIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, tier: number, _color: string, _accent: string): void {
+  const r = size * 0.35;
+  const bodyCy = cy + r * 0.1;
+
+  // Ground shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.06)';
+  ctx.beginPath();
+  ctx.ellipse(cx, bodyCy + r * 1.05, r * 0.7, r * 0.12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Body
+  drawPlushieBody(ctx, cx, bodyCy, r, '#00BCD4', '#80DEEA', '#00838F');
+
+  // Diamond on head
+  ctx.save();
+  const dCx = cx;
+  const dCy = bodyCy - r * 0.95;
+  const dH = r * 0.35;
+  const dW = r * 0.25;
+
+  // Diamond shape (top half + bottom point)
+  // Top facet (left)
+  const facetGrad1 = ctx.createLinearGradient(dCx - dW, dCy - dH * 0.1, dCx, dCy - dH);
+  facetGrad1.addColorStop(0, '#4DD0E1');
+  facetGrad1.addColorStop(1, '#E0F7FA');
+  ctx.fillStyle = facetGrad1;
+  ctx.beginPath();
+  ctx.moveTo(dCx, dCy - dH);
+  ctx.lineTo(dCx - dW, dCy - dH * 0.1);
+  ctx.lineTo(dCx, dCy - dH * 0.1);
+  ctx.closePath();
+  ctx.fill();
+
+  // Top facet (right)
+  const facetGrad2 = ctx.createLinearGradient(dCx, dCy - dH, dCx + dW, dCy - dH * 0.1);
+  facetGrad2.addColorStop(0, '#B2EBF2');
+  facetGrad2.addColorStop(1, '#26C6DA');
+  ctx.fillStyle = facetGrad2;
+  ctx.beginPath();
+  ctx.moveTo(dCx, dCy - dH);
+  ctx.lineTo(dCx + dW, dCy - dH * 0.1);
+  ctx.lineTo(dCx, dCy - dH * 0.1);
+  ctx.closePath();
+  ctx.fill();
+
+  // Bottom facet (left)
+  const facetGrad3 = ctx.createLinearGradient(dCx - dW, dCy - dH * 0.1, dCx, dCy + dH * 0.5);
+  facetGrad3.addColorStop(0, '#26C6DA');
+  facetGrad3.addColorStop(1, '#00838F');
+  ctx.fillStyle = facetGrad3;
+  ctx.beginPath();
+  ctx.moveTo(dCx - dW, dCy - dH * 0.1);
+  ctx.lineTo(dCx, dCy - dH * 0.1);
+  ctx.lineTo(dCx, dCy + dH * 0.5);
+  ctx.closePath();
+  ctx.fill();
+
+  // Bottom facet (right)
+  const facetGrad4 = ctx.createLinearGradient(dCx + dW, dCy - dH * 0.1, dCx, dCy + dH * 0.5);
+  facetGrad4.addColorStop(0, '#4DD0E1');
+  facetGrad4.addColorStop(1, '#00838F');
+  ctx.fillStyle = facetGrad4;
+  ctx.beginPath();
+  ctx.moveTo(dCx + dW, dCy - dH * 0.1);
+  ctx.lineTo(dCx, dCy - dH * 0.1);
+  ctx.lineTo(dCx, dCy + dH * 0.5);
+  ctx.closePath();
+  ctx.fill();
+
+  // Highlight flash across diamond
+  ctx.fillStyle = 'rgba(255,255,255,0.4)';
+  ctx.beginPath();
+  ctx.moveTo(dCx - dW * 0.3, dCy - dH * 0.8);
+  ctx.lineTo(dCx + dW * 0.1, dCy - dH * 0.8);
+  ctx.lineTo(dCx - dW * 0.1, dCy - dH * 0.3);
+  ctx.lineTo(dCx - dW * 0.5, dCy - dH * 0.3);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+
+  addTierSparkles(ctx, cx, cy, r, tier);
+
+  // Face
+  drawPlushieEyes(ctx, cx, bodyCy, r, 'sparkle');
+  drawPlushieMouth(ctx, cx, bodyCy, r, 'cat');
+  drawPlushieBlush(ctx, cx, bodyCy, r, 0.3);
+}
+
+// --- T5 Crown: Gold plushie with crown on head, gold glow ---
+function drawPlushieCrownIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, tier: number, _color: string, _accent: string): void {
+  const r = size * 0.35;
+  const bodyCy = cy + r * 0.1;
+
+  // Gold glow aura
+  const auraGrad = ctx.createRadialGradient(cx, bodyCy, r * 0.5, cx, bodyCy, r * 1.5);
+  auraGrad.addColorStop(0, 'rgba(255,215,0,0.2)');
+  auraGrad.addColorStop(0.6, 'rgba(255,215,0,0.08)');
+  auraGrad.addColorStop(1, 'rgba(255,215,0,0)');
+  ctx.fillStyle = auraGrad;
+  ctx.beginPath();
+  ctx.arc(cx, bodyCy, r * 1.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Ground shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.08)';
+  ctx.beginPath();
+  ctx.ellipse(cx, bodyCy + r * 1.05, r * 0.75, r * 0.14, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Body
+  drawPlushieBody(ctx, cx, bodyCy, r, '#FFD700', '#FFF176', '#F9A825');
+
+  // Crown on head
+  ctx.save();
+  const crownCx = cx;
+  const crownBase = bodyCy - r * 0.85;
+  const crownW = r * 0.4;
+  const crownH = r * 0.35;
+
+  // Crown body
+  const crownGrad = ctx.createLinearGradient(crownCx - crownW, crownBase, crownCx + crownW, crownBase - crownH);
+  crownGrad.addColorStop(0, '#FFD700');
+  crownGrad.addColorStop(0.5, '#FFF176');
+  crownGrad.addColorStop(1, '#FFD700');
+  ctx.fillStyle = crownGrad;
+  ctx.beginPath();
+  // Base of crown
+  ctx.moveTo(crownCx - crownW, crownBase);
+  // Left point
+  ctx.lineTo(crownCx - crownW * 0.85, crownBase - crownH);
+  // Dip between left and center
+  ctx.lineTo(crownCx - crownW * 0.4, crownBase - crownH * 0.5);
+  // Center point (tallest)
+  ctx.lineTo(crownCx, crownBase - crownH * 1.1);
+  // Dip between center and right
+  ctx.lineTo(crownCx + crownW * 0.4, crownBase - crownH * 0.5);
+  // Right point
+  ctx.lineTo(crownCx + crownW * 0.85, crownBase - crownH);
+  // Right base
+  ctx.lineTo(crownCx + crownW, crownBase);
+  ctx.closePath();
+  ctx.fill();
+
+  // Crown base band
+  ctx.fillStyle = '#F9A825';
+  ctx.fillRect(crownCx - crownW, crownBase - r * 0.04, crownW * 2, r * 0.08);
+
+  // Gems on crown points
+  const gemColors = ['#FF1744', '#2979FF', '#FF1744'];
+  const gemPositions = [
+    { x: crownCx - crownW * 0.85, y: crownBase - crownH + r * 0.04 },
+    { x: crownCx, y: crownBase - crownH * 1.1 + r * 0.04 },
+    { x: crownCx + crownW * 0.85, y: crownBase - crownH + r * 0.04 },
+  ];
+  gemPositions.forEach((g, i) => {
+    ctx.fillStyle = gemColors[i];
+    ctx.beginPath();
+    ctx.arc(g.x, g.y, r * 0.04, 0, Math.PI * 2);
+    ctx.fill();
+    // Gem highlight
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    ctx.beginPath();
+    ctx.arc(g.x - r * 0.01, g.y - r * 0.015, r * 0.018, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  ctx.restore();
+
+  addTierSparkles(ctx, cx, cy, r, tier);
+
+  // Face
+  drawPlushieEyes(ctx, cx, bodyCy, r, 'sparkle');
+  drawPlushieMouth(ctx, cx, bodyCy, r, 'open');
+  drawPlushieBlush(ctx, cx, bodyCy, r, 0.35);
+}
+
+// =============================================================================
+// NATURE CHAIN (6 tiers)
+// =============================================================================
+
+// --- T1 Leaf: Brown/tan plushie with single leaf on head ---
+function drawPlushieLeafIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, _tier: number, _color: string, _accent: string): void {
+  const r = size * 0.35;
+  const bodyCy = cy + r * 0.1;
+
+  // Ground shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.06)';
+  ctx.beginPath();
+  ctx.ellipse(cx, bodyCy + r * 1.05, r * 0.7, r * 0.12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Body
+  drawPlushieBody(ctx, cx, bodyCy, r, '#8D6E63', '#BCAAA4', '#6D4C41');
+
+  // Single leaf on head
+  ctx.save();
+  ctx.translate(cx + r * 0.05, bodyCy - r * 0.9);
+  // Stem
+  ctx.strokeStyle = '#558B2F';
+  ctx.lineWidth = r * 0.06;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(0, r * 0.12);
+  ctx.quadraticCurveTo(r * 0.03, -r * 0.05, 0, -r * 0.18);
+  ctx.stroke();
+  // Leaf shape
+  const leafGrad = ctx.createRadialGradient(0, -r * 0.25, 0, 0, -r * 0.2, r * 0.18);
+  leafGrad.addColorStop(0, '#81C784');
+  leafGrad.addColorStop(1, '#388E3C');
+  ctx.fillStyle = leafGrad;
+  ctx.beginPath();
+  ctx.ellipse(0, -r * 0.26, r * 0.12, r * 0.08, -0.4, 0, Math.PI * 2);
+  ctx.fill();
+  // Leaf vein
+  ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+  ctx.lineWidth = r * 0.02;
+  ctx.beginPath();
+  ctx.moveTo(-r * 0.06, -r * 0.26);
+  ctx.lineTo(r * 0.06, -r * 0.26);
+  ctx.stroke();
+  ctx.restore();
+
+  // Face
+  drawPlushieEyes(ctx, cx, bodyCy, r, 'normal');
+  drawPlushieMouth(ctx, cx, bodyCy, r, 'dot');
+  drawPlushieBlush(ctx, cx, bodyCy, r, 0.25);
+}
+
+// --- T2 Maple Leaf: Orange-brown plushie with maple leaf on head ---
+function drawPlushieMapleLeafIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, _tier: number, _color: string, _accent: string): void {
+  const r = size * 0.35;
+  const bodyCy = cy + r * 0.1;
+
+  // Ground shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.06)';
+  ctx.beginPath();
+  ctx.ellipse(cx, bodyCy + r * 1.05, r * 0.7, r * 0.12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Body
+  drawPlushieBody(ctx, cx, bodyCy, r, '#E65100', '#FF8A65', '#BF360C');
+
+  // Maple leaf on head
+  ctx.save();
+  const mlCx = cx;
+  const mlCy = bodyCy - r * 1.0;
+  const leafS = r * 0.2;
+
+  // Stem
+  ctx.strokeStyle = '#795548';
+  ctx.lineWidth = r * 0.05;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(mlCx, mlCy + leafS * 1.5);
+  ctx.lineTo(mlCx, mlCy + leafS * 0.3);
+  ctx.stroke();
+
+  // Maple leaf (simplified 5-point)
+  const mapleGrad = ctx.createRadialGradient(mlCx, mlCy, 0, mlCx, mlCy, leafS * 1.3);
+  mapleGrad.addColorStop(0, '#FF6F00');
+  mapleGrad.addColorStop(1, '#E65100');
+  ctx.fillStyle = mapleGrad;
+  ctx.beginPath();
+  for (let i = 0; i < 5; i++) {
+    const angle = (i / 5) * Math.PI * 2 - Math.PI / 2;
+    const outerR = leafS * (i % 2 === 0 ? 1.2 : 0.6);
+    const px = mlCx + Math.cos(angle) * outerR;
+    const py = mlCy + Math.sin(angle) * outerR;
+    if (i === 0) {
+      ctx.moveTo(px, py);
+    } else {
+      // Inner notch
+      const midAngle = ((i - 0.5) / 5) * Math.PI * 2 - Math.PI / 2;
+      const midR = leafS * 0.35;
+      ctx.lineTo(mlCx + Math.cos(midAngle) * midR, mlCy + Math.sin(midAngle) * midR);
+      ctx.lineTo(px, py);
+    }
+  }
+  // Close with last notch
+  const lastMidAngle = ((-0.5) / 5) * Math.PI * 2 - Math.PI / 2;
+  ctx.lineTo(mlCx + Math.cos(lastMidAngle) * leafS * 0.35, mlCy + Math.sin(lastMidAngle) * leafS * 0.35);
+  ctx.closePath();
+  ctx.fill();
+
+  // Centre vein
+  ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+  ctx.lineWidth = r * 0.02;
+  ctx.beginPath();
+  ctx.moveTo(mlCx, mlCy - leafS * 0.9);
+  ctx.lineTo(mlCx, mlCy + leafS * 0.3);
+  ctx.stroke();
+  ctx.restore();
+
+  // Face
+  drawPlushieEyes(ctx, cx, bodyCy, r, 'normal');
+  drawPlushieMouth(ctx, cx, bodyCy, r, 'smile');
+  drawPlushieBlush(ctx, cx, bodyCy, r, 0.25);
+}
+
+// --- T3 Pine: Dark green plushie with small pine tree shape on head ---
+function drawPlushiePineIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, tier: number, _color: string, _accent: string): void {
+  const r = size * 0.35;
+  const bodyCy = cy + r * 0.1;
+
+  // Ground shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.06)';
+  ctx.beginPath();
+  ctx.ellipse(cx, bodyCy + r * 1.05, r * 0.7, r * 0.12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Body
+  drawPlushieBody(ctx, cx, bodyCy, r, '#2E7D32', '#66BB6A', '#1B5E20');
+
+  // Pine tree on head (3 stacked triangles)
+  ctx.save();
+  const treeCx = cx;
+  const treeBase = bodyCy - r * 0.82;
+  const treeW = r * 0.2;
+
+  // Trunk
+  ctx.fillStyle = '#5D4037';
+  ctx.fillRect(treeCx - r * 0.04, treeBase, r * 0.08, r * 0.12);
+
+  // Three layers of foliage (bottom to top)
+  const layers = [
+    { y: treeBase - r * 0.02, w: treeW, h: r * 0.18 },
+    { y: treeBase - r * 0.15, w: treeW * 0.8, h: r * 0.16 },
+    { y: treeBase - r * 0.26, w: treeW * 0.55, h: r * 0.14 },
+  ];
+  layers.forEach(l => {
+    const layerGrad = ctx.createLinearGradient(treeCx - l.w, l.y, treeCx + l.w, l.y - l.h);
+    layerGrad.addColorStop(0, '#388E3C');
+    layerGrad.addColorStop(0.5, '#43A047');
+    layerGrad.addColorStop(1, '#2E7D32');
+    ctx.fillStyle = layerGrad;
+    ctx.beginPath();
+    ctx.moveTo(treeCx, l.y - l.h);
+    ctx.lineTo(treeCx + l.w, l.y);
+    ctx.lineTo(treeCx - l.w, l.y);
+    ctx.closePath();
+    ctx.fill();
+  });
+  ctx.restore();
+
+  addTierSparkles(ctx, cx, cy, r, tier);
+
+  // Face
+  drawPlushieEyes(ctx, cx, bodyCy, r, 'normal');
+  drawPlushieMouth(ctx, cx, bodyCy, r, 'cat');
+  drawPlushieBlush(ctx, cx, bodyCy, r, 0.25);
+}
+
+// --- T4 Tree: Green plushie with small round tree canopy on head ---
+function drawPlushieTreeIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, tier: number, _color: string, _accent: string): void {
+  const r = size * 0.35;
+  const bodyCy = cy + r * 0.1;
+
+  // Ground shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.06)';
+  ctx.beginPath();
+  ctx.ellipse(cx, bodyCy + r * 1.05, r * 0.7, r * 0.12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Body
+  drawPlushieBody(ctx, cx, bodyCy, r, '#388E3C', '#66BB6A', '#1B5E20');
+
+  // Tree on head: trunk + round canopy
+  ctx.save();
+  const treeCx = cx;
+  const trunkBase = bodyCy - r * 0.82;
+
+  // Trunk
+  ctx.fillStyle = '#795548';
+  ctx.fillRect(treeCx - r * 0.04, trunkBase, r * 0.08, r * 0.15);
+
+  // Round canopy
+  const canopyCy = trunkBase - r * 0.15;
+  const canopyR = r * 0.22;
+  const canopyGrad = ctx.createRadialGradient(treeCx - canopyR * 0.2, canopyCy - canopyR * 0.2, 0, treeCx, canopyCy, canopyR);
+  canopyGrad.addColorStop(0, '#81C784');
+  canopyGrad.addColorStop(0.6, '#4CAF50');
+  canopyGrad.addColorStop(1, '#2E7D32');
+  ctx.fillStyle = canopyGrad;
+  ctx.beginPath();
+  ctx.arc(treeCx, canopyCy, canopyR, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Canopy highlight
+  ctx.fillStyle = 'rgba(255,255,255,0.2)';
+  ctx.beginPath();
+  ctx.arc(treeCx - canopyR * 0.25, canopyCy - canopyR * 0.25, canopyR * 0.35, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  addTierSparkles(ctx, cx, cy, r, tier);
+
+  // Face
+  drawPlushieEyes(ctx, cx, bodyCy, r, 'gentle');
+  drawPlushieMouth(ctx, cx, bodyCy, r, 'smile');
+  drawPlushieBlush(ctx, cx, bodyCy, r, 0.3);
+}
+
+// --- T5 Palm: Bright green plushie with palm frond leaves on head ---
+function drawPlushiePalmIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, tier: number, _color: string, _accent: string): void {
+  const r = size * 0.35;
+  const bodyCy = cy + r * 0.1;
+
+  // Ground shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.06)';
+  ctx.beginPath();
+  ctx.ellipse(cx, bodyCy + r * 1.05, r * 0.7, r * 0.12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Body
+  drawPlushieBody(ctx, cx, bodyCy, r, '#43A047', '#81C784', '#2E7D32');
+
+  // Palm trunk on head
+  ctx.save();
+  const palmCx = cx;
+  const palmBase = bodyCy - r * 0.85;
+
+  // Curved trunk
+  ctx.strokeStyle = '#8D6E63';
+  ctx.lineWidth = r * 0.08;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(palmCx, palmBase + r * 0.05);
+  ctx.quadraticCurveTo(palmCx + r * 0.05, palmBase - r * 0.15, palmCx, palmBase - r * 0.25);
+  ctx.stroke();
+
+  // Palm fronds (4 drooping leaves)
+  const frondTop = palmBase - r * 0.28;
+  const fronds = [
+    { endX: -r * 0.3, endY: -r * 0.05, cpX: -r * 0.2, cpY: -r * 0.2 },
+    { endX: r * 0.3, endY: -r * 0.05, cpX: r * 0.2, cpY: -r * 0.2 },
+    { endX: -r * 0.25, endY: -r * 0.18, cpX: -r * 0.18, cpY: -r * 0.28 },
+    { endX: r * 0.25, endY: -r * 0.18, cpX: r * 0.18, cpY: -r * 0.28 },
+  ];
+  fronds.forEach(f => {
+    ctx.strokeStyle = '#388E3C';
+    ctx.lineWidth = r * 0.05;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(palmCx, frondTop);
+    ctx.quadraticCurveTo(palmCx + f.cpX, frondTop + f.cpY, palmCx + f.endX, frondTop + f.endY);
+    ctx.stroke();
+    // Leaf fill
+    ctx.fillStyle = '#4CAF50';
+    ctx.beginPath();
+    ctx.moveTo(palmCx, frondTop);
+    ctx.quadraticCurveTo(palmCx + f.cpX * 0.9, frondTop + f.cpY * 0.9 - r * 0.02, palmCx + f.endX, frondTop + f.endY);
+    ctx.quadraticCurveTo(palmCx + f.cpX * 1.1, frondTop + f.cpY * 1.1 + r * 0.02, palmCx, frondTop);
+    ctx.fill();
+  });
+  ctx.restore();
+
+  addTierSparkles(ctx, cx, cy, r, tier);
+
+  // Face
+  drawPlushieEyes(ctx, cx, bodyCy, r, 'normal');
+  drawPlushieMouth(ctx, cx, bodyCy, r, 'open');
+  drawPlushieBlush(ctx, cx, bodyCy, r, 0.3);
+}
+
+// --- T6 Cottage: Warm brown plushie with tiny house/cottage on head, warm glow ---
+function drawPlushieCottageIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, tier: number, _color: string, _accent: string): void {
+  const r = size * 0.35;
+  const bodyCy = cy + r * 0.1;
+
+  // Warm glow aura
+  const auraGrad = ctx.createRadialGradient(cx, bodyCy, r * 0.5, cx, bodyCy, r * 1.5);
+  auraGrad.addColorStop(0, 'rgba(255,183,77,0.18)');
+  auraGrad.addColorStop(0.6, 'rgba(255,183,77,0.06)');
+  auraGrad.addColorStop(1, 'rgba(255,183,77,0)');
+  ctx.fillStyle = auraGrad;
+  ctx.beginPath();
+  ctx.arc(cx, bodyCy, r * 1.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Ground shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.08)';
+  ctx.beginPath();
+  ctx.ellipse(cx, bodyCy + r * 1.05, r * 0.75, r * 0.14, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Body
+  drawPlushieBody(ctx, cx, bodyCy, r, '#8D6E63', '#BCAAA4', '#5D4037');
+
+  // Cottage on head
+  ctx.save();
+  const hCx = cx;
+  const hBase = bodyCy - r * 0.8;
+  const hW = r * 0.28;
+  const hH = r * 0.2;
+  const roofH = r * 0.2;
+
+  // House body (walls)
+  ctx.fillStyle = '#EFEBE9';
+  ctx.fillRect(hCx - hW, hBase - hH, hW * 2, hH);
+
+  // Roof (triangle)
+  const roofGrad = ctx.createLinearGradient(hCx - hW * 1.1, hBase - hH, hCx + hW * 1.1, hBase - hH - roofH);
+  roofGrad.addColorStop(0, '#D84315');
+  roofGrad.addColorStop(1, '#FF5722');
+  ctx.fillStyle = roofGrad;
+  ctx.beginPath();
+  ctx.moveTo(hCx, hBase - hH - roofH);
+  ctx.lineTo(hCx - hW * 1.15, hBase - hH);
+  ctx.lineTo(hCx + hW * 1.15, hBase - hH);
+  ctx.closePath();
+  ctx.fill();
+
+  // Door
+  ctx.fillStyle = '#795548';
+  ctx.fillRect(hCx - r * 0.04, hBase - hH * 0.55, r * 0.08, hH * 0.55);
+
+  // Window (left side of door, tiny yellow glow)
+  ctx.fillStyle = '#FFF9C4';
+  ctx.fillRect(hCx - hW * 0.7, hBase - hH * 0.7, r * 0.08, r * 0.06);
+  // Window glow
+  const winGlow = ctx.createRadialGradient(hCx - hW * 0.66, hBase - hH * 0.67, 0, hCx - hW * 0.66, hBase - hH * 0.67, r * 0.1);
+  winGlow.addColorStop(0, 'rgba(255,249,196,0.4)');
+  winGlow.addColorStop(1, 'rgba(255,249,196,0)');
+  ctx.fillStyle = winGlow;
+  ctx.beginPath();
+  ctx.arc(hCx - hW * 0.66, hBase - hH * 0.67, r * 0.1, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Chimney
+  ctx.fillStyle = '#795548';
+  ctx.fillRect(hCx + hW * 0.45, hBase - hH - roofH * 0.9, r * 0.07, roofH * 0.5);
+  // Chimney top
+  ctx.fillStyle = '#6D4C41';
+  ctx.fillRect(hCx + hW * 0.42, hBase - hH - roofH * 0.9, r * 0.1, r * 0.03);
+  ctx.restore();
+
+  addTierSparkles(ctx, cx, cy, r, tier);
+
+  // Face
+  drawPlushieEyes(ctx, cx, bodyCy, r, 'sparkle');
+  drawPlushieMouth(ctx, cx, bodyCy, r, 'smile');
+  drawPlushieBlush(ctx, cx, bodyCy, r, 0.35);
+}
+
+// =============================================================================
+// STAR CHAIN (6 tiers)
+// =============================================================================
+
+// --- T1 Star: Yellow plushie with small 5-point star on head ---
+function drawPlushieStarIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, _tier: number, _color: string, _accent: string): void {
+  const r = size * 0.35;
+  const bodyCy = cy + r * 0.1;
+
+  // Ground shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.06)';
+  ctx.beginPath();
+  ctx.ellipse(cx, bodyCy + r * 1.05, r * 0.7, r * 0.12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Body
+  drawPlushieBody(ctx, cx, bodyCy, r, '#FFD54F', '#FFF9C4', '#FFC107');
+
+  // Small 5-point star on head
+  ctx.save();
+  const starCx = cx;
+  const starCy = bodyCy - r * 1.0;
+  const starR = r * 0.18;
+  const starGrad = ctx.createRadialGradient(starCx, starCy, 0, starCx, starCy, starR);
+  starGrad.addColorStop(0, '#FFF9C4');
+  starGrad.addColorStop(1, '#FFD54F');
+  ctx.fillStyle = starGrad;
+  ctx.beginPath();
+  for (let i = 0; i < 10; i++) {
+    const angle = (i / 10) * Math.PI * 2 - Math.PI / 2;
+    const sr = i % 2 === 0 ? starR : starR * 0.4;
+    const px = starCx + Math.cos(angle) * sr;
+    const py = starCy + Math.sin(angle) * sr;
+    i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+  }
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+
+  // Face
+  drawPlushieEyes(ctx, cx, bodyCy, r, 'normal');
+  drawPlushieMouth(ctx, cx, bodyCy, r, 'smile');
+  drawPlushieBlush(ctx, cx, bodyCy, r, 0.25);
+}
+
+// --- T2 Glowing Star: Brighter yellow plushie with star and glow rays on head ---
+function drawPlushieGlowingStarIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, _tier: number, _color: string, _accent: string): void {
+  const r = size * 0.35;
+  const bodyCy = cy + r * 0.1;
+
+  // Ground shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.06)';
+  ctx.beginPath();
+  ctx.ellipse(cx, bodyCy + r * 1.05, r * 0.7, r * 0.12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Body
+  drawPlushieBody(ctx, cx, bodyCy, r, '#FFD700', '#FFF8E1', '#FBC02D');
+
+  // Glowing star on head
+  ctx.save();
+  const starCx = cx;
+  const starCy = bodyCy - r * 1.0;
+  const starR = r * 0.2;
+
+  // Glow behind star
+  const glowGrad = ctx.createRadialGradient(starCx, starCy, starR * 0.3, starCx, starCy, starR * 2.5);
+  glowGrad.addColorStop(0, 'rgba(255,215,0,0.35)');
+  glowGrad.addColorStop(0.5, 'rgba(255,215,0,0.1)');
+  glowGrad.addColorStop(1, 'rgba(255,215,0,0)');
+  ctx.fillStyle = glowGrad;
+  ctx.beginPath();
+  ctx.arc(starCx, starCy, starR * 2.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Glow rays
+  ctx.strokeStyle = 'rgba(255,235,59,0.4)';
+  ctx.lineWidth = r * 0.025;
+  ctx.lineCap = 'round';
+  for (let i = 0; i < 8; i++) {
+    const angle = (i / 8) * Math.PI * 2;
+    ctx.beginPath();
+    ctx.moveTo(starCx + Math.cos(angle) * starR * 1.1, starCy + Math.sin(angle) * starR * 1.1);
+    ctx.lineTo(starCx + Math.cos(angle) * starR * 1.7, starCy + Math.sin(angle) * starR * 1.7);
+    ctx.stroke();
+  }
+
+  // Star shape
+  const starGrad = ctx.createRadialGradient(starCx, starCy, 0, starCx, starCy, starR);
+  starGrad.addColorStop(0, '#FFF8E1');
+  starGrad.addColorStop(1, '#FFD700');
+  ctx.fillStyle = starGrad;
+  ctx.beginPath();
+  for (let i = 0; i < 10; i++) {
+    const angle = (i / 10) * Math.PI * 2 - Math.PI / 2;
+    const sr = i % 2 === 0 ? starR : starR * 0.4;
+    const px = starCx + Math.cos(angle) * sr;
+    const py = starCy + Math.sin(angle) * sr;
+    i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+  }
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+
+  // Face
+  drawPlushieEyes(ctx, cx, bodyCy, r, 'normal');
+  drawPlushieMouth(ctx, cx, bodyCy, r, 'smile');
+  drawPlushieBlush(ctx, cx, bodyCy, r, 0.25);
+}
+
+// --- T3 Sparkles: Golden plushie with 3 small sparkle shapes around head ---
+function drawPlushieSparklesIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, tier: number, _color: string, _accent: string): void {
+  const r = size * 0.35;
+  const bodyCy = cy + r * 0.1;
+
+  // Ground shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.06)';
+  ctx.beginPath();
+  ctx.ellipse(cx, bodyCy + r * 1.05, r * 0.7, r * 0.12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Body
+  drawPlushieBody(ctx, cx, bodyCy, r, '#FFC107', '#FFF8E1', '#FF8F00');
+
+  // 3 sparkle shapes around head
+  ctx.save();
+  const sparkles = [
+    { x: cx - r * 0.35, y: bodyCy - r * 0.95, s: 0.8 },
+    { x: cx + r * 0.1, y: bodyCy - r * 1.15, s: 1.0 },
+    { x: cx + r * 0.4, y: bodyCy - r * 0.8, s: 0.65 },
+  ];
+  sparkles.forEach(sp => {
+    const spR = r * 0.1 * sp.s;
+    ctx.fillStyle = '#FFD54F';
+    ctx.beginPath();
+    // 4-point sparkle
+    ctx.moveTo(sp.x, sp.y - spR * 2);
+    ctx.quadraticCurveTo(sp.x + spR * 0.3, sp.y - spR * 0.3, sp.x + spR * 2, sp.y);
+    ctx.quadraticCurveTo(sp.x + spR * 0.3, sp.y + spR * 0.3, sp.x, sp.y + spR * 2);
+    ctx.quadraticCurveTo(sp.x - spR * 0.3, sp.y + spR * 0.3, sp.x - spR * 2, sp.y);
+    ctx.quadraticCurveTo(sp.x - spR * 0.3, sp.y - spR * 0.3, sp.x, sp.y - spR * 2);
+    ctx.fill();
+    // White centre
+    ctx.fillStyle = 'rgba(255,255,255,0.6)';
+    ctx.beginPath();
+    ctx.arc(sp.x, sp.y, spR * 0.4, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  ctx.restore();
+
+  addTierSparkles(ctx, cx, cy, r, tier);
+
+  // Face
+  drawPlushieEyes(ctx, cx, bodyCy, r, 'wide');
+  drawPlushieMouth(ctx, cx, bodyCy, r, 'open');
+  drawPlushieBlush(ctx, cx, bodyCy, r, 0.3);
+}
+
+// --- T4 Shooting Star: Orange-gold plushie with shooting star and trail on head ---
+function drawPlushieShootingStarIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, tier: number, _color: string, _accent: string): void {
+  const r = size * 0.35;
+  const bodyCy = cy + r * 0.1;
+
+  // Ground shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.06)';
+  ctx.beginPath();
+  ctx.ellipse(cx, bodyCy + r * 1.05, r * 0.7, r * 0.12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Body
+  drawPlushieBody(ctx, cx, bodyCy, r, '#FF9800', '#FFE0B2', '#E65100');
+
+  // Shooting star with trail on head
+  ctx.save();
+  const starCx = cx + r * 0.15;
+  const starCy = bodyCy - r * 1.0;
+  const starR = r * 0.15;
+
+  // Trail (fading arc behind the star)
+  ctx.save();
+  const trailGrad = ctx.createLinearGradient(starCx - r * 0.5, starCy + r * 0.1, starCx, starCy);
+  trailGrad.addColorStop(0, 'rgba(255,152,0,0)');
+  trailGrad.addColorStop(0.5, 'rgba(255,183,77,0.3)');
+  trailGrad.addColorStop(1, 'rgba(255,213,79,0.5)');
+  ctx.strokeStyle = trailGrad;
+  ctx.lineWidth = r * 0.08;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(starCx - r * 0.55, starCy + r * 0.15);
+  ctx.quadraticCurveTo(starCx - r * 0.25, starCy + r * 0.05, starCx - starR * 0.5, starCy);
+  ctx.stroke();
+  // Second thinner trail line
+  ctx.strokeStyle = 'rgba(255,235,59,0.25)';
+  ctx.lineWidth = r * 0.04;
+  ctx.beginPath();
+  ctx.moveTo(starCx - r * 0.45, starCy + r * 0.22);
+  ctx.quadraticCurveTo(starCx - r * 0.2, starCy + r * 0.1, starCx - starR * 0.3, starCy + r * 0.02);
+  ctx.stroke();
+  ctx.restore();
+
+  // Star
+  const sGrad = ctx.createRadialGradient(starCx, starCy, 0, starCx, starCy, starR);
+  sGrad.addColorStop(0, '#FFF8E1');
+  sGrad.addColorStop(1, '#FF9800');
+  ctx.fillStyle = sGrad;
+  ctx.beginPath();
+  for (let i = 0; i < 10; i++) {
+    const angle = (i / 10) * Math.PI * 2 - Math.PI / 2;
+    const sr = i % 2 === 0 ? starR : starR * 0.4;
+    const px = starCx + Math.cos(angle) * sr;
+    const py = starCy + Math.sin(angle) * sr;
+    i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+  }
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+
+  addTierSparkles(ctx, cx, cy, r, tier);
+
+  // Face
+  drawPlushieEyes(ctx, cx, bodyCy, r, 'sparkle');
+  drawPlushieMouth(ctx, cx, bodyCy, r, 'cat');
+  drawPlushieBlush(ctx, cx, bodyCy, r, 0.3);
+}
+
+// --- T5 Moon: Pale yellow plushie with crescent moon on head, soft glow ---
+function drawPlushieMoonIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, tier: number, _color: string, _accent: string): void {
+  const r = size * 0.35;
+  const bodyCy = cy + r * 0.1;
+
+  // Soft moon glow aura
+  const auraGrad = ctx.createRadialGradient(cx, bodyCy, r * 0.5, cx, bodyCy, r * 1.4);
+  auraGrad.addColorStop(0, 'rgba(253,216,53,0.15)');
+  auraGrad.addColorStop(0.6, 'rgba(253,216,53,0.05)');
+  auraGrad.addColorStop(1, 'rgba(253,216,53,0)');
+  ctx.fillStyle = auraGrad;
+  ctx.beginPath();
+  ctx.arc(cx, bodyCy, r * 1.4, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Ground shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.06)';
+  ctx.beginPath();
+  ctx.ellipse(cx, bodyCy + r * 1.05, r * 0.72, r * 0.13, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Body
+  drawPlushieBody(ctx, cx, bodyCy, r, '#FDD835', '#FFF9C4', '#F9A825');
+
+  // Crescent moon on head (drawn with two arcs, no composite ops)
+  ctx.save();
+  const mCx = cx;
+  const mCy = bodyCy - r * 0.98;
+  const mR = r * 0.22;
+  // Inner cutout circle offset/radius
+  const cutX = mCx + mR * 0.4;
+  const cutY = mCy - mR * 0.15;
+  const cutR = mR * 0.72;
+
+  // Calculate intersection angles between the two circles for a clean crescent path
+  // Outer arc (clockwise) then inner arc (counter-clockwise)
+  const moonGrad = ctx.createRadialGradient(mCx - mR * 0.3, mCy - mR * 0.3, 0, mCx, mCy, mR);
+  moonGrad.addColorStop(0, '#FFF9C4');
+  moonGrad.addColorStop(0.5, '#FDD835');
+  moonGrad.addColorStop(1, '#F9A825');
+  ctx.fillStyle = moonGrad;
+
+  // Draw crescent: outer circle CW, then inner circle CCW to subtract
+  ctx.beginPath();
+  ctx.arc(mCx, mCy, mR, 0, Math.PI * 2); // outer moon
+  ctx.arc(cutX, cutY, cutR, 0, Math.PI * 2, true); // inner cutout (counter-clockwise = hole)
+  ctx.fill();
+
+  // Highlight on crescent edge
+  ctx.fillStyle = 'rgba(255,255,255,0.3)';
+  ctx.beginPath();
+  ctx.arc(mCx - mR * 0.35, mCy - mR * 0.1, mR * 0.2, 0, Math.PI * 2);
+  // Also cut this highlight with the same inner circle
+  ctx.arc(cutX, cutY, cutR, 0, Math.PI * 2, true);
+  ctx.fill();
+  ctx.restore();
+
+  addTierSparkles(ctx, cx, cy, r, tier);
+
+  // Face
+  drawPlushieEyes(ctx, cx, bodyCy, r, 'gentle');
+  drawPlushieMouth(ctx, cx, bodyCy, r, 'smile');
+  drawPlushieBlush(ctx, cx, bodyCy, r, 0.3);
+}
+
+// --- T6 Rainbow: White/pastel plushie with rainbow arc on head, rainbow accents ---
+function drawPlushieRainbowIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, tier: number, _color: string, _accent: string): void {
+  const r = size * 0.35;
+  const bodyCy = cy + r * 0.1;
+
+  // Rainbow glow aura
+  const auraGrad = ctx.createRadialGradient(cx, bodyCy, r * 0.5, cx, bodyCy, r * 1.5);
+  auraGrad.addColorStop(0, 'rgba(255,82,82,0.12)');
+  auraGrad.addColorStop(0.3, 'rgba(255,193,7,0.08)');
+  auraGrad.addColorStop(0.6, 'rgba(76,175,80,0.06)');
+  auraGrad.addColorStop(1, 'rgba(33,150,243,0)');
+  ctx.fillStyle = auraGrad;
+  ctx.beginPath();
+  ctx.arc(cx, bodyCy, r * 1.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Ground shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.08)';
+  ctx.beginPath();
+  ctx.ellipse(cx, bodyCy + r * 1.05, r * 0.75, r * 0.14, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Body with pastel rainbow gradient
+  const bodyGrad = ctx.createLinearGradient(cx - r, bodyCy - r, cx + r, bodyCy + r);
+  bodyGrad.addColorStop(0, '#FFCDD2');
+  bodyGrad.addColorStop(0.2, '#FFE0B2');
+  bodyGrad.addColorStop(0.4, '#FFF9C4');
+  bodyGrad.addColorStop(0.6, '#C8E6C9');
+  bodyGrad.addColorStop(0.8, '#BBDEFB');
+  bodyGrad.addColorStop(1, '#E1BEE7');
+  ctx.fillStyle = bodyGrad;
+  ctx.beginPath();
+  ctx.arc(cx, bodyCy, r, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 3D depth overlay on body
+  const depthGrad = ctx.createRadialGradient(cx - r * 0.2, bodyCy - r * 0.2, r * 0.1, cx, bodyCy, r);
+  depthGrad.addColorStop(0, 'rgba(255,255,255,0.35)');
+  depthGrad.addColorStop(0.5, 'rgba(255,255,255,0)');
+  depthGrad.addColorStop(1, 'rgba(0,0,0,0.08)');
+  ctx.fillStyle = depthGrad;
+  ctx.beginPath();
+  ctx.arc(cx, bodyCy, r, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Specular highlight
+  const specGrad = ctx.createRadialGradient(cx - r * 0.3, bodyCy - r * 0.3, 0, cx - r * 0.3, bodyCy - r * 0.3, r * 0.5);
+  specGrad.addColorStop(0, 'rgba(255,255,255,0.45)');
+  specGrad.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = specGrad;
+  ctx.beginPath();
+  ctx.arc(cx, bodyCy, r, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Rim light
+  ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+  ctx.lineWidth = r * 0.06;
+  ctx.beginPath();
+  ctx.arc(cx, bodyCy, r * 0.95, -Math.PI * 0.7, -Math.PI * 0.2);
+  ctx.stroke();
+
+  // Rainbow arc on head
+  ctx.save();
+  const arcCx = cx;
+  const arcCy = bodyCy - r * 0.8;
+  const arcR = r * 0.32;
+  const rainbowColors = ['#FF5252', '#FF9800', '#FFEB3B', '#4CAF50', '#2196F3', '#9C27B0'];
+
+  rainbowColors.forEach((color, i) => {
+    const bandR = arcR - i * (r * 0.035);
+    if (bandR > 0) {
+      ctx.strokeStyle = color;
+      ctx.lineWidth = r * 0.04;
+      ctx.beginPath();
+      ctx.arc(arcCx, arcCy, bandR, Math.PI, 0);
+      ctx.stroke();
+    }
+  });
+
+  // Tiny clouds at rainbow ends
+  for (const side of [-1, 1]) {
+    const cloudX = arcCx + side * arcR;
+    const cloudY = arcCy;
+    ctx.fillStyle = '#FFFFFF';
+    ctx.beginPath();
+    ctx.arc(cloudX, cloudY, r * 0.06, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(cloudX + side * r * 0.04, cloudY + r * 0.02, r * 0.045, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+
+  addTierSparkles(ctx, cx, cy, r, tier);
+
+  // Face
+  drawPlushieEyes(ctx, cx, bodyCy, r, 'sparkle');
+  drawPlushieMouth(ctx, cx, bodyCy, r, 'open');
+  drawPlushieBlush(ctx, cx, bodyCy, r, 0.35);
+}
+
+//   tea: [
+//     { draw: drawPlushieTeaLeafIcon, color: '#689F38', accent: '#AED581' },        // t1 Tea Leaf plushie
+//     { draw: drawPlushieMatchaIcon, color: '#689F38', accent: '#C5E1A5' },         // t2 Matcha plushie
+//     { draw: drawPlushieCoffeeIcon, color: '#795548', accent: '#D7CCC8' },         // t3 Coffee plushie
+//     { draw: drawPlushieBobaTeaIcon, color: '#8D6E63', accent: '#BCAAA4' },        // t4 Boba Tea plushie
+//     { draw: drawPlushieCakeSliceIcon, color: '#F8BBD0', accent: '#FCE4EC' },      // t5 Cake Slice plushie
+//     { draw: drawPlushieTeaSetIcon, color: '#A1887F', accent: '#D7CCC8' },         // t6 Tea Set plushie
+//     { draw: drawPlushieTeaHouseIcon, color: '#8D6E63', accent: '#BCAAA4' },       // t7 Tea House plushie
+//   ],
+
+// --- T1 Tea Leaf: Soft green body, small rolled tea leaf on head ---
+function drawPlushieTeaLeafIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, _tier: number, _color: string, _accent: string): void {
+  const r = size * 0.35;
+  const bodyCy = cy + r * 0.1;
+
+  // Ground shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.06)';
+  ctx.beginPath();
+  ctx.ellipse(cx, bodyCy + r * 1.05, r * 0.7, r * 0.12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Plushie body (soft green)
+  drawPlushieBody(ctx, cx, bodyCy, r, '#A8C97A', '#C5E0A0', '#8BAF5A');
+
+  // Small rolled tea leaf on head
+  ctx.save();
+  ctx.translate(cx, bodyCy - r * 0.9);
+  ctx.rotate(-0.2);
+  const leafGrad = ctx.createLinearGradient(-r * 0.15, 0, r * 0.15, 0);
+  leafGrad.addColorStop(0, '#558B2F');
+  leafGrad.addColorStop(1, '#7CB342');
+  ctx.fillStyle = leafGrad;
+  ctx.beginPath();
+  ctx.ellipse(0, 0, r * 0.18, r * 0.08, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // Leaf curl
+  ctx.strokeStyle = '#33691E';
+  ctx.lineWidth = r * 0.03;
+  ctx.beginPath();
+  ctx.arc(r * 0.1, 0, r * 0.06, -Math.PI * 0.5, Math.PI * 0.5);
+  ctx.stroke();
+  ctx.restore();
+
+  // Face
+  drawPlushieEyes(ctx, cx, bodyCy, r, 'normal');
+  drawPlushieMouth(ctx, cx, bodyCy, r, 'dot');
+  drawPlushieBlush(ctx, cx, bodyCy, r, 0.25);
+}
+
+// --- T2 Matcha: Light green body, tiny matcha cup on head ---
+function drawPlushieMatchaIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, _tier: number, _color: string, _accent: string): void {
+  const r = size * 0.35;
+  const bodyCy = cy + r * 0.1;
+
+  // Ground shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.06)';
+  ctx.beginPath();
+  ctx.ellipse(cx, bodyCy + r * 1.05, r * 0.7, r * 0.12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Plushie body (light green)
+  drawPlushieBody(ctx, cx, bodyCy, r, '#B5D99C', '#D0EEB8', '#94C076');
+
+  // Tiny matcha cup on head
+  ctx.save();
+  ctx.translate(cx, bodyCy - r * 0.95);
+  // Cup body
+  ctx.fillStyle = '#E8E0D8';
+  ctx.beginPath();
+  ctx.moveTo(-r * 0.15, r * 0.05);
+  ctx.lineTo(-r * 0.12, -r * 0.12);
+  ctx.lineTo(r * 0.12, -r * 0.12);
+  ctx.lineTo(r * 0.15, r * 0.05);
+  ctx.closePath();
+  ctx.fill();
+  // Matcha liquid
+  ctx.fillStyle = '#8BC34A';
+  ctx.beginPath();
+  ctx.ellipse(0, -r * 0.08, r * 0.11, r * 0.04, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // Foam swirl
+  ctx.strokeStyle = '#C5E1A5';
+  ctx.lineWidth = r * 0.025;
+  ctx.beginPath();
+  ctx.arc(0, -r * 0.08, r * 0.04, 0, Math.PI * 1.5);
+  ctx.stroke();
+  ctx.restore();
+
+  // Face
+  drawPlushieEyes(ctx, cx, bodyCy, r, 'gentle');
+  drawPlushieMouth(ctx, cx, bodyCy, r, 'smile');
+  drawPlushieBlush(ctx, cx, bodyCy, r, 0.3);
+}
+
+// --- T3 Coffee: Brown body, small coffee cup on head with steam swirl ---
+function drawPlushieCoffeeIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, _tier: number, _color: string, _accent: string): void {
+  const r = size * 0.35;
+  const bodyCy = cy + r * 0.1;
+
+  // Ground shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.06)';
+  ctx.beginPath();
+  ctx.ellipse(cx, bodyCy + r * 1.05, r * 0.7, r * 0.12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Plushie body (warm brown)
+  drawPlushieBody(ctx, cx, bodyCy, r, '#A1887F', '#C4AFA8', '#8D7068');
+
+  // Coffee cup on head
+  ctx.save();
+  ctx.translate(cx, bodyCy - r * 0.95);
+  // Cup body (white)
+  ctx.fillStyle = '#F5F0EB';
+  ctx.beginPath();
+  ctx.moveTo(-r * 0.15, r * 0.08);
+  ctx.lineTo(-r * 0.12, -r * 0.1);
+  ctx.lineTo(r * 0.12, -r * 0.1);
+  ctx.lineTo(r * 0.15, r * 0.08);
+  ctx.closePath();
+  ctx.fill();
+  // Coffee liquid
+  ctx.fillStyle = '#5D4037';
+  ctx.beginPath();
+  ctx.ellipse(0, -r * 0.06, r * 0.11, r * 0.04, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // Steam swirl
+  ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+  ctx.lineWidth = r * 0.03;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(0, -r * 0.12);
+  ctx.quadraticCurveTo(r * 0.06, -r * 0.2, 0, -r * 0.28);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(r * 0.05, -r * 0.14);
+  ctx.quadraticCurveTo(-r * 0.02, -r * 0.22, r * 0.04, -r * 0.3);
+  ctx.stroke();
+  ctx.restore();
+
+  // Face
+  drawPlushieEyes(ctx, cx, bodyCy, r, 'normal');
+  drawPlushieMouth(ctx, cx, bodyCy, r, 'smile');
+  drawPlushieBlush(ctx, cx, bodyCy, r, 0.3);
+}
+
+// --- T4 Boba Tea: Tan/brown body, boba cup on head with straw and dots ---
+function drawPlushieBobaTeaIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, _tier: number, _color: string, _accent: string): void {
+  const r = size * 0.35;
+  const bodyCy = cy + r * 0.1;
+
+  // Ground shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.06)';
+  ctx.beginPath();
+  ctx.ellipse(cx, bodyCy + r * 1.05, r * 0.7, r * 0.12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Plushie body (warm tan)
+  drawPlushieBody(ctx, cx, bodyCy, r, '#C4A882', '#DBBFA0', '#A68B66');
+
+  // Boba cup on head
+  ctx.save();
+  ctx.translate(cx, bodyCy - r * 0.9);
+  // Cup body (clear)
+  ctx.fillStyle = 'rgba(255,248,240,0.85)';
+  ctx.beginPath();
+  ctx.moveTo(-r * 0.14, r * 0.12);
+  ctx.lineTo(-r * 0.12, -r * 0.14);
+  ctx.lineTo(r * 0.12, -r * 0.14);
+  ctx.lineTo(r * 0.14, r * 0.12);
+  ctx.closePath();
+  ctx.fill();
+  // Cup outline
+  ctx.strokeStyle = '#BCAAA4';
+  ctx.lineWidth = r * 0.02;
+  ctx.beginPath();
+  ctx.moveTo(-r * 0.14, r * 0.12);
+  ctx.lineTo(-r * 0.12, -r * 0.14);
+  ctx.lineTo(r * 0.12, -r * 0.14);
+  ctx.lineTo(r * 0.14, r * 0.12);
+  ctx.closePath();
+  ctx.stroke();
+  // Boba pearls (small dots at bottom)
+  ctx.fillStyle = '#4E342E';
+  const bobaPositions = [
+    { x: -r * 0.06, y: r * 0.06 },
+    { x: r * 0.04, y: r * 0.08 },
+    { x: -r * 0.01, y: r * 0.03 },
+    { x: r * 0.08, y: r * 0.04 },
+  ];
+  bobaPositions.forEach(p => {
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, r * 0.03, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  // Lid
+  ctx.fillStyle = '#D7CCC8';
+  ctx.beginPath();
+  ctx.ellipse(0, -r * 0.14, r * 0.14, r * 0.03, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // Straw
+  ctx.strokeStyle = '#E91E63';
+  ctx.lineWidth = r * 0.04;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(r * 0.04, -r * 0.14);
+  ctx.lineTo(r * 0.06, -r * 0.32);
+  ctx.stroke();
+  ctx.restore();
+
+  // Face
+  drawPlushieEyes(ctx, cx, bodyCy, r, 'wide');
+  drawPlushieMouth(ctx, cx, bodyCy, r, 'open');
+  drawPlushieBlush(ctx, cx, bodyCy, r, 0.3);
+}
+
+// --- T5 Cake Slice: Pink body, triangle cake slice on head with strawberry ---
+function drawPlushieCakeSliceIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, _tier: number, _color: string, _accent: string): void {
+  const r = size * 0.35;
+  const bodyCy = cy + r * 0.1;
+
+  // Ground shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.06)';
+  ctx.beginPath();
+  ctx.ellipse(cx, bodyCy + r * 1.05, r * 0.7, r * 0.12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Plushie body (soft pink)
+  drawPlushieBody(ctx, cx, bodyCy, r, '#F8C8D8', '#FFE0EA', '#F0A0B8');
+
+  // Cake slice on head (triangle)
+  ctx.save();
+  ctx.translate(cx, bodyCy - r * 0.92);
+  // Cake body (cream/sponge)
+  ctx.fillStyle = '#FFF8E1';
+  ctx.beginPath();
+  ctx.moveTo(0, -r * 0.28);
+  ctx.lineTo(-r * 0.18, r * 0.04);
+  ctx.lineTo(r * 0.18, r * 0.04);
+  ctx.closePath();
+  ctx.fill();
+  // Frosting layer (pink top edge)
+  ctx.fillStyle = '#F8BBD0';
+  ctx.beginPath();
+  ctx.moveTo(-r * 0.16, -r * 0.04);
+  ctx.lineTo(r * 0.16, -r * 0.04);
+  ctx.lineTo(r * 0.17, r * 0.02);
+  ctx.lineTo(-r * 0.17, r * 0.02);
+  ctx.closePath();
+  ctx.fill();
+  // Strawberry on top
+  ctx.fillStyle = '#E53935';
+  ctx.beginPath();
+  ctx.arc(0, -r * 0.26, r * 0.06, 0, Math.PI * 2);
+  ctx.fill();
+  // Strawberry leaf
+  ctx.fillStyle = '#4CAF50';
+  ctx.beginPath();
+  ctx.ellipse(0, -r * 0.31, r * 0.04, r * 0.02, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // Face
+  drawPlushieEyes(ctx, cx, bodyCy, r, 'normal');
+  drawPlushieMouth(ctx, cx, bodyCy, r, 'cat');
+  drawPlushieBlush(ctx, cx, bodyCy, r, 0.3);
+}
+
+// --- T6 Tea Set: Cream body, tiny teapot on head with spout, warm glow ---
+function drawPlushieTeaSetIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, _tier: number, _color: string, _accent: string): void {
+  const r = size * 0.35;
+  const bodyCy = cy + r * 0.1;
+
+  // Warm glow aura
+  const glowGrad = ctx.createRadialGradient(cx, bodyCy, r * 0.5, cx, bodyCy, r * 1.4);
+  glowGrad.addColorStop(0, 'rgba(255,183,77,0.12)');
+  glowGrad.addColorStop(1, 'rgba(255,183,77,0)');
+  ctx.fillStyle = glowGrad;
+  ctx.beginPath();
+  ctx.arc(cx, bodyCy, r * 1.4, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Ground shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.07)';
+  ctx.beginPath();
+  ctx.ellipse(cx, bodyCy + r * 1.05, r * 0.72, r * 0.12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Plushie body (warm cream)
+  drawPlushieBody(ctx, cx, bodyCy, r, '#D7C4B0', '#EAD9C8', '#BFA890');
+
+  // Teapot on head
+  ctx.save();
+  ctx.translate(cx, bodyCy - r * 0.9);
+  // Teapot body (round)
+  const potGrad = ctx.createRadialGradient(-r * 0.02, 0, 0, 0, 0, r * 0.18);
+  potGrad.addColorStop(0, '#F5EFE6');
+  potGrad.addColorStop(1, '#D7CCC8');
+  ctx.fillStyle = potGrad;
+  ctx.beginPath();
+  ctx.ellipse(0, 0, r * 0.18, r * 0.14, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // Lid
+  ctx.fillStyle = '#BCAAA4';
+  ctx.beginPath();
+  ctx.ellipse(0, -r * 0.12, r * 0.1, r * 0.03, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // Lid knob
+  ctx.fillStyle = '#8D6E63';
+  ctx.beginPath();
+  ctx.arc(0, -r * 0.15, r * 0.025, 0, Math.PI * 2);
+  ctx.fill();
+  // Spout (right side)
+  ctx.strokeStyle = '#D7CCC8';
+  ctx.lineWidth = r * 0.04;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(r * 0.16, -r * 0.02);
+  ctx.quadraticCurveTo(r * 0.26, -r * 0.06, r * 0.28, -r * 0.12);
+  ctx.stroke();
+  // Handle (left side)
+  ctx.strokeStyle = '#BCAAA4';
+  ctx.lineWidth = r * 0.035;
+  ctx.beginPath();
+  ctx.arc(-r * 0.2, 0, r * 0.07, -Math.PI * 0.6, Math.PI * 0.6);
+  ctx.stroke();
+  ctx.restore();
+
+  // Face
+  drawPlushieEyes(ctx, cx, bodyCy, r, 'gentle');
+  drawPlushieMouth(ctx, cx, bodyCy, r, 'smile');
+  drawPlushieBlush(ctx, cx, bodyCy, r, 0.35);
+}
+
+// --- T7 Tea House: Warm brown body, tiny pagoda on head, gold accents ---
+function drawPlushieTeaHouseIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, tier: number, _color: string, _accent: string): void {
+  const r = size * 0.35;
+  const bodyCy = cy + r * 0.1;
+
+  // Gold glow aura
+  const auraGrad = ctx.createRadialGradient(cx, bodyCy, r * 0.5, cx, bodyCy, r * 1.5);
+  auraGrad.addColorStop(0, 'rgba(255,215,0,0.15)');
+  auraGrad.addColorStop(0.5, 'rgba(255,215,0,0.06)');
+  auraGrad.addColorStop(1, 'rgba(255,215,0,0)');
+  ctx.fillStyle = auraGrad;
+  ctx.beginPath();
+  ctx.arc(cx, bodyCy, r * 1.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Ground shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.08)';
+  ctx.beginPath();
+  ctx.ellipse(cx, bodyCy + r * 1.05, r * 0.74, r * 0.13, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Plushie body (warm brown)
+  drawPlushieBody(ctx, cx, bodyCy, r, '#A68B72', '#C4A890', '#8A7058');
+
+  // Tiny pagoda/tea house on head
+  ctx.save();
+  ctx.translate(cx, bodyCy - r * 0.92);
+  // Base/walls
+  ctx.fillStyle = '#8D6E63';
+  ctx.fillRect(-r * 0.14, -r * 0.06, r * 0.28, r * 0.14);
+  // Door
+  ctx.fillStyle = '#5D4037';
+  ctx.fillRect(-r * 0.04, 0, r * 0.08, r * 0.08);
+  // Roof (curved pagoda shape)
+  ctx.fillStyle = '#FFB74D';
+  ctx.beginPath();
+  ctx.moveTo(-r * 0.22, -r * 0.06);
+  ctx.quadraticCurveTo(cx * 0, -r * 0.2, r * 0.22, -r * 0.06);
+  ctx.closePath();
+  ctx.fill();
+  // Gold roof tip
+  ctx.fillStyle = '#FFD700';
+  ctx.beginPath();
+  ctx.arc(0, -r * 0.16, r * 0.025, 0, Math.PI * 2);
+  ctx.fill();
+  // Gold accent lines on roof
+  ctx.strokeStyle = '#FFD700';
+  ctx.lineWidth = r * 0.015;
+  ctx.beginPath();
+  ctx.moveTo(-r * 0.2, -r * 0.06);
+  ctx.lineTo(r * 0.2, -r * 0.06);
+  ctx.stroke();
+  ctx.restore();
+
+  addTierSparkles(ctx, cx, cy, r, tier);
+
+  // Face
+  drawPlushieEyes(ctx, cx, bodyCy, r, 'sparkle');
+  drawPlushieMouth(ctx, cx, bodyCy, r, 'smile');
+  drawPlushieBlush(ctx, cx, bodyCy, r, 0.35);
+}
+
+
+// ============================================================
+// PLUSHIE SHELL CHAIN (6 tiers)
+// ============================================================
+// Config entries:
+//   shell: [
+//     { draw: drawPlushieCoralIcon, color: '#EF5350', accent: '#FFCDD2' },          // t1 Coral plushie
+//     { draw: drawPlushieShellIcon, color: '#FFAB91', accent: '#FBE9E7' },          // t2 Shell plushie
+//     { draw: drawPlushieCrabIcon, color: '#E53935', accent: '#EF9A9A' },           // t3 Crab plushie
+//     { draw: drawPlushieTropicalFishIcon, color: '#29B6F6', accent: '#B3E5FC' },   // t4 Tropical Fish plushie
+//     { draw: drawPlushieDolphinIcon, color: '#42A5F5', accent: '#90CAF9' },        // t5 Dolphin plushie
+//     { draw: drawPlushieMermaidIcon, color: '#26C6DA', accent: '#80DEEA' },        // t6 Mermaid plushie
+//   ],
+
+// --- T1 Coral: Coral-pink body, small branching coral on head ---
+function drawPlushieCoralIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, _tier: number, _color: string, _accent: string): void {
+  const r = size * 0.35;
+  const bodyCy = cy + r * 0.1;
+
+  // Ground shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.06)';
+  ctx.beginPath();
+  ctx.ellipse(cx, bodyCy + r * 1.05, r * 0.7, r * 0.12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Plushie body (coral pink)
+  drawPlushieBody(ctx, cx, bodyCy, r, '#F09090', '#FFB0B0', '#D87070');
+
+  // Branching coral on head
+  ctx.save();
+  ctx.translate(cx, bodyCy - r * 0.85);
+  ctx.strokeStyle = '#EF5350';
+  ctx.lineWidth = r * 0.06;
+  ctx.lineCap = 'round';
+  // Main branch
+  ctx.beginPath();
+  ctx.moveTo(0, r * 0.1);
+  ctx.lineTo(0, -r * 0.15);
+  ctx.stroke();
+  // Left branch
+  ctx.beginPath();
+  ctx.moveTo(0, -r * 0.05);
+  ctx.lineTo(-r * 0.1, -r * 0.2);
+  ctx.stroke();
+  // Right branch
+  ctx.beginPath();
+  ctx.moveTo(0, -r * 0.08);
+  ctx.lineTo(r * 0.1, -r * 0.22);
+  ctx.stroke();
+  // Branch tips (round blobs)
+  ctx.fillStyle = '#EF7070';
+  ctx.beginPath();
+  ctx.arc(0, -r * 0.17, r * 0.035, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(-r * 0.1, -r * 0.22, r * 0.03, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(r * 0.1, -r * 0.24, r * 0.03, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // Face
+  drawPlushieEyes(ctx, cx, bodyCy, r, 'normal');
+  drawPlushieMouth(ctx, cx, bodyCy, r, 'dot');
+  drawPlushieBlush(ctx, cx, bodyCy, r, 0.25);
+}
+
+// --- T2 Shell: Peach body, spiral shell shape on head ---
+function drawPlushieShellIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, _tier: number, _color: string, _accent: string): void {
+  const r = size * 0.35;
+  const bodyCy = cy + r * 0.1;
+
+  // Ground shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.06)';
+  ctx.beginPath();
+  ctx.ellipse(cx, bodyCy + r * 1.05, r * 0.7, r * 0.12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Plushie body (soft peach)
+  drawPlushieBody(ctx, cx, bodyCy, r, '#FFCCAA', '#FFE0CC', '#F0B088');
+
+  // Spiral shell on head
+  ctx.save();
+  ctx.translate(cx, bodyCy - r * 0.92);
+  // Shell base
+  const shellGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, r * 0.2);
+  shellGrad.addColorStop(0, '#FFE0CC');
+  shellGrad.addColorStop(1, '#FFAB91');
+  ctx.fillStyle = shellGrad;
+  ctx.beginPath();
+  ctx.ellipse(0, 0, r * 0.18, r * 0.15, -0.2, 0, Math.PI * 2);
+  ctx.fill();
+  // Spiral line
+  ctx.strokeStyle = '#FF8A65';
+  ctx.lineWidth = r * 0.025;
+  ctx.beginPath();
+  ctx.arc(0, 0, r * 0.12, 0, Math.PI * 1.5);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(0, 0, r * 0.07, Math.PI * 0.5, Math.PI * 2);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(0, 0, r * 0.03, Math.PI, Math.PI * 2.5);
+  ctx.stroke();
+  ctx.restore();
+
+  // Face
+  drawPlushieEyes(ctx, cx, bodyCy, r, 'normal');
+  drawPlushieMouth(ctx, cx, bodyCy, r, 'smile');
+  drawPlushieBlush(ctx, cx, bodyCy, r, 0.3);
+}
+
+// --- T3 Crab: Red body, small claw pincers on sides ---
+function drawPlushieCrabIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, _tier: number, _color: string, _accent: string): void {
+  const r = size * 0.35;
+  const bodyCy = cy + r * 0.1;
+
+  // Ground shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.06)';
+  ctx.beginPath();
+  ctx.ellipse(cx, bodyCy + r * 1.05, r * 0.7, r * 0.12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Plushie body (red)
+  drawPlushieBody(ctx, cx, bodyCy, r, '#EF6050', '#FF8878', '#D04838');
+
+  // Claw pincers on sides
+  for (const side of [-1, 1]) {
+    ctx.save();
+    ctx.translate(cx + side * r * 0.95, bodyCy - r * 0.1);
+    ctx.fillStyle = '#E53935';
+    // Arm
+    ctx.beginPath();
+    ctx.ellipse(0, 0, r * 0.08, r * 0.14, side * 0.3, 0, Math.PI * 2);
+    ctx.fill();
+    // Top pincer
+    ctx.beginPath();
+    ctx.ellipse(side * r * 0.04, -r * 0.14, r * 0.07, r * 0.04, side * 0.5, 0, Math.PI * 2);
+    ctx.fill();
+    // Bottom pincer
+    ctx.beginPath();
+    ctx.ellipse(side * r * 0.04, -r * 0.06, r * 0.06, r * 0.035, side * -0.3, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // Tiny eye stalks
+  for (const side of [-1, 1]) {
+    ctx.fillStyle = '#D04838';
+    ctx.beginPath();
+    ctx.ellipse(cx + side * r * 0.2, bodyCy - r * 0.9, r * 0.04, r * 0.08, side * 0.15, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Face
+  drawPlushieEyes(ctx, cx, bodyCy, r, 'wide');
+  drawPlushieMouth(ctx, cx, bodyCy, r, 'cat');
+  drawPlushieBlush(ctx, cx, bodyCy, r, 0.25);
+}
+
+// --- T4 Tropical Fish: Blue body, small fins on sides, colorful stripe ---
+function drawPlushieTropicalFishIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, _tier: number, _color: string, _accent: string): void {
+  const r = size * 0.35;
+  const bodyCy = cy + r * 0.1;
+
+  // Ground shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.06)';
+  ctx.beginPath();
+  ctx.ellipse(cx, bodyCy + r * 1.05, r * 0.7, r * 0.12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Plushie body (bright blue)
+  drawPlushieBody(ctx, cx, bodyCy, r, '#64B5F6', '#90CAF9', '#42A5F5');
+
+  // Colorful stripe across body
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(cx, bodyCy, r, 0, Math.PI * 2);
+  ctx.clip();
+  ctx.fillStyle = '#FFA726';
+  ctx.fillRect(cx - r, bodyCy - r * 0.08, r * 2, r * 0.16);
+  ctx.fillStyle = '#FFCC80';
+  ctx.fillRect(cx - r, bodyCy - r * 0.12, r * 2, r * 0.04);
+  ctx.restore();
+
+  // Small side fins
+  for (const side of [-1, 1]) {
+    ctx.save();
+    ctx.translate(cx + side * r * 0.85, bodyCy + r * 0.1);
+    ctx.fillStyle = '#42A5F5';
+    ctx.beginPath();
+    ctx.ellipse(side * r * 0.08, 0, r * 0.12, r * 0.06, side * 0.4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // Dorsal fin on top
+  ctx.fillStyle = '#29B6F6';
+  ctx.beginPath();
+  ctx.moveTo(cx, bodyCy - r * 0.85);
+  ctx.quadraticCurveTo(cx + r * 0.12, bodyCy - r * 1.1, cx + r * 0.04, bodyCy - r * 1.15);
+  ctx.quadraticCurveTo(cx - r * 0.06, bodyCy - r * 1.05, cx, bodyCy - r * 0.85);
+  ctx.fill();
+
+  // Face
+  drawPlushieEyes(ctx, cx, bodyCy, r, 'normal');
+  drawPlushieMouth(ctx, cx, bodyCy, r, 'open');
+  drawPlushieBlush(ctx, cx, bodyCy, r, 0.25);
+}
+
+// --- T5 Dolphin: Blue-grey body, small dorsal fin on head ---
+function drawPlushieDolphinIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, _tier: number, _color: string, _accent: string): void {
+  const r = size * 0.35;
+  const bodyCy = cy + r * 0.1;
+
+  // Ground shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.06)';
+  ctx.beginPath();
+  ctx.ellipse(cx, bodyCy + r * 1.05, r * 0.72, r * 0.12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Plushie body (blue-grey)
+  drawPlushieBody(ctx, cx, bodyCy, r, '#78A8CC', '#A0C8E8', '#5A8AB0');
+
+  // Light belly (clipped to body)
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(cx, bodyCy, r, 0, Math.PI * 2);
+  ctx.clip();
+  ctx.fillStyle = 'rgba(255,255,255,0.2)';
+  ctx.beginPath();
+  ctx.ellipse(cx, bodyCy + r * 0.3, r * 0.6, r * 0.5, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // Dorsal fin on head
+  ctx.fillStyle = '#5A8AB0';
+  ctx.beginPath();
+  ctx.moveTo(cx - r * 0.04, bodyCy - r * 0.88);
+  ctx.quadraticCurveTo(cx, bodyCy - r * 1.25, cx + r * 0.12, bodyCy - r * 1.1);
+  ctx.quadraticCurveTo(cx + r * 0.08, bodyCy - r * 0.95, cx + r * 0.04, bodyCy - r * 0.88);
+  ctx.closePath();
+  ctx.fill();
+
+  // Small flippers on sides
+  for (const side of [-1, 1]) {
+    ctx.fillStyle = '#6898B8';
+    ctx.beginPath();
+    ctx.ellipse(cx + side * r * 0.8, bodyCy + r * 0.2, r * 0.12, r * 0.05, side * 0.5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Face
+  drawPlushieEyes(ctx, cx, bodyCy, r, 'gentle');
+  drawPlushieMouth(ctx, cx, bodyCy, r, 'smile');
+  drawPlushieBlush(ctx, cx, bodyCy, r, 0.3);
+}
+
+// --- T6 Mermaid: Teal body, small crown/tiara and tail fin visible, shimmer accents ---
+function drawPlushieMermaidIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, tier: number, _color: string, _accent: string): void {
+  const r = size * 0.35;
+  const bodyCy = cy + r * 0.1;
+
+  // Shimmer glow aura
+  const shimmerGrad = ctx.createRadialGradient(cx, bodyCy, r * 0.5, cx, bodyCy, r * 1.5);
+  shimmerGrad.addColorStop(0, 'rgba(38,198,218,0.15)');
+  shimmerGrad.addColorStop(0.5, 'rgba(128,222,234,0.06)');
+  shimmerGrad.addColorStop(1, 'rgba(38,198,218,0)');
+  ctx.fillStyle = shimmerGrad;
+  ctx.beginPath();
+  ctx.arc(cx, bodyCy, r * 1.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Ground shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.07)';
+  ctx.beginPath();
+  ctx.ellipse(cx, bodyCy + r * 1.05, r * 0.74, r * 0.13, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Plushie body (teal)
+  drawPlushieBody(ctx, cx, bodyCy, r, '#5CC8D0', '#88DDE4', '#3CABB5');
+
+  // Scale shimmer on lower body (clipped)
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(cx, bodyCy, r, 0, Math.PI * 2);
+  ctx.clip();
+  ctx.fillStyle = 'rgba(128,222,234,0.25)';
+  for (let row = 0; row < 3; row++) {
+    for (let col = -2; col <= 2; col++) {
+      const sx = cx + col * r * 0.18 + (row % 2 === 0 ? 0 : r * 0.09);
+      const sy = bodyCy + r * 0.2 + row * r * 0.14;
+      ctx.beginPath();
+      ctx.arc(sx, sy, r * 0.06, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  ctx.restore();
+
+  // Tail fin peeking out at bottom
+  ctx.fillStyle = '#26C6DA';
+  ctx.beginPath();
+  ctx.moveTo(cx - r * 0.15, bodyCy + r * 0.85);
+  ctx.quadraticCurveTo(cx - r * 0.3, bodyCy + r * 1.15, cx - r * 0.22, bodyCy + r * 1.2);
+  ctx.quadraticCurveTo(cx, bodyCy + r * 1.0, cx + r * 0.22, bodyCy + r * 1.2);
+  ctx.quadraticCurveTo(cx + r * 0.3, bodyCy + r * 1.15, cx + r * 0.15, bodyCy + r * 0.85);
+  ctx.closePath();
+  ctx.fill();
+
+  // Small crown/tiara on head
+  ctx.save();
+  ctx.translate(cx, bodyCy - r * 0.92);
+  ctx.fillStyle = '#FFD700';
+  // Crown base
+  ctx.fillRect(-r * 0.14, -r * 0.02, r * 0.28, r * 0.06);
+  // Crown points
+  const points = [-r * 0.1, 0, r * 0.1];
+  points.forEach(px => {
+    ctx.beginPath();
+    ctx.moveTo(px - r * 0.04, -r * 0.02);
+    ctx.lineTo(px, -r * 0.12);
+    ctx.lineTo(px + r * 0.04, -r * 0.02);
+    ctx.closePath();
+    ctx.fill();
+  });
+  // Tiny jewels on crown points
+  ctx.fillStyle = '#E0F7FA';
+  points.forEach(px => {
+    ctx.beginPath();
+    ctx.arc(px, -r * 0.08, r * 0.015, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  ctx.restore();
+
+  addTierSparkles(ctx, cx, cy, r, tier);
+
+  // Face
+  drawPlushieEyes(ctx, cx, bodyCy, r, 'sparkle');
+  drawPlushieMouth(ctx, cx, bodyCy, r, 'smile');
+  drawPlushieBlush(ctx, cx, bodyCy, r, 0.35);
+}
+
+
+// ============================================================
+// PLUSHIE SWEET CHAIN (8 tiers)
+// ============================================================
+// Config entries:
+//   sweet: [
+//     { draw: drawPlushieCandyIcon, color: '#E91E63', accent: '#F48FB1' },          // t1 Candy plushie
+//     { draw: drawPlushieLollipopIcon, color: '#E91E63', accent: '#F8BBD0' },       // t2 Lollipop plushie
+//     { draw: drawPlushieCookieIcon, color: '#8D6E63', accent: '#D7CCC8' },         // t3 Cookie plushie
+//     { draw: drawPlushieCupcakeIcon, color: '#F06292', accent: '#F8BBD0' },        // t4 Cupcake plushie
+//     { draw: drawPlushieDonutIcon, color: '#F48FB1', accent: '#FCE4EC' },          // t5 Donut plushie
+//     { draw: drawPlushieChocolateIcon, color: '#795548', accent: '#A1887F' },      // t6 Chocolate plushie
+//     { draw: drawPlushieBirthdayCakeIcon, color: '#F8BBD0', accent: '#FCE4EC' },   // t7 Birthday Cake plushie
+//     { draw: drawPlushieCandyCastleIcon, color: '#F8BBD0', accent: '#FCE4EC' },    // t8 Candy Castle plushie
+//   ],
+
+// --- T1 Candy: Pink body, small wrapped candy on head ---
+function drawPlushieCandyIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, _tier: number, _color: string, _accent: string): void {
+  const r = size * 0.35;
+  const bodyCy = cy + r * 0.1;
+
+  // Ground shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.06)';
+  ctx.beginPath();
+  ctx.ellipse(cx, bodyCy + r * 1.05, r * 0.7, r * 0.12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Plushie body (soft pink)
+  drawPlushieBody(ctx, cx, bodyCy, r, '#F48FB1', '#FFB0C8', '#E06890');
+
+  // Wrapped candy on head
+  ctx.save();
+  ctx.translate(cx, bodyCy - r * 0.92);
+  // Candy body (oval)
+  const candyGrad = ctx.createLinearGradient(-r * 0.1, 0, r * 0.1, 0);
+  candyGrad.addColorStop(0, '#EC407A');
+  candyGrad.addColorStop(0.5, '#F06292');
+  candyGrad.addColorStop(1, '#EC407A');
+  ctx.fillStyle = candyGrad;
+  ctx.beginPath();
+  ctx.ellipse(0, 0, r * 0.12, r * 0.08, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // Wrapper twists
+  ctx.fillStyle = '#F8BBD0';
+  // Left twist
+  ctx.beginPath();
+  ctx.moveTo(-r * 0.12, -r * 0.02);
+  ctx.lineTo(-r * 0.2, -r * 0.06);
+  ctx.lineTo(-r * 0.2, r * 0.02);
+  ctx.lineTo(-r * 0.12, r * 0.02);
+  ctx.closePath();
+  ctx.fill();
+  // Right twist
+  ctx.beginPath();
+  ctx.moveTo(r * 0.12, -r * 0.02);
+  ctx.lineTo(r * 0.2, -r * 0.06);
+  ctx.lineTo(r * 0.2, r * 0.02);
+  ctx.lineTo(r * 0.12, r * 0.02);
+  ctx.closePath();
+  ctx.fill();
+  // Candy stripe
+  ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+  ctx.lineWidth = r * 0.02;
+  ctx.beginPath();
+  ctx.moveTo(-r * 0.04, -r * 0.07);
+  ctx.lineTo(-r * 0.04, r * 0.07);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(r * 0.04, -r * 0.07);
+  ctx.lineTo(r * 0.04, r * 0.07);
+  ctx.stroke();
+  ctx.restore();
+
+  // Face
+  drawPlushieEyes(ctx, cx, bodyCy, r, 'normal');
+  drawPlushieMouth(ctx, cx, bodyCy, r, 'smile');
+  drawPlushieBlush(ctx, cx, bodyCy, r, 0.3);
+}
+
+// --- T2 Lollipop: Pink body, lollipop stick with swirl on head ---
+function drawPlushieLollipopIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, _tier: number, _color: string, _accent: string): void {
+  const r = size * 0.35;
+  const bodyCy = cy + r * 0.1;
+
+  // Ground shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.06)';
+  ctx.beginPath();
+  ctx.ellipse(cx, bodyCy + r * 1.05, r * 0.7, r * 0.12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Plushie body (bright pink)
+  drawPlushieBody(ctx, cx, bodyCy, r, '#F48FB1', '#FFB0C8', '#E06890');
+
+  // Lollipop on head
+  ctx.save();
+  ctx.translate(cx, bodyCy - r * 0.88);
+  // Stick
+  ctx.strokeStyle = '#D7CCC8';
+  ctx.lineWidth = r * 0.04;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(0, r * 0.08);
+  ctx.lineTo(0, -r * 0.12);
+  ctx.stroke();
+  // Lollipop circle
+  const lolliCy = -r * 0.24;
+  const lolliR = r * 0.14;
+  const lolliGrad = ctx.createRadialGradient(0, lolliCy, 0, 0, lolliCy, lolliR);
+  lolliGrad.addColorStop(0, '#FFE0E8');
+  lolliGrad.addColorStop(1, '#EC407A');
+  ctx.fillStyle = lolliGrad;
+  ctx.beginPath();
+  ctx.arc(0, lolliCy, lolliR, 0, Math.PI * 2);
+  ctx.fill();
+  // Spiral swirl
+  ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+  ctx.lineWidth = r * 0.025;
+  ctx.beginPath();
+  ctx.arc(0, lolliCy, lolliR * 0.7, 0, Math.PI * 1.5);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(0, lolliCy, lolliR * 0.35, Math.PI * 0.5, Math.PI * 2);
+  ctx.stroke();
+  ctx.restore();
+
+  // Face
+  drawPlushieEyes(ctx, cx, bodyCy, r, 'wide');
+  drawPlushieMouth(ctx, cx, bodyCy, r, 'open');
+  drawPlushieBlush(ctx, cx, bodyCy, r, 0.3);
+}
+
+// --- T3 Cookie: Brown body, cookie chunk on head with chips ---
+function drawPlushieCookieIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, _tier: number, _color: string, _accent: string): void {
+  const r = size * 0.35;
+  const bodyCy = cy + r * 0.1;
+
+  // Ground shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.06)';
+  ctx.beginPath();
+  ctx.ellipse(cx, bodyCy + r * 1.05, r * 0.7, r * 0.12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Plushie body (warm cookie brown)
+  drawPlushieBody(ctx, cx, bodyCy, r, '#C9A882', '#DBBFA0', '#A88A64');
+
+  // Cookie on head
+  ctx.save();
+  ctx.translate(cx, bodyCy - r * 0.92);
+  // Cookie disc
+  const cookieGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, r * 0.18);
+  cookieGrad.addColorStop(0, '#D7B98E');
+  cookieGrad.addColorStop(1, '#B8956A');
+  ctx.fillStyle = cookieGrad;
+  ctx.beginPath();
+  ctx.arc(0, 0, r * 0.18, 0, Math.PI * 2);
+  ctx.fill();
+  // Chocolate chips
+  ctx.fillStyle = '#4E342E';
+  const chipPositions = [
+    { x: -r * 0.06, y: -r * 0.04 },
+    { x: r * 0.07, y: r * 0.02 },
+    { x: r * 0.01, y: -r * 0.1 },
+    { x: -r * 0.09, y: r * 0.05 },
+    { x: r * 0.1, y: -r * 0.06 },
+  ];
+  chipPositions.forEach(p => {
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, r * 0.025, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  ctx.restore();
+
+  // Face
+  drawPlushieEyes(ctx, cx, bodyCy, r, 'normal');
+  drawPlushieMouth(ctx, cx, bodyCy, r, 'cat');
+  drawPlushieBlush(ctx, cx, bodyCy, r, 0.25);
+}
+
+// --- T4 Cupcake: Pink body, cupcake top on head with frosting swirl ---
+function drawPlushieCupcakeIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, _tier: number, _color: string, _accent: string): void {
+  const r = size * 0.35;
+  const bodyCy = cy + r * 0.1;
+
+  // Ground shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.06)';
+  ctx.beginPath();
+  ctx.ellipse(cx, bodyCy + r * 1.05, r * 0.7, r * 0.12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Plushie body (warm pink)
+  drawPlushieBody(ctx, cx, bodyCy, r, '#F5A0B8', '#FFB8CC', '#E88098');
+
+  // Cupcake on head
+  ctx.save();
+  ctx.translate(cx, bodyCy - r * 0.88);
+  // Cupcake wrapper (trapezoid)
+  ctx.fillStyle = '#F8BBD0';
+  ctx.beginPath();
+  ctx.moveTo(-r * 0.14, r * 0.08);
+  ctx.lineTo(-r * 0.1, -r * 0.04);
+  ctx.lineTo(r * 0.1, -r * 0.04);
+  ctx.lineTo(r * 0.14, r * 0.08);
+  ctx.closePath();
+  ctx.fill();
+  // Wrapper lines
+  ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+  ctx.lineWidth = r * 0.015;
+  for (let i = -2; i <= 2; i++) {
+    ctx.beginPath();
+    ctx.moveTo(i * r * 0.04, r * 0.08);
+    ctx.lineTo(i * r * 0.03, -r * 0.04);
+    ctx.stroke();
+  }
+  // Frosting swirl (dome on top)
+  const frostGrad = ctx.createRadialGradient(0, -r * 0.12, 0, 0, -r * 0.1, r * 0.16);
+  frostGrad.addColorStop(0, '#FFF0F5');
+  frostGrad.addColorStop(1, '#F48FB1');
+  ctx.fillStyle = frostGrad;
+  ctx.beginPath();
+  ctx.ellipse(0, -r * 0.1, r * 0.12, r * 0.1, 0, Math.PI, Math.PI * 2);
+  ctx.fill();
+  // Frosting peak
+  ctx.beginPath();
+  ctx.arc(0, -r * 0.18, r * 0.04, 0, Math.PI * 2);
+  ctx.fill();
+  // Cherry on top
+  ctx.fillStyle = '#E53935';
+  ctx.beginPath();
+  ctx.arc(0, -r * 0.22, r * 0.025, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // Face
+  drawPlushieEyes(ctx, cx, bodyCy, r, 'normal');
+  drawPlushieMouth(ctx, cx, bodyCy, r, 'smile');
+  drawPlushieBlush(ctx, cx, bodyCy, r, 0.3);
+}
+
+// --- T5 Donut: Pink body, donut ring on head with sprinkles ---
+function drawPlushieDonutIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, _tier: number, _color: string, _accent: string): void {
+  const r = size * 0.35;
+  const bodyCy = cy + r * 0.1;
+
+  // Ground shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.06)';
+  ctx.beginPath();
+  ctx.ellipse(cx, bodyCy + r * 1.05, r * 0.7, r * 0.12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Plushie body (soft pink)
+  drawPlushieBody(ctx, cx, bodyCy, r, '#F8B0C8', '#FFC8DA', '#F090A8');
+
+  // Donut on head
+  ctx.save();
+  ctx.translate(cx, bodyCy - r * 0.92);
+  // Donut body (torus seen from above, tilted)
+  ctx.fillStyle = '#D7A96A';
+  ctx.beginPath();
+  ctx.ellipse(0, 0, r * 0.2, r * 0.12, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // Donut hole
+  ctx.fillStyle = '#C49458';
+  ctx.beginPath();
+  ctx.ellipse(0, 0, r * 0.08, r * 0.05, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // Pink frosting on top half
+  ctx.fillStyle = '#F48FB1';
+  ctx.beginPath();
+  ctx.ellipse(0, -r * 0.01, r * 0.19, r * 0.1, 0, Math.PI, Math.PI * 2);
+  ctx.fill();
+  // Sprinkles
+  const sprinkleColors = ['#FF5252', '#FFEB3B', '#69F0AE', '#40C4FF', '#E040FB'];
+  for (let i = 0; i < 6; i++) {
+    const angle = (i / 6) * Math.PI - Math.PI * 0.1;
+    const sx = Math.cos(angle) * r * 0.13;
+    const sy = -r * 0.02 + Math.sin(angle) * r * 0.06;
+    ctx.save();
+    ctx.translate(sx, sy);
+    ctx.rotate(angle);
+    ctx.fillStyle = sprinkleColors[i % sprinkleColors.length];
+    ctx.fillRect(-r * 0.015, -r * 0.005, r * 0.03, r * 0.01);
+    ctx.restore();
+  }
+  ctx.restore();
+
+  // Face
+  drawPlushieEyes(ctx, cx, bodyCy, r, 'wide');
+  drawPlushieMouth(ctx, cx, bodyCy, r, 'open');
+  drawPlushieBlush(ctx, cx, bodyCy, r, 0.3);
+}
+
+// --- T6 Chocolate: Dark brown body, chocolate bar piece on head ---
+function drawPlushieChocolateIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, _tier: number, _color: string, _accent: string): void {
+  const r = size * 0.35;
+  const bodyCy = cy + r * 0.1;
+
+  // Ground shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.06)';
+  ctx.beginPath();
+  ctx.ellipse(cx, bodyCy + r * 1.05, r * 0.7, r * 0.12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Plushie body (dark chocolate brown)
+  drawPlushieBody(ctx, cx, bodyCy, r, '#8D6E63', '#A68B7B', '#6D4C41');
+
+  // Chocolate bar piece on head
+  ctx.save();
+  ctx.translate(cx, bodyCy - r * 0.92);
+  ctx.rotate(-0.15);
+  // Chocolate bar (rounded rect)
+  const chocGrad = ctx.createLinearGradient(-r * 0.14, -r * 0.08, r * 0.14, r * 0.08);
+  chocGrad.addColorStop(0, '#5D4037');
+  chocGrad.addColorStop(0.5, '#6D4C41');
+  chocGrad.addColorStop(1, '#4E342E');
+  ctx.fillStyle = chocGrad;
+  ctx.beginPath();
+  ctx.moveTo(-r * 0.14, -r * 0.08);
+  ctx.lineTo(r * 0.14, -r * 0.08);
+  ctx.lineTo(r * 0.14, r * 0.06);
+  ctx.lineTo(-r * 0.14, r * 0.06);
+  ctx.closePath();
+  ctx.fill();
+  // Grid lines on chocolate
+  ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+  ctx.lineWidth = r * 0.015;
+  ctx.beginPath();
+  ctx.moveTo(0, -r * 0.08);
+  ctx.lineTo(0, r * 0.06);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(-r * 0.14, -r * 0.01);
+  ctx.lineTo(r * 0.14, -r * 0.01);
+  ctx.stroke();
+  // Shine
+  ctx.fillStyle = 'rgba(255,255,255,0.15)';
+  ctx.fillRect(-r * 0.13, -r * 0.07, r * 0.12, r * 0.04);
+  ctx.restore();
+
+  // Face
+  drawPlushieEyes(ctx, cx, bodyCy, r, 'gentle');
+  drawPlushieMouth(ctx, cx, bodyCy, r, 'smile');
+  drawPlushieBlush(ctx, cx, bodyCy, r, 0.3);
+}
+
+// --- T7 Birthday Cake: Pink body, layered cake on head with candle, sprinkles ---
+function drawPlushieBirthdayCakeIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, tier: number, _color: string, _accent: string): void {
+  const r = size * 0.35;
+  const bodyCy = cy + r * 0.1;
+
+  // Ground shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.07)';
+  ctx.beginPath();
+  ctx.ellipse(cx, bodyCy + r * 1.05, r * 0.72, r * 0.12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Plushie body (light pink)
+  drawPlushieBody(ctx, cx, bodyCy, r, '#F8C8D8', '#FFE0EA', '#F0A0B8');
+
+  // Layered cake on head
+  ctx.save();
+  ctx.translate(cx, bodyCy - r * 0.88);
+  // Bottom layer
+  ctx.fillStyle = '#FFE0B2';
+  ctx.fillRect(-r * 0.16, -r * 0.02, r * 0.32, r * 0.1);
+  // Frosting between layers
+  ctx.fillStyle = '#F48FB1';
+  ctx.fillRect(-r * 0.16, -r * 0.05, r * 0.32, r * 0.04);
+  // Top layer
+  ctx.fillStyle = '#FFF8E1';
+  ctx.fillRect(-r * 0.12, -r * 0.14, r * 0.24, r * 0.1);
+  // Top frosting
+  ctx.fillStyle = '#F8BBD0';
+  ctx.beginPath();
+  ctx.ellipse(0, -r * 0.14, r * 0.13, r * 0.03, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // Candle
+  ctx.fillStyle = '#FFEB3B';
+  ctx.fillRect(-r * 0.02, -r * 0.26, r * 0.04, r * 0.12);
+  // Flame
+  ctx.fillStyle = '#FF9800';
+  ctx.beginPath();
+  ctx.ellipse(0, -r * 0.28, r * 0.02, r * 0.03, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#FFEB3B';
+  ctx.beginPath();
+  ctx.ellipse(0, -r * 0.29, r * 0.01, r * 0.018, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // Sprinkles on sides
+  const sprinkleColors = ['#FF5252', '#FFEB3B', '#69F0AE', '#40C4FF', '#E040FB'];
+  for (let i = 0; i < 5; i++) {
+    ctx.fillStyle = sprinkleColors[i];
+    const sx = -r * 0.12 + i * r * 0.06;
+    const sy = -r * 0.08 + (i % 2) * r * 0.04;
+    ctx.beginPath();
+    ctx.arc(sx, sy, r * 0.012, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+
+  addTierSparkles(ctx, cx, cy, r, tier);
+
+  // Face
+  drawPlushieEyes(ctx, cx, bodyCy, r, 'sparkle');
+  drawPlushieMouth(ctx, cx, bodyCy, r, 'open');
+  drawPlushieBlush(ctx, cx, bodyCy, r, 0.35);
+}
+
+// --- T8 Candy Castle: Pastel pink body, tiny castle turret on head, gold + rainbow accents ---
+function drawPlushieCandyCastleIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, tier: number, _color: string, _accent: string): void {
+  const r = size * 0.35;
+  const bodyCy = cy + r * 0.1;
+
+  // Rainbow/gold glow aura
+  const auraGrad = ctx.createRadialGradient(cx, bodyCy, r * 0.5, cx, bodyCy, r * 1.6);
+  auraGrad.addColorStop(0, 'rgba(255,215,0,0.15)');
+  auraGrad.addColorStop(0.3, 'rgba(244,143,177,0.08)');
+  auraGrad.addColorStop(0.6, 'rgba(179,136,255,0.06)');
+  auraGrad.addColorStop(1, 'rgba(255,215,0,0)');
+  ctx.fillStyle = auraGrad;
+  ctx.beginPath();
+  ctx.arc(cx, bodyCy, r * 1.6, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Ground shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.08)';
+  ctx.beginPath();
+  ctx.ellipse(cx, bodyCy + r * 1.05, r * 0.76, r * 0.13, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Plushie body (pastel pink with rainbow shimmer)
+  drawPlushieBody(ctx, cx, bodyCy, r, '#F8C8D8', '#FFE0EA', '#F0A0B8');
+
+  // Rainbow shimmer band (clipped to body)
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(cx, bodyCy, r, 0, Math.PI * 2);
+  ctx.clip();
+  ctx.globalAlpha = 0.12;
+  const rainbowColors = ['#FF5252', '#FFAB40', '#FFEB3B', '#69F0AE', '#40C4FF', '#B388FF'];
+  rainbowColors.forEach((color, i) => {
+    ctx.fillStyle = color;
+    const bandY = bodyCy - r + (i * r * 2) / rainbowColors.length;
+    ctx.fillRect(cx - r, bandY, r * 2, (r * 2) / rainbowColors.length);
+  });
+  ctx.globalAlpha = 1;
+  ctx.restore();
+
+  // Castle turret on head
+  ctx.save();
+  ctx.translate(cx, bodyCy - r * 0.88);
+  // Main tower
+  ctx.fillStyle = '#F8BBD0';
+  ctx.fillRect(-r * 0.1, -r * 0.14, r * 0.2, r * 0.2);
+  // Battlements
+  ctx.fillStyle = '#F48FB1';
+  const bWidth = r * 0.06;
+  for (let i = -1; i <= 1; i++) {
+    ctx.fillRect(i * bWidth * 1.2 - bWidth * 0.5, -r * 0.2, bWidth, r * 0.06);
+  }
+  // Side turrets
+  for (const side of [-1, 1]) {
+    ctx.fillStyle = '#F8BBD0';
+    ctx.fillRect(side * r * 0.1 - r * 0.03, -r * 0.18, r * 0.06, r * 0.16);
+    // Turret cap
+    ctx.fillStyle = '#FFD700';
+    ctx.beginPath();
+    ctx.moveTo(side * r * 0.1 - r * 0.04, -r * 0.18);
+    ctx.lineTo(side * r * 0.1, -r * 0.26);
+    ctx.lineTo(side * r * 0.1 + r * 0.04, -r * 0.18);
+    ctx.closePath();
+    ctx.fill();
+  }
+  // Gold door
+  ctx.fillStyle = '#FFD700';
+  ctx.beginPath();
+  ctx.arc(0, r * 0.04, r * 0.04, Math.PI, Math.PI * 2);
+  ctx.fill();
+  ctx.fillRect(-r * 0.04, r * 0.04, r * 0.08, r * 0.02);
+  // Gold flag on top
+  ctx.strokeStyle = '#FFD700';
+  ctx.lineWidth = r * 0.02;
+  ctx.beginPath();
+  ctx.moveTo(0, -r * 0.2);
+  ctx.lineTo(0, -r * 0.32);
+  ctx.stroke();
+  ctx.fillStyle = '#FFD700';
+  ctx.beginPath();
+  ctx.moveTo(0, -r * 0.32);
+  ctx.lineTo(r * 0.06, -r * 0.28);
+  ctx.lineTo(0, -r * 0.24);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+
+  addTierSparkles(ctx, cx, cy, r, tier);
+
+  // Face
+  drawPlushieEyes(ctx, cx, bodyCy, r, 'sparkle');
+  drawPlushieMouth(ctx, cx, bodyCy, r, 'open');
+  drawPlushieBlush(ctx, cx, bodyCy, r, 0.4);
+}
+
+
+// ============================================================
+// EXPORTS
+// ============================================================
+export {
+  // Tea chain (7)
+  drawPlushieTeaLeafIcon,
+  drawPlushieMatchaIcon,
+  drawPlushieCoffeeIcon,
+  drawPlushieBobaTeaIcon,
+  drawPlushieCakeSliceIcon,
+  drawPlushieTeaSetIcon,
+  drawPlushieTeaHouseIcon,
+  // Shell chain (6)
+  drawPlushieCoralIcon,
+  drawPlushieShellIcon,
+  drawPlushieCrabIcon,
+  drawPlushieTropicalFishIcon,
+  drawPlushieDolphinIcon,
+  drawPlushieMermaidIcon,
+  // Sweet chain (8)
+  drawPlushieCandyIcon,
+  drawPlushieLollipopIcon,
+  drawPlushieCookieIcon,
+  drawPlushieCupcakeIcon,
+  drawPlushieDonutIcon,
+  drawPlushieChocolateIcon,
+  drawPlushieBirthdayCakeIcon,
+  drawPlushieCandyCastleIcon,
+};
+
+//
+// CONFIG ENTRIES (add to the appropriate chain arrays):
+//
+// --- Love chain (6 tiers) ---
+// { draw: drawPlushieLoveNoteIcon, color: '#F48FB1', accent: '#FCE4EC' },     // t1 Love Note plushie
+// { draw: drawPlushieGrowingHeartIcon, color: '#EC407A', accent: '#F8BBD0' }, // t2 Growing Heart plushie
+// { draw: drawPlushieSparklingHeartIcon, color: '#E91E63', accent: '#F48FB1' }, // t3 Sparkling Heart plushie
+// { draw: drawPlushieGiftHeartIcon, color: '#D81B60', accent: '#F06292' },    // t4 Gift Heart plushie
+// { draw: drawPlushieTwinHeartsIcon, color: '#C2185B', accent: '#EC407A' },   // t5 Twin Hearts plushie
+// { draw: drawPlushieEternalLoveIcon, color: '#AD1457', accent: '#FFD700' },  // t6 Eternal Love plushie
+//
+// --- Cosmic chain (7 tiers) ---
+// { draw: drawPlushieSpaceRockIcon, color: '#78909C', accent: '#B0BEC5' },    // t1 Space Rock plushie
+// { draw: drawPlushieCometIcon, color: '#7C4DFF', accent: '#B388FF' },        // t2 Comet plushie
+// { draw: drawPlushieUFOIcon, color: '#90A4AE', accent: '#E0E0E0' },         // t3 UFO plushie
+// { draw: drawPlushieEarthIcon, color: '#42A5F5', accent: '#81D4FA' },        // t4 Earth plushie
+// { draw: drawPlushieSaturnIcon, color: '#7C4DFF', accent: '#D1C4E9' },       // t5 Saturn plushie
+// { draw: drawPlushieNebulaIcon, color: '#7B1FA2', accent: '#CE93D8' },       // t6 Nebula plushie
+// { draw: drawPlushieRocketIcon, color: '#B0BEC5', accent: '#FFD700' },       // t7 Rocket plushie
+//
+// --- Cafe chain (7 tiers) ---
+// { draw: drawPlushieCoffeeBeanIcon, color: '#795548', accent: '#A1887F' },   // t1 Coffee Bean plushie
+// { draw: drawPlushieEspressoIcon, color: '#6D4C41', accent: '#BCAAA4' },     // t2 Espresso plushie
+// { draw: drawPlushieCroissantIcon, color: '#F9A825', accent: '#FFF9C4' },    // t3 Croissant plushie
+// { draw: drawPlushieWaffleIcon, color: '#FFB300', accent: '#FFE082' },       // t4 Waffle plushie
+// { draw: drawPlushiePancakeStackIcon, color: '#D7CCC8', accent: '#EFEBE9' }, // t5 Pancake Stack plushie
+// { draw: drawPlushieLayerCakeIcon, color: '#F48FB1', accent: '#FCE4EC' },    // t6 Layer Cake plushie
+// { draw: drawPlushieBakeryIcon, color: '#8D6E63', accent: '#FFD700' },       // t7 Bakery plushie
+// =============================================================================
+
+// =============================================================================
+//  LOVE CHAIN (6 tiers)
+// =============================================================================
+
+// --- T1 Love Note: Soft pink body, small envelope on head ---
+function drawPlushieLoveNoteIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, _tier: number, _color: string, _accent: string): void {
+  const r = size * 0.35;
+  const bodyCy = cy + r * 0.1;
+
+  // Ground shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.06)';
+  ctx.beginPath();
+  ctx.ellipse(cx, bodyCy + r * 1.05, r * 0.7, r * 0.12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  drawPlushieBody(ctx, cx, bodyCy, r, '#F48FB1', '#FACDD6', '#E06B90');
+
+  // Small envelope on head
+  ctx.save();
+  const envCx = cx;
+  const envCy = bodyCy - r * 0.95;
+  const ew = r * 0.4;
+  const eh = r * 0.26;
+  // Envelope body
+  ctx.fillStyle = '#FFF9C4';
+  ctx.fillRect(envCx - ew / 2, envCy - eh / 2, ew, eh);
+  // Envelope flap (triangle)
+  ctx.fillStyle = '#FFF176';
+  ctx.beginPath();
+  ctx.moveTo(envCx - ew / 2, envCy - eh / 2);
+  ctx.lineTo(envCx, envCy + eh * 0.05);
+  ctx.lineTo(envCx + ew / 2, envCy - eh / 2);
+  ctx.closePath();
+  ctx.fill();
+  // Tiny heart seal
+  ctx.fillStyle = '#EC407A';
+  ctx.beginPath();
+  const hx = envCx;
+  const hy = envCy - eh * 0.05;
+  const hs = r * 0.06;
+  ctx.moveTo(hx, hy + hs * 0.6);
+  ctx.bezierCurveTo(hx - hs, hy - hs * 0.4, hx - hs * 0.5, hy - hs, hx, hy - hs * 0.3);
+  ctx.bezierCurveTo(hx + hs * 0.5, hy - hs, hx + hs, hy - hs * 0.4, hx, hy + hs * 0.6);
+  ctx.fill();
+  ctx.restore();
+
+  drawPlushieEyes(ctx, cx, bodyCy, r, 'normal');
+  drawPlushieMouth(ctx, cx, bodyCy, r, 'dot');
+  drawPlushieBlush(ctx, cx, bodyCy, r, 0.25);
+}
+
+// --- T2 Growing Heart: Pink body, small heart on head ---
+function drawPlushieGrowingHeartIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, _tier: number, _color: string, _accent: string): void {
+  const r = size * 0.35;
+  const bodyCy = cy + r * 0.1;
+
+  ctx.fillStyle = 'rgba(0,0,0,0.06)';
+  ctx.beginPath();
+  ctx.ellipse(cx, bodyCy + r * 1.05, r * 0.7, r * 0.12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  drawPlushieBody(ctx, cx, bodyCy, r, '#EC407A', '#F48FB1', '#C2185B');
+
+  // Heart on head
+  ctx.save();
+  const hx = cx;
+  const hy = bodyCy - r * 0.95;
+  const hs = r * 0.22;
+  ctx.fillStyle = '#F8BBD0';
+  ctx.beginPath();
+  ctx.moveTo(hx, hy + hs * 0.8);
+  ctx.bezierCurveTo(hx - hs * 1.3, hy - hs * 0.3, hx - hs * 0.7, hy - hs * 1.2, hx, hy - hs * 0.35);
+  ctx.bezierCurveTo(hx + hs * 0.7, hy - hs * 1.2, hx + hs * 1.3, hy - hs * 0.3, hx, hy + hs * 0.8);
+  ctx.fill();
+  ctx.restore();
+
+  drawPlushieEyes(ctx, cx, bodyCy, r, 'normal');
+  drawPlushieMouth(ctx, cx, bodyCy, r, 'smile');
+  drawPlushieBlush(ctx, cx, bodyCy, r, 0.28);
+}
+
+// --- T3 Sparkling Heart: Deeper pink body, heart with sparkle on head ---
+function drawPlushieSparklingHeartIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, tier: number, _color: string, _accent: string): void {
+  const r = size * 0.35;
+  const bodyCy = cy + r * 0.1;
+
+  ctx.fillStyle = 'rgba(0,0,0,0.06)';
+  ctx.beginPath();
+  ctx.ellipse(cx, bodyCy + r * 1.05, r * 0.7, r * 0.12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  drawPlushieBody(ctx, cx, bodyCy, r, '#E91E63', '#F48FB1', '#C2185B');
+
+  // Heart with sparkle on head
+  ctx.save();
+  const hx = cx;
+  const hy = bodyCy - r * 0.95;
+  const hs = r * 0.24;
+  const heartGrad = ctx.createRadialGradient(hx, hy, 0, hx, hy, hs);
+  heartGrad.addColorStop(0, '#FF80AB');
+  heartGrad.addColorStop(1, '#E91E63');
+  ctx.fillStyle = heartGrad;
+  ctx.beginPath();
+  ctx.moveTo(hx, hy + hs * 0.8);
+  ctx.bezierCurveTo(hx - hs * 1.3, hy - hs * 0.3, hx - hs * 0.7, hy - hs * 1.2, hx, hy - hs * 0.35);
+  ctx.bezierCurveTo(hx + hs * 0.7, hy - hs * 1.2, hx + hs * 1.3, hy - hs * 0.3, hx, hy + hs * 0.8);
+  ctx.fill();
+  // Sparkle on heart
+  ctx.fillStyle = 'rgba(255,255,255,0.9)';
+  const spx = hx + hs * 0.3;
+  const spy = hy - hs * 0.35;
+  const ss = r * 0.07;
+  ctx.beginPath();
+  ctx.moveTo(spx, spy - ss);
+  ctx.lineTo(spx + ss * 0.3, spy);
+  ctx.lineTo(spx, spy + ss);
+  ctx.lineTo(spx - ss * 0.3, spy);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+
+  addTierSparkles(ctx, cx, cy, r, tier);
+
+  drawPlushieEyes(ctx, cx, bodyCy, r, 'wide');
+  drawPlushieMouth(ctx, cx, bodyCy, r, 'smile');
+  drawPlushieBlush(ctx, cx, bodyCy, r, 0.3);
+}
+
+// --- T4 Gift Heart: Rose body, heart with ribbon bow on head ---
+function drawPlushieGiftHeartIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, tier: number, _color: string, _accent: string): void {
+  const r = size * 0.35;
+  const bodyCy = cy + r * 0.1;
+
+  ctx.fillStyle = 'rgba(0,0,0,0.07)';
+  ctx.beginPath();
+  ctx.ellipse(cx, bodyCy + r * 1.05, r * 0.7, r * 0.12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  drawPlushieBody(ctx, cx, bodyCy, r, '#D81B60', '#F06292', '#AD1457');
+
+  // Heart with ribbon bow on head
+  ctx.save();
+  const hx = cx;
+  const hy = bodyCy - r * 0.95;
+  const hs = r * 0.24;
+  ctx.fillStyle = '#F06292';
+  ctx.beginPath();
+  ctx.moveTo(hx, hy + hs * 0.8);
+  ctx.bezierCurveTo(hx - hs * 1.3, hy - hs * 0.3, hx - hs * 0.7, hy - hs * 1.2, hx, hy - hs * 0.35);
+  ctx.bezierCurveTo(hx + hs * 0.7, hy - hs * 1.2, hx + hs * 1.3, hy - hs * 0.3, hx, hy + hs * 0.8);
+  ctx.fill();
+  // Ribbon bow on top of heart
+  const bx = hx;
+  const by = hy - hs * 0.55;
+  ctx.fillStyle = '#FFD700';
+  // Left loop
+  ctx.beginPath();
+  ctx.ellipse(bx - r * 0.08, by, r * 0.08, r * 0.05, -0.3, 0, Math.PI * 2);
+  ctx.fill();
+  // Right loop
+  ctx.beginPath();
+  ctx.ellipse(bx + r * 0.08, by, r * 0.08, r * 0.05, 0.3, 0, Math.PI * 2);
+  ctx.fill();
+  // Knot center
+  ctx.beginPath();
+  ctx.arc(bx, by, r * 0.03, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  addTierSparkles(ctx, cx, cy, r, tier);
+
+  drawPlushieEyes(ctx, cx, bodyCy, r, 'normal');
+  drawPlushieMouth(ctx, cx, bodyCy, r, 'cat');
+  drawPlushieBlush(ctx, cx, bodyCy, r, 0.3);
+}
+
+// --- T5 Twin Hearts: Deep pink body, two small hearts on head ---
+function drawPlushieTwinHeartsIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, tier: number, _color: string, _accent: string): void {
+  const r = size * 0.35;
+  const bodyCy = cy + r * 0.1;
+
+  ctx.fillStyle = 'rgba(0,0,0,0.07)';
+  ctx.beginPath();
+  ctx.ellipse(cx, bodyCy + r * 1.05, r * 0.72, r * 0.12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  drawPlushieBody(ctx, cx, bodyCy, r, '#C2185B', '#EC407A', '#880E4F');
+
+  // Two hearts on head
+  ctx.save();
+  const hs = r * 0.18;
+  const drawHeart = (hx: number, hy: number, color: string) => {
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(hx, hy + hs * 0.8);
+    ctx.bezierCurveTo(hx - hs * 1.3, hy - hs * 0.3, hx - hs * 0.7, hy - hs * 1.2, hx, hy - hs * 0.35);
+    ctx.bezierCurveTo(hx + hs * 0.7, hy - hs * 1.2, hx + hs * 1.3, hy - hs * 0.3, hx, hy + hs * 0.8);
+    ctx.fill();
+  };
+  drawHeart(cx - r * 0.2, bodyCy - r * 0.92, '#F48FB1');
+  drawHeart(cx + r * 0.2, bodyCy - r * 1.0, '#FF80AB');
+  ctx.restore();
+
+  addTierSparkles(ctx, cx, cy, r, tier);
+
+  drawPlushieEyes(ctx, cx, bodyCy, r, 'sparkle');
+  drawPlushieMouth(ctx, cx, bodyCy, r, 'open');
+  drawPlushieBlush(ctx, cx, bodyCy, r, 0.35);
+}
+
+// --- T6 Eternal Love: Rich magenta body, glowing heart with wings, gold accents ---
+function drawPlushieEternalLoveIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, tier: number, _color: string, _accent: string): void {
+  const r = size * 0.35;
+  const bodyCy = cy + r * 0.1;
+
+  // Golden glow aura
+  const auraGrad = ctx.createRadialGradient(cx, bodyCy, r * 0.5, cx, bodyCy, r * 1.5);
+  auraGrad.addColorStop(0, 'rgba(255,215,0,0.15)');
+  auraGrad.addColorStop(0.6, 'rgba(255,215,0,0.06)');
+  auraGrad.addColorStop(1, 'rgba(255,215,0,0)');
+  ctx.fillStyle = auraGrad;
+  ctx.beginPath();
+  ctx.arc(cx, bodyCy, r * 1.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = 'rgba(0,0,0,0.08)';
+  ctx.beginPath();
+  ctx.ellipse(cx, bodyCy + r * 1.05, r * 0.74, r * 0.13, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  drawPlushieBody(ctx, cx, bodyCy, r, '#AD1457', '#D81B60', '#880E4F');
+
+  // Winged heart on head
+  ctx.save();
+  const hx = cx;
+  const hy = bodyCy - r * 0.95;
+  const hs = r * 0.22;
+  // Wings behind heart
+  for (const side of [-1, 1]) {
+    ctx.fillStyle = 'rgba(255,215,0,0.5)';
+    ctx.beginPath();
+    ctx.ellipse(hx + side * hs * 1.1, hy - hs * 0.1, hs * 0.55, hs * 0.3, side * 0.25, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,0.4)';
+    ctx.beginPath();
+    ctx.ellipse(hx + side * hs * 0.9, hy - hs * 0.15, hs * 0.35, hs * 0.2, side * 0.2, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  // Glowing heart
+  const heartGlow = ctx.createRadialGradient(hx, hy, 0, hx, hy, hs * 1.2);
+  heartGlow.addColorStop(0, '#FF80AB');
+  heartGlow.addColorStop(0.7, '#E91E63');
+  heartGlow.addColorStop(1, 'rgba(233,30,99,0)');
+  ctx.fillStyle = heartGlow;
+  ctx.beginPath();
+  ctx.arc(hx, hy, hs * 1.1, 0, Math.PI * 2);
+  ctx.fill();
+  // Solid heart
+  ctx.fillStyle = '#FF80AB';
+  ctx.beginPath();
+  ctx.moveTo(hx, hy + hs * 0.8);
+  ctx.bezierCurveTo(hx - hs * 1.3, hy - hs * 0.3, hx - hs * 0.7, hy - hs * 1.2, hx, hy - hs * 0.35);
+  ctx.bezierCurveTo(hx + hs * 0.7, hy - hs * 1.2, hx + hs * 1.3, hy - hs * 0.3, hx, hy + hs * 0.8);
+  ctx.fill();
+  ctx.restore();
+
+  addTierSparkles(ctx, cx, cy, r, tier);
+
+  drawPlushieEyes(ctx, cx, bodyCy, r, 'sparkle');
+  drawPlushieMouth(ctx, cx, bodyCy, r, 'open');
+  drawPlushieBlush(ctx, cx, bodyCy, r, 0.4);
+}
+
+
+// =============================================================================
+//  COSMIC CHAIN (7 tiers)
+// =============================================================================
+
+// --- T1 Space Rock: Grey body, small asteroid chunk on head ---
+function drawPlushieSpaceRockIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, _tier: number, _color: string, _accent: string): void {
+  const r = size * 0.35;
+  const bodyCy = cy + r * 0.1;
+
+  ctx.fillStyle = 'rgba(0,0,0,0.06)';
+  ctx.beginPath();
+  ctx.ellipse(cx, bodyCy + r * 1.05, r * 0.7, r * 0.12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  drawPlushieBody(ctx, cx, bodyCy, r, '#78909C', '#B0BEC5', '#546E7A');
+
+  // Small lumpy rock on head
+  ctx.save();
+  const rx = cx;
+  const ry = bodyCy - r * 0.92;
+  ctx.fillStyle = '#90A4AE';
+  ctx.beginPath();
+  ctx.moveTo(rx - r * 0.15, ry + r * 0.05);
+  ctx.lineTo(rx - r * 0.12, ry - r * 0.12);
+  ctx.lineTo(rx - r * 0.02, ry - r * 0.18);
+  ctx.lineTo(rx + r * 0.1, ry - r * 0.13);
+  ctx.lineTo(rx + r * 0.15, ry + r * 0.02);
+  ctx.lineTo(rx + r * 0.05, ry + r * 0.08);
+  ctx.closePath();
+  ctx.fill();
+  // Crater dots
+  ctx.fillStyle = '#607D8B';
+  ctx.beginPath();
+  ctx.arc(rx - r * 0.03, ry - r * 0.05, r * 0.025, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(rx + r * 0.06, ry - r * 0.02, r * 0.02, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  drawPlushieEyes(ctx, cx, bodyCy, r, 'normal');
+  drawPlushieMouth(ctx, cx, bodyCy, r, 'dot');
+  drawPlushieBlush(ctx, cx, bodyCy, r, 0.25);
+}
+
+// --- T2 Comet: Purple body, comet with trail on head ---
+function drawPlushieCometIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, _tier: number, _color: string, _accent: string): void {
+  const r = size * 0.35;
+  const bodyCy = cy + r * 0.1;
+
+  ctx.fillStyle = 'rgba(0,0,0,0.06)';
+  ctx.beginPath();
+  ctx.ellipse(cx, bodyCy + r * 1.05, r * 0.7, r * 0.12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  drawPlushieBody(ctx, cx, bodyCy, r, '#7C4DFF', '#B388FF', '#5E35B1');
+
+  // Comet with trail on head
+  ctx.save();
+  const cmx = cx + r * 0.05;
+  const cmy = bodyCy - r * 0.95;
+  // Trail (tapers to the right)
+  const trailGrad = ctx.createLinearGradient(cmx - r * 0.3, cmy, cmx + r * 0.05, cmy);
+  trailGrad.addColorStop(0, 'rgba(179,136,255,0)');
+  trailGrad.addColorStop(0.5, 'rgba(179,136,255,0.4)');
+  trailGrad.addColorStop(1, '#B388FF');
+  ctx.fillStyle = trailGrad;
+  ctx.beginPath();
+  ctx.moveTo(cmx - r * 0.35, cmy - r * 0.02);
+  ctx.lineTo(cmx, cmy - r * 0.06);
+  ctx.lineTo(cmx, cmy + r * 0.06);
+  ctx.lineTo(cmx - r * 0.35, cmy + r * 0.02);
+  ctx.closePath();
+  ctx.fill();
+  // Comet body (small bright circle)
+  const cometGrad = ctx.createRadialGradient(cmx, cmy, 0, cmx, cmy, r * 0.1);
+  cometGrad.addColorStop(0, '#FFFFFF');
+  cometGrad.addColorStop(0.5, '#E1BEE7');
+  cometGrad.addColorStop(1, '#B388FF');
+  ctx.fillStyle = cometGrad;
+  ctx.beginPath();
+  ctx.arc(cmx, cmy, r * 0.1, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  drawPlushieEyes(ctx, cx, bodyCy, r, 'normal');
+  drawPlushieMouth(ctx, cx, bodyCy, r, 'smile');
+  drawPlushieBlush(ctx, cx, bodyCy, r, 0.25);
+}
+
+// --- T3 UFO: Silver-blue body, small UFO disc on head with light beam ---
+function drawPlushieUFOIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, tier: number, _color: string, _accent: string): void {
+  const r = size * 0.35;
+  const bodyCy = cy + r * 0.1;
+
+  ctx.fillStyle = 'rgba(0,0,0,0.06)';
+  ctx.beginPath();
+  ctx.ellipse(cx, bodyCy + r * 1.05, r * 0.7, r * 0.12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  drawPlushieBody(ctx, cx, bodyCy, r, '#90A4AE', '#CFD8DC', '#607D8B');
+
+  // UFO disc on head
+  ctx.save();
+  const ux = cx;
+  const uy = bodyCy - r * 0.95;
+  // Light beam (triangle below disc)
+  ctx.fillStyle = 'rgba(129,212,250,0.25)';
+  ctx.beginPath();
+  ctx.moveTo(ux - r * 0.06, uy + r * 0.06);
+  ctx.lineTo(ux + r * 0.06, uy + r * 0.06);
+  ctx.lineTo(ux + r * 0.15, uy + r * 0.25);
+  ctx.lineTo(ux - r * 0.15, uy + r * 0.25);
+  ctx.closePath();
+  ctx.fill();
+  // Saucer disc (ellipse)
+  const saucerGrad = ctx.createLinearGradient(ux, uy - r * 0.06, ux, uy + r * 0.06);
+  saucerGrad.addColorStop(0, '#E0E0E0');
+  saucerGrad.addColorStop(0.5, '#BDBDBD');
+  saucerGrad.addColorStop(1, '#9E9E9E');
+  ctx.fillStyle = saucerGrad;
+  ctx.beginPath();
+  ctx.ellipse(ux, uy, r * 0.22, r * 0.07, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // Dome
+  ctx.fillStyle = '#81D4FA';
+  ctx.beginPath();
+  ctx.arc(ux, uy - r * 0.04, r * 0.1, Math.PI, 0);
+  ctx.closePath();
+  ctx.fill();
+  // Dome highlight
+  ctx.fillStyle = 'rgba(255,255,255,0.5)';
+  ctx.beginPath();
+  ctx.arc(ux - r * 0.02, uy - r * 0.07, r * 0.03, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  addTierSparkles(ctx, cx, cy, r, tier);
+
+  drawPlushieEyes(ctx, cx, bodyCy, r, 'wide');
+  drawPlushieMouth(ctx, cx, bodyCy, r, 'open');
+  drawPlushieBlush(ctx, cx, bodyCy, r, 0.28);
+}
+
+// --- T4 Earth: Blue-green body, tiny globe on head ---
+function drawPlushieEarthIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, tier: number, _color: string, _accent: string): void {
+  const r = size * 0.35;
+  const bodyCy = cy + r * 0.1;
+
+  ctx.fillStyle = 'rgba(0,0,0,0.07)';
+  ctx.beginPath();
+  ctx.ellipse(cx, bodyCy + r * 1.05, r * 0.7, r * 0.12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  drawPlushieBody(ctx, cx, bodyCy, r, '#42A5F5', '#81D4FA', '#1E88E5');
+
+  // Tiny globe on head
+  ctx.save();
+  const gx = cx;
+  const gy = bodyCy - r * 0.95;
+  const gr = r * 0.18;
+  // Ocean blue base
+  ctx.fillStyle = '#42A5F5';
+  ctx.beginPath();
+  ctx.arc(gx, gy, gr, 0, Math.PI * 2);
+  ctx.fill();
+  // Continents (simple green blobs)
+  ctx.fillStyle = '#66BB6A';
+  // Left continent
+  ctx.beginPath();
+  ctx.ellipse(gx - gr * 0.3, gy - gr * 0.1, gr * 0.3, gr * 0.4, 0.2, 0, Math.PI * 2);
+  ctx.fill();
+  // Right continent
+  ctx.beginPath();
+  ctx.ellipse(gx + gr * 0.35, gy + gr * 0.15, gr * 0.25, gr * 0.3, -0.3, 0, Math.PI * 2);
+  ctx.fill();
+  // Globe highlight
+  ctx.fillStyle = 'rgba(255,255,255,0.35)';
+  ctx.beginPath();
+  ctx.arc(gx - gr * 0.25, gy - gr * 0.25, gr * 0.3, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  addTierSparkles(ctx, cx, cy, r, tier);
+
+  drawPlushieEyes(ctx, cx, bodyCy, r, 'normal');
+  drawPlushieMouth(ctx, cx, bodyCy, r, 'smile');
+  drawPlushieBlush(ctx, cx, bodyCy, r, 0.3);
+}
+
+// --- T5 Saturn: Purple body, ring around the body/head ---
+function drawPlushieSaturnIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, tier: number, _color: string, _accent: string): void {
+  const r = size * 0.35;
+  const bodyCy = cy + r * 0.1;
+
+  ctx.fillStyle = 'rgba(0,0,0,0.07)';
+  ctx.beginPath();
+  ctx.ellipse(cx, bodyCy + r * 1.05, r * 0.72, r * 0.12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Ring behind body (back half)
+  ctx.save();
+  ctx.strokeStyle = '#D1C4E9';
+  ctx.lineWidth = r * 0.08;
+  ctx.beginPath();
+  ctx.ellipse(cx, bodyCy - r * 0.05, r * 1.2, r * 0.25, -0.2, Math.PI, Math.PI * 2);
+  ctx.stroke();
+  ctx.restore();
+
+  drawPlushieBody(ctx, cx, bodyCy, r, '#7C4DFF', '#B388FF', '#5E35B1');
+
+  // Ring in front of body (front half)
+  ctx.save();
+  ctx.strokeStyle = '#D1C4E9';
+  ctx.lineWidth = r * 0.08;
+  ctx.beginPath();
+  ctx.ellipse(cx, bodyCy - r * 0.05, r * 1.2, r * 0.25, -0.2, 0, Math.PI);
+  ctx.stroke();
+  ctx.restore();
+
+  addTierSparkles(ctx, cx, cy, r, tier);
+
+  drawPlushieEyes(ctx, cx, bodyCy, r, 'gentle');
+  drawPlushieMouth(ctx, cx, bodyCy, r, 'cat');
+  drawPlushieBlush(ctx, cx, bodyCy, r, 0.3);
+}
+
+// --- T6 Nebula: Deep purple body with pink tints, swirly nebula cloud on head ---
+function drawPlushieNebulaIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, tier: number, _color: string, _accent: string): void {
+  const r = size * 0.35;
+  const bodyCy = cy + r * 0.1;
+
+  ctx.fillStyle = 'rgba(0,0,0,0.07)';
+  ctx.beginPath();
+  ctx.ellipse(cx, bodyCy + r * 1.05, r * 0.73, r * 0.12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  drawPlushieBody(ctx, cx, bodyCy, r, '#7B1FA2', '#CE93D8', '#4A148C');
+
+  // Pink tint overlay on body
+  ctx.save();
+  ctx.globalAlpha = 0.15;
+  const pinkTint = ctx.createRadialGradient(cx + r * 0.3, bodyCy - r * 0.2, 0, cx, bodyCy, r);
+  pinkTint.addColorStop(0, '#F48FB1');
+  pinkTint.addColorStop(1, 'rgba(244,143,177,0)');
+  ctx.fillStyle = pinkTint;
+  ctx.beginPath();
+  ctx.arc(cx, bodyCy, r, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // Swirly nebula cloud on head
+  ctx.save();
+  const nx = cx;
+  const ny = bodyCy - r * 0.9;
+  // Multiple overlapping soft circles
+  const clouds = [
+    { ox: -r * 0.1, oy: -r * 0.05, s: r * 0.14, c: '#CE93D8' },
+    { ox: r * 0.08, oy: -r * 0.1, s: r * 0.12, c: '#F48FB1' },
+    { ox: 0, oy: -r * 0.15, s: r * 0.16, c: '#BA68C8' },
+    { ox: -r * 0.06, oy: -r * 0.12, s: r * 0.1, c: '#E1BEE7' },
+    { ox: r * 0.12, oy: -r * 0.02, s: r * 0.1, c: '#AB47BC' },
+  ];
+  clouds.forEach(c => {
+    const cg = ctx.createRadialGradient(nx + c.ox, ny + c.oy, 0, nx + c.ox, ny + c.oy, c.s);
+    cg.addColorStop(0, c.c);
+    cg.addColorStop(1, 'rgba(123,31,162,0)');
+    ctx.fillStyle = cg;
+    ctx.beginPath();
+    ctx.arc(nx + c.ox, ny + c.oy, c.s, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  // Tiny stars in nebula
+  ctx.fillStyle = 'rgba(255,255,255,0.8)';
+  ctx.beginPath();
+  ctx.arc(nx - r * 0.05, ny - r * 0.13, r * 0.02, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(nx + r * 0.1, ny - r * 0.08, r * 0.015, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  addTierSparkles(ctx, cx, cy, r, tier);
+
+  drawPlushieEyes(ctx, cx, bodyCy, r, 'sparkle');
+  drawPlushieMouth(ctx, cx, bodyCy, r, 'open');
+  drawPlushieBlush(ctx, cx, bodyCy, r, 0.35);
+}
+
+// --- T7 Rocket: Silver body, small rocket with flame on head, gold flame accents ---
+function drawPlushieRocketIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, tier: number, _color: string, _accent: string): void {
+  const r = size * 0.35;
+  const bodyCy = cy + r * 0.1;
+
+  // Golden glow aura
+  const auraGrad = ctx.createRadialGradient(cx, bodyCy, r * 0.5, cx, bodyCy, r * 1.5);
+  auraGrad.addColorStop(0, 'rgba(255,215,0,0.12)');
+  auraGrad.addColorStop(0.6, 'rgba(255,215,0,0.05)');
+  auraGrad.addColorStop(1, 'rgba(255,215,0,0)');
+  ctx.fillStyle = auraGrad;
+  ctx.beginPath();
+  ctx.arc(cx, bodyCy, r * 1.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = 'rgba(0,0,0,0.08)';
+  ctx.beginPath();
+  ctx.ellipse(cx, bodyCy + r * 1.05, r * 0.75, r * 0.13, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  drawPlushieBody(ctx, cx, bodyCy, r, '#B0BEC5', '#ECEFF1', '#78909C');
+
+  // Rocket on head
+  ctx.save();
+  const rkx = cx;
+  const rky = bodyCy - r * 0.85;
+  // Flame at bottom of rocket
+  const flameGrad = ctx.createLinearGradient(rkx, rky + r * 0.2, rkx, rky + r * 0.42);
+  flameGrad.addColorStop(0, '#FFD700');
+  flameGrad.addColorStop(0.5, '#FF9800');
+  flameGrad.addColorStop(1, 'rgba(255,87,34,0)');
+  ctx.fillStyle = flameGrad;
+  ctx.beginPath();
+  ctx.moveTo(rkx - r * 0.07, rky + r * 0.18);
+  ctx.quadraticCurveTo(rkx, rky + r * 0.42, rkx + r * 0.07, rky + r * 0.18);
+  ctx.closePath();
+  ctx.fill();
+  // Rocket body (capsule shape)
+  const rocketGrad = ctx.createLinearGradient(rkx - r * 0.1, rky, rkx + r * 0.1, rky);
+  rocketGrad.addColorStop(0, '#CFD8DC');
+  rocketGrad.addColorStop(0.5, '#ECEFF1');
+  rocketGrad.addColorStop(1, '#90A4AE');
+  ctx.fillStyle = rocketGrad;
+  ctx.beginPath();
+  ctx.moveTo(rkx, rky - r * 0.35);
+  ctx.quadraticCurveTo(rkx + r * 0.12, rky - r * 0.2, rkx + r * 0.1, rky + r * 0.15);
+  ctx.lineTo(rkx - r * 0.1, rky + r * 0.15);
+  ctx.quadraticCurveTo(rkx - r * 0.12, rky - r * 0.2, rkx, rky - r * 0.35);
+  ctx.fill();
+  // Nose cone tip
+  ctx.fillStyle = '#EF5350';
+  ctx.beginPath();
+  ctx.moveTo(rkx, rky - r * 0.35);
+  ctx.lineTo(rkx + r * 0.06, rky - r * 0.22);
+  ctx.lineTo(rkx - r * 0.06, rky - r * 0.22);
+  ctx.closePath();
+  ctx.fill();
+  // Window
+  ctx.fillStyle = '#81D4FA';
+  ctx.beginPath();
+  ctx.arc(rkx, rky - r * 0.06, r * 0.04, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,0.5)';
+  ctx.beginPath();
+  ctx.arc(rkx - r * 0.01, rky - r * 0.07, r * 0.015, 0, Math.PI * 2);
+  ctx.fill();
+  // Fins
+  for (const side of [-1, 1]) {
+    ctx.fillStyle = '#EF5350';
+    ctx.beginPath();
+    ctx.moveTo(rkx + side * r * 0.1, rky + r * 0.1);
+    ctx.lineTo(rkx + side * r * 0.18, rky + r * 0.2);
+    ctx.lineTo(rkx + side * r * 0.08, rky + r * 0.18);
+    ctx.closePath();
+    ctx.fill();
+  }
+  ctx.restore();
+
+  addTierSparkles(ctx, cx, cy, r, tier);
+
+  drawPlushieEyes(ctx, cx, bodyCy, r, 'sparkle');
+  drawPlushieMouth(ctx, cx, bodyCy, r, 'open');
+  drawPlushieBlush(ctx, cx, bodyCy, r, 0.35);
+}
+
+
+// =============================================================================
+//  CAFE CHAIN (7 tiers)
+// =============================================================================
+
+// --- T1 Coffee Bean: Dark brown body, small coffee bean shape on head ---
+function drawPlushieCoffeeBeanIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, _tier: number, _color: string, _accent: string): void {
+  const r = size * 0.35;
+  const bodyCy = cy + r * 0.1;
+
+  ctx.fillStyle = 'rgba(0,0,0,0.06)';
+  ctx.beginPath();
+  ctx.ellipse(cx, bodyCy + r * 1.05, r * 0.7, r * 0.12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  drawPlushieBody(ctx, cx, bodyCy, r, '#795548', '#A1887F', '#5D4037');
+
+  // Coffee bean on head
+  ctx.save();
+  const bx = cx;
+  const by = bodyCy - r * 0.95;
+  const beanGrad = ctx.createRadialGradient(bx, by, 0, bx, by, r * 0.15);
+  beanGrad.addColorStop(0, '#8D6E63');
+  beanGrad.addColorStop(1, '#4E342E');
+  ctx.fillStyle = beanGrad;
+  ctx.beginPath();
+  ctx.ellipse(bx, by, r * 0.12, r * 0.16, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // Center crease line
+  ctx.strokeStyle = '#3E2723';
+  ctx.lineWidth = r * 0.025;
+  ctx.beginPath();
+  ctx.moveTo(bx, by - r * 0.12);
+  ctx.quadraticCurveTo(bx + r * 0.03, by, bx, by + r * 0.12);
+  ctx.stroke();
+  ctx.restore();
+
+  drawPlushieEyes(ctx, cx, bodyCy, r, 'normal');
+  drawPlushieMouth(ctx, cx, bodyCy, r, 'dot');
+  drawPlushieBlush(ctx, cx, bodyCy, r, 0.25);
+}
+
+// --- T2 Espresso: Brown body, tiny espresso cup on head with steam ---
+function drawPlushieEspressoIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, _tier: number, _color: string, _accent: string): void {
+  const r = size * 0.35;
+  const bodyCy = cy + r * 0.1;
+
+  ctx.fillStyle = 'rgba(0,0,0,0.06)';
+  ctx.beginPath();
+  ctx.ellipse(cx, bodyCy + r * 1.05, r * 0.7, r * 0.12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  drawPlushieBody(ctx, cx, bodyCy, r, '#6D4C41', '#A1887F', '#4E342E');
+
+  // Espresso cup on head
+  ctx.save();
+  const cupX = cx;
+  const cupY = bodyCy - r * 0.88;
+  // Cup body (trapezoid)
+  ctx.fillStyle = '#EFEBE9';
+  ctx.beginPath();
+  ctx.moveTo(cupX - r * 0.12, cupY - r * 0.08);
+  ctx.lineTo(cupX + r * 0.12, cupY - r * 0.08);
+  ctx.lineTo(cupX + r * 0.1, cupY + r * 0.08);
+  ctx.lineTo(cupX - r * 0.1, cupY + r * 0.08);
+  ctx.closePath();
+  ctx.fill();
+  // Coffee inside
+  ctx.fillStyle = '#5D4037';
+  ctx.beginPath();
+  ctx.ellipse(cupX, cupY - r * 0.06, r * 0.1, r * 0.03, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // Handle
+  ctx.strokeStyle = '#EFEBE9';
+  ctx.lineWidth = r * 0.03;
+  ctx.beginPath();
+  ctx.arc(cupX + r * 0.15, cupY, r * 0.05, -Math.PI * 0.5, Math.PI * 0.5);
+  ctx.stroke();
+  // Steam wisps
+  ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+  ctx.lineWidth = r * 0.02;
+  ctx.lineCap = 'round';
+  for (const offset of [-r * 0.04, r * 0.04]) {
+    ctx.beginPath();
+    ctx.moveTo(cupX + offset, cupY - r * 0.1);
+    ctx.quadraticCurveTo(cupX + offset + r * 0.03, cupY - r * 0.18, cupX + offset, cupY - r * 0.24);
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  drawPlushieEyes(ctx, cx, bodyCy, r, 'normal');
+  drawPlushieMouth(ctx, cx, bodyCy, r, 'smile');
+  drawPlushieBlush(ctx, cx, bodyCy, r, 0.25);
+}
+
+// --- T3 Croissant: Golden-brown body, small crescent croissant on head ---
+function drawPlushieCroissantIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, tier: number, _color: string, _accent: string): void {
+  const r = size * 0.35;
+  const bodyCy = cy + r * 0.1;
+
+  ctx.fillStyle = 'rgba(0,0,0,0.06)';
+  ctx.beginPath();
+  ctx.ellipse(cx, bodyCy + r * 1.05, r * 0.7, r * 0.12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  drawPlushieBody(ctx, cx, bodyCy, r, '#F9A825', '#FFF9C4', '#F57F17');
+
+  // Crescent croissant on head
+  ctx.save();
+  const crx = cx;
+  const cry = bodyCy - r * 0.95;
+  const croissantGrad = ctx.createLinearGradient(crx - r * 0.2, cry, crx + r * 0.2, cry);
+  croissantGrad.addColorStop(0, '#FFB74D');
+  croissantGrad.addColorStop(0.5, '#FFE082');
+  croissantGrad.addColorStop(1, '#F9A825');
+  ctx.fillStyle = croissantGrad;
+  // Crescent shape
+  ctx.beginPath();
+  ctx.arc(crx, cry, r * 0.18, Math.PI * 0.8, Math.PI * 2.2);
+  ctx.arc(crx + r * 0.04, cry - r * 0.02, r * 0.12, Math.PI * 2.2, Math.PI * 0.8, true);
+  ctx.closePath();
+  ctx.fill();
+  // Score lines across croissant
+  ctx.strokeStyle = 'rgba(230,150,50,0.4)';
+  ctx.lineWidth = r * 0.015;
+  for (let i = 0; i < 3; i++) {
+    const angle = Math.PI * 1.0 + (i / 3) * Math.PI * 1.0;
+    const x1 = crx + Math.cos(angle) * r * 0.08;
+    const y1 = cry + Math.sin(angle) * r * 0.08;
+    const x2 = crx + Math.cos(angle) * r * 0.17;
+    const y2 = cry + Math.sin(angle) * r * 0.17;
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  addTierSparkles(ctx, cx, cy, r, tier);
+
+  drawPlushieEyes(ctx, cx, bodyCy, r, 'normal');
+  drawPlushieMouth(ctx, cx, bodyCy, r, 'cat');
+  drawPlushieBlush(ctx, cx, bodyCy, r, 0.28);
+}
+
+// --- T4 Waffle: Golden body, waffle grid pattern on head ---
+function drawPlushieWaffleIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, tier: number, _color: string, _accent: string): void {
+  const r = size * 0.35;
+  const bodyCy = cy + r * 0.1;
+
+  ctx.fillStyle = 'rgba(0,0,0,0.07)';
+  ctx.beginPath();
+  ctx.ellipse(cx, bodyCy + r * 1.05, r * 0.7, r * 0.12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  drawPlushieBody(ctx, cx, bodyCy, r, '#FFB300', '#FFE082', '#FF8F00');
+
+  // Waffle grid on head
+  ctx.save();
+  const wx = cx;
+  const wy = bodyCy - r * 0.92;
+  const ws = r * 0.32; // Waffle size
+  // Waffle base (rounded square)
+  ctx.fillStyle = '#FFD54F';
+  ctx.beginPath();
+  const halfW = ws / 2;
+  ctx.moveTo(wx - halfW + r * 0.03, wy - halfW);
+  ctx.lineTo(wx + halfW - r * 0.03, wy - halfW);
+  ctx.quadraticCurveTo(wx + halfW, wy - halfW, wx + halfW, wy - halfW + r * 0.03);
+  ctx.lineTo(wx + halfW, wy + halfW - r * 0.03);
+  ctx.quadraticCurveTo(wx + halfW, wy + halfW, wx + halfW - r * 0.03, wy + halfW);
+  ctx.lineTo(wx - halfW + r * 0.03, wy + halfW);
+  ctx.quadraticCurveTo(wx - halfW, wy + halfW, wx - halfW, wy + halfW - r * 0.03);
+  ctx.lineTo(wx - halfW, wy - halfW + r * 0.03);
+  ctx.quadraticCurveTo(wx - halfW, wy - halfW, wx - halfW + r * 0.03, wy - halfW);
+  ctx.fill();
+  // Grid lines
+  ctx.strokeStyle = '#F9A825';
+  ctx.lineWidth = r * 0.02;
+  // Vertical lines
+  ctx.beginPath();
+  ctx.moveTo(wx, wy - halfW);
+  ctx.lineTo(wx, wy + halfW);
+  ctx.stroke();
+  // Horizontal lines
+  ctx.beginPath();
+  ctx.moveTo(wx - halfW, wy);
+  ctx.lineTo(wx + halfW, wy);
+  ctx.stroke();
+  // Butter pat on top
+  ctx.fillStyle = '#FFF9C4';
+  ctx.beginPath();
+  ctx.ellipse(wx + r * 0.03, wy - r * 0.02, r * 0.06, r * 0.04, 0.2, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  addTierSparkles(ctx, cx, cy, r, tier);
+
+  drawPlushieEyes(ctx, cx, bodyCy, r, 'wide');
+  drawPlushieMouth(ctx, cx, bodyCy, r, 'open');
+  drawPlushieBlush(ctx, cx, bodyCy, r, 0.3);
+}
+
+// --- T5 Pancake Stack: Light brown body, 3 stacked pancakes on head with syrup drip ---
+function drawPlushiePancakeStackIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, tier: number, _color: string, _accent: string): void {
+  const r = size * 0.35;
+  const bodyCy = cy + r * 0.1;
+
+  ctx.fillStyle = 'rgba(0,0,0,0.07)';
+  ctx.beginPath();
+  ctx.ellipse(cx, bodyCy + r * 1.05, r * 0.72, r * 0.12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  drawPlushieBody(ctx, cx, bodyCy, r, '#D7CCC8', '#EFEBE9', '#BCAAA4');
+
+  // Stack of 3 pancakes on head
+  ctx.save();
+  const px = cx;
+  const pBaseY = bodyCy - r * 0.82;
+  const pancakeH = r * 0.09;
+  const pancakeW = r * 0.22;
+  for (let i = 0; i < 3; i++) {
+    const py = pBaseY - i * pancakeH * 1.1;
+    const pw = pancakeW - i * r * 0.02; // Slightly smaller each layer
+    const pGrad = ctx.createLinearGradient(px, py - pancakeH / 2, px, py + pancakeH / 2);
+    pGrad.addColorStop(0, '#FFCC80');
+    pGrad.addColorStop(0.5, '#FFE0B2');
+    pGrad.addColorStop(1, '#FFB74D');
+    ctx.fillStyle = pGrad;
+    ctx.beginPath();
+    ctx.ellipse(px, py, pw, pancakeH / 2, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  // Syrup drip
+  const syrupY = pBaseY - 2 * pancakeH * 1.1;
+  ctx.fillStyle = '#8D6E63';
+  // Pool on top
+  ctx.beginPath();
+  ctx.ellipse(px, syrupY - r * 0.02, r * 0.1, r * 0.03, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // Drip down side
+  ctx.beginPath();
+  ctx.moveTo(px + r * 0.08, syrupY);
+  ctx.quadraticCurveTo(px + r * 0.1, syrupY + r * 0.08, px + r * 0.08, syrupY + r * 0.14);
+  ctx.lineTo(px + r * 0.06, syrupY + r * 0.14);
+  ctx.quadraticCurveTo(px + r * 0.07, syrupY + r * 0.06, px + r * 0.06, syrupY);
+  ctx.closePath();
+  ctx.fill();
+  // Butter pat
+  ctx.fillStyle = '#FFF9C4';
+  ctx.beginPath();
+  ctx.ellipse(px - r * 0.02, syrupY - r * 0.04, r * 0.04, r * 0.025, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  addTierSparkles(ctx, cx, cy, r, tier);
+
+  drawPlushieEyes(ctx, cx, bodyCy, r, 'normal');
+  drawPlushieMouth(ctx, cx, bodyCy, r, 'smile');
+  drawPlushieBlush(ctx, cx, bodyCy, r, 0.3);
+}
+
+// --- T6 Layer Cake: Pink body, layered cake on head with frosting ---
+function drawPlushieLayerCakeIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, tier: number, _color: string, _accent: string): void {
+  const r = size * 0.35;
+  const bodyCy = cy + r * 0.1;
+
+  ctx.fillStyle = 'rgba(0,0,0,0.07)';
+  ctx.beginPath();
+  ctx.ellipse(cx, bodyCy + r * 1.05, r * 0.73, r * 0.12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  drawPlushieBody(ctx, cx, bodyCy, r, '#F48FB1', '#FCE4EC', '#EC407A');
+
+  // Layered cake on head
+  ctx.save();
+  const ckx = cx;
+  const ckBaseY = bodyCy - r * 0.82;
+  // Bottom layer
+  ctx.fillStyle = '#FFCCBC';
+  ctx.beginPath();
+  ctx.ellipse(ckx, ckBaseY, r * 0.22, r * 0.08, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillRect(ckx - r * 0.22, ckBaseY - r * 0.06, r * 0.44, r * 0.06);
+  // Middle layer
+  ctx.fillStyle = '#F8BBD0';
+  ctx.beginPath();
+  ctx.ellipse(ckx, ckBaseY - r * 0.1, r * 0.18, r * 0.06, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillRect(ckx - r * 0.18, ckBaseY - r * 0.16, r * 0.36, r * 0.06);
+  // Top layer
+  ctx.fillStyle = '#FCE4EC';
+  ctx.beginPath();
+  ctx.ellipse(ckx, ckBaseY - r * 0.2, r * 0.14, r * 0.05, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // Frosting drips (wavy line on middle layer)
+  ctx.strokeStyle = '#FFFFFF';
+  ctx.lineWidth = r * 0.025;
+  ctx.beginPath();
+  ctx.moveTo(ckx - r * 0.18, ckBaseY - r * 0.09);
+  for (let i = 0; i < 5; i++) {
+    const sx = ckx - r * 0.18 + (i + 0.5) * (r * 0.36 / 5);
+    const sy = ckBaseY - r * 0.09 + (i % 2 === 0 ? r * 0.03 : -r * 0.01);
+    ctx.lineTo(sx, sy);
+  }
+  ctx.stroke();
+  // Cherry on top
+  ctx.fillStyle = '#EF5350';
+  ctx.beginPath();
+  ctx.arc(ckx, ckBaseY - r * 0.25, r * 0.04, 0, Math.PI * 2);
+  ctx.fill();
+  // Cherry highlight
+  ctx.fillStyle = 'rgba(255,255,255,0.5)';
+  ctx.beginPath();
+  ctx.arc(ckx - r * 0.01, ckBaseY - r * 0.26, r * 0.015, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  addTierSparkles(ctx, cx, cy, r, tier);
+
+  drawPlushieEyes(ctx, cx, bodyCy, r, 'sparkle');
+  drawPlushieMouth(ctx, cx, bodyCy, r, 'open');
+  drawPlushieBlush(ctx, cx, bodyCy, r, 0.35);
+}
+
+// --- T7 Bakery: Warm cream body, tiny bakery shop front on head with awning, gold accents ---
+function drawPlushieBakeryIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, tier: number, _color: string, _accent: string): void {
+  const r = size * 0.35;
+  const bodyCy = cy + r * 0.1;
+
+  // Golden glow aura
+  const auraGrad = ctx.createRadialGradient(cx, bodyCy, r * 0.5, cx, bodyCy, r * 1.5);
+  auraGrad.addColorStop(0, 'rgba(255,215,0,0.12)');
+  auraGrad.addColorStop(0.6, 'rgba(255,215,0,0.05)');
+  auraGrad.addColorStop(1, 'rgba(255,215,0,0)');
+  ctx.fillStyle = auraGrad;
+  ctx.beginPath();
+  ctx.arc(cx, bodyCy, r * 1.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = 'rgba(0,0,0,0.08)';
+  ctx.beginPath();
+  ctx.ellipse(cx, bodyCy + r * 1.05, r * 0.75, r * 0.13, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  drawPlushieBody(ctx, cx, bodyCy, r, '#8D6E63', '#BCAAA4', '#6D4C41');
+
+  // Tiny bakery shop front on head
+  ctx.save();
+  const sx = cx;
+  const sy = bodyCy - r * 0.88;
+  const sw = r * 0.4;
+  const sh = r * 0.28;
+  // Shop wall
+  ctx.fillStyle = '#EFEBE9';
+  ctx.fillRect(sx - sw / 2, sy - sh / 2, sw, sh);
+  // Awning (striped)
+  const awningY = sy - sh / 2;
+  const awningH = r * 0.1;
+  ctx.fillStyle = '#EF5350';
+  ctx.beginPath();
+  ctx.moveTo(sx - sw / 2 - r * 0.04, awningY);
+  ctx.lineTo(sx + sw / 2 + r * 0.04, awningY);
+  ctx.lineTo(sx + sw / 2 + r * 0.02, awningY + awningH);
+  ctx.lineTo(sx - sw / 2 - r * 0.02, awningY + awningH);
+  ctx.closePath();
+  ctx.fill();
+  // Awning stripes
+  ctx.fillStyle = '#FFFFFF';
+  const stripeW = sw / 4;
+  for (let i = 0; i < 4; i += 2) {
+    ctx.fillRect(sx - sw / 2 + i * stripeW, awningY, stripeW, awningH);
+  }
+  // Door
+  ctx.fillStyle = '#8D6E63';
+  ctx.fillRect(sx - r * 0.04, sy, r * 0.08, sh / 2);
+  // Gold door handle
+  ctx.fillStyle = '#FFD700';
+  ctx.beginPath();
+  ctx.arc(sx + r * 0.025, sy + sh * 0.18, r * 0.012, 0, Math.PI * 2);
+  ctx.fill();
+  // Window
+  ctx.fillStyle = '#81D4FA';
+  ctx.fillRect(sx - sw / 2 + r * 0.04, sy - sh / 4, r * 0.08, r * 0.07);
+  // Window highlight
+  ctx.fillStyle = 'rgba(255,255,255,0.4)';
+  ctx.fillRect(sx - sw / 2 + r * 0.045, sy - sh / 4 + r * 0.01, r * 0.025, r * 0.04);
+  // Gold sign above door
+  ctx.fillStyle = '#FFD700';
+  ctx.beginPath();
+  ctx.ellipse(sx, awningY - r * 0.04, r * 0.06, r * 0.03, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  addTierSparkles(ctx, cx, cy, r, tier);
+
+  drawPlushieEyes(ctx, cx, bodyCy, r, 'sparkle');
+  drawPlushieMouth(ctx, cx, bodyCy, r, 'smile');
+  drawPlushieBlush(ctx, cx, bodyCy, r, 0.35);
 }
 
 // --- T1 Seedling: Tiny pale green plushie, small leaf sprouting from top of head ---
